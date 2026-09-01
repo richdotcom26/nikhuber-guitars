@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ninox-Rohdaten (nur lokal, groß)
+/ninox-dump/
