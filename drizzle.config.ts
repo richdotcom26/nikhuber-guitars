@@ -1,5 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
+
+// Next.js lädt .env.local automatisch, drizzle-kit (plain Node) nicht.
+config({ path: ".env.local" });
+config({ path: ".env" });
 
 /**
  * Drizzle-Kit-Konfiguration.

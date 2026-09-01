@@ -68,7 +68,7 @@ CREATE TABLE "seriennummer" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"lfd" integer NOT NULL,
 	"jahr_praefix" text NOT NULL,
-	"anzeige" text GENERATED ALWAYS AS (jahr_praefix || ' ' || lfd) STORED,
+	"anzeige" text GENERATED ALWAYS AS ((jahr_praefix || ' ' || lfd::text)) STORED,
 	"auftrag_id" uuid,
 	"manuell" boolean DEFAULT false NOT NULL,
 	"vergeben_am" date,
@@ -372,7 +372,7 @@ CREATE TABLE "auftrag" (
 	"spezialauftrag" text,
 	"produktionsort" "produktionsort",
 	"bauplandatum" date,
-	"bauplan_monat" text GENERATED ALWAYS AS (to_char(bauplandatum, 'YYYY/MM')) STORED,
+	"bauplan_monat" text,
 	"seriennummer_id" uuid,
 	"fortschritt_prozent" integer,
 	"stand_he_wert" numeric(12, 2),
@@ -402,7 +402,7 @@ CREATE TABLE "auftrag" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" uuid,
-	CONSTRAINT "angebot_nummer_unique" UNIQUE("nummer")
+	CONSTRAINT "auftrag_nummer_unique" UNIQUE("nummer")
 );
 --> statement-breakpoint
 CREATE TABLE "beleg_position" (
@@ -485,7 +485,7 @@ CREATE TABLE "rechnung" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" uuid,
-	CONSTRAINT "angebot_nummer_unique" UNIQUE("nummer")
+	CONSTRAINT "rechnung_nummer_unique" UNIQUE("nummer")
 );
 --> statement-breakpoint
 CREATE TABLE "arbeitsschritt" (

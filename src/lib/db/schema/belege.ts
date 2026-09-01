@@ -21,8 +21,10 @@ import { seriennummer } from "./stammdaten";
  * Summen: Service (`/lib/domain`) berechnet + schreibt bei jeder Positions-/Rabattänderung (E5).
  */
 
-// gemeinsame Snapshot-/Kopf-Spalten (Konvention, in allen drei Header-Tabellen)
-const kopf = {
+// gemeinsame Snapshot-/Kopf-Spalten (Konvention, in allen drei Header-Tabellen).
+// FACTORY: pro Tabelle frische Column-Builder — geteilte Builder-Instanzen mit .unique()/.references()
+// würden sonst denselben Constraint-Namen dreimal erzeugen.
+const kopf = () => ({
   nummer: text("nummer").notNull().unique(),               // 'AN-2026-2544' / 'A-2026-4773' / 'RG-2026-3722'
   kundeId: uuid("kunde_id").references(() => kunde.id),
   kdFirma: text("kd_firma"),
@@ -58,12 +60,12 @@ const kopf = {
   summeBrutto: numeric("summe_brutto", { precision: 12, scale: 2 }),
 
   drucktemplateId: uuid("drucktemplate_id"),               // -> beleg_template.id (relations)
-} as const;
+});
 
 // -------------------------------------------------------------------- ANGEBOT
 export const angebot = pgTable("angebot", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ...kopf,
+  ...kopf(),
   status: angebotStatusEnum("status").default("NEU").notNull(),
   angebotsdatum: date("angebotsdatum"),
   kopftext: text("kopftext"),                              // "Angebots Text"
@@ -76,7 +78,7 @@ export const angebot = pgTable("angebot", {
 // -------------------------------------------------------------------- AUFTRAG
 export const auftrag = pgTable("auftrag", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ...kopf,
+  ...kopf(),
   auftragsart: auftragsartEnum("auftragsart").default("PRODUKTION").notNull(),
   status: auftragStatusEnum("status").default("BACKORDER").notNull(),
   auftragsdatum: date("auftragsdatum"),
@@ -86,8 +88,9 @@ export const auftrag = pgTable("auftrag", {
   produktionsort: produktionsortEnum("produktionsort"),
 
   bauplandatum: date("bauplandatum"),                      // Monatserster (7i)
-  bauplanMonat: text("bauplan_monat")
-    .generatedAlwaysAs(sql`to_char(bauplandatum, 'YYYY/MM')`),
+  // 'YYYY/MM' aus bauplandatum — Service setzt beim Speichern (to_char ist nicht IMMUTABLE,
+  // taugt daher nicht als GENERATED-Spalte). Filterfeld der Auftragsliste (7c) → Index.
+  bauplanMonat: text("bauplan_monat"),
 
   seriennummerId: uuid("seriennummer_id").references(() => seriennummer.id),
 
@@ -127,7 +130,7 @@ export const auftrag = pgTable("auftrag", {
 // -------------------------------------------------------------------- RECHNUNG
 export const rechnung = pgTable("rechnung", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ...kopf,
+  ...kopf(),
   belegart: rechnungBelegartEnum("belegart").default("RECHNUNG").notNull(),
   status: rechnungStatusEnum("status").default("OFFEN").notNull(),
   zahlungsstatus: zahlungsstatusEnum("zahlungsstatus"),

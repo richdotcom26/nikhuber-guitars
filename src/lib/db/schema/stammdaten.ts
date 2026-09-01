@@ -81,7 +81,7 @@ export const seriennummer = pgTable("seriennummer", {
   id: uuid("id").primaryKey().defaultRandom(),
   lfd: integer("lfd").notNull().unique(),
   jahrPraefix: text("jahr_praefix").notNull(),   // "5" (Jahr <= 2025) | "26" (>= 2026)
-  anzeige: text("anzeige").generatedAlwaysAs(sql`jahr_praefix || ' ' || lfd`), // "26 5404"
+  anzeige: text("anzeige").generatedAlwaysAs(sql`(jahr_praefix || ' ' || lfd::text)`), // "26 5404"
   auftragId: uuid("auftrag_id"),                  // -> auftrag.id (relations); null = gelöscht/frei
   manuell: boolean("manuell").default(false).notNull(),
   vergebenAm: date("vergeben_am"),

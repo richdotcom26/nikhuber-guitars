@@ -1,5 +1,5 @@
 {
-  "id": "883cf3c3-2345-4b1b-a9c2-2acac05544d5",
+  "id": "59c17afd-723c-4ff5-8f21-5a38c10e31f8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -201,7 +201,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "jahr_praefix || ' ' || lfd",
+            "as": "(jahr_praefix || ' ' || lfd::text)",
             "type": "stored"
           }
         },
@@ -2215,11 +2215,7 @@
           "name": "bauplan_monat",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "generated": {
-            "as": "to_char(bauplandatum, 'YYYY/MM')",
-            "type": "stored"
-          }
+          "notNull": false
         },
         "seriennummer_id": {
           "name": "seriennummer_id",
@@ -2446,8 +2442,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "angebot_nummer_unique": {
-          "name": "angebot_nummer_unique",
+        "auftrag_nummer_unique": {
+          "name": "auftrag_nummer_unique",
           "nullsNotDistinct": false,
           "columns": [
             "nummer"
@@ -3057,8 +3053,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "angebot_nummer_unique": {
-          "name": "angebot_nummer_unique",
+        "rechnung_nummer_unique": {
+          "name": "rechnung_nummer_unique",
           "nullsNotDistinct": false,
           "columns": [
             "nummer"
