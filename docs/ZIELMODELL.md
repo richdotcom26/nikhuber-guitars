@@ -730,20 +730,24 @@ modellgruppe                 -- ex OD (Kapazitätsbänder)
 
 ## 10. Nächste Schritte
 
-1. ✅ **`Huber/schema-entwurf/`** — Drizzle-Schema (enums + alle Tabellen aus §3), Ziel Supabase Postgres.
-   Erstentwurf steht (14 Dateien, README.md erklärt Review-Reihenfolge). `// TODO` = offene Details.
-   → **dein Review**; `relations.ts` folgt, wenn das Schema passt.
-2. **`spec_slot`-Registry** vollständig aus dem Ninox-Schema ableiten (alle ~55 Slots: key, caption,
-   artikelgruppe, section, order, aufpreis, multi, holz) → DB-Tabelle + `/lib/specs`-Konstante.
-3. **Service-Layer-Spezifikationen** (`/lib/domain`): je ein Ablauf-Doc für die ex-Trigger/Generatoren
-   (Angebot→Auftrag, Positions-Generator, Auftragsstatus-State-Machine, Arbeitsschritt-Trigger,
-   Compliance-Schritte, Serien-Nr, Summen-Berechnung, Beleg-Erzeugung).
-4. Import-Feld-Mapping je Kern-Tabelle → ETL-Skript (Ninox-Backup → Supabase via Drizzle).
-5. Beleg-HTML-Templates aus `Druckausgaben/*.docx` ableiten (1 je Belegart, DE/EN + Steuerblock parametrisch)
-   + ZUGFeRD-XML-Mapping (7dd).
-6. Next.js/Vercel-Grundgerüst + Supabase-Anbindung (`@supabase/ssr`, Drizzle-Connection).
+> Kanonischer Ort dieses Dokuments: **`docs/ZIELMODELL.md` im Repo `nikhuber-guitars`**.
+> Die Kopie im OneDrive-Ordner `Huber/` ist ab jetzt nur Archiv.
 
-**User-seitig offen:** E15 (Format XRechnung/ZUGFeRD mit Steuerbüro), Gutschrift-/Teil-Gutschrift-Ablauf,
-AVV mit Supabase + Vercel + Mail-Provider.
+1. ✅ **Schema-Entwurf** unter `src/lib/db/schema/` (14 Dateien, ~40 Tabellen). `db:generate` läuft,
+   `drizzle/0000_*.sql` liegt bei. `// TODO` = offene Details. → **dein Review**.
+2. ✅ **`SPEC_SLOTS`-Registry** in `src/lib/db/schema/specs.ts` (47 Slots aus dem Ninox-Schema abgeleitet).
+   Noch offen: Seed für Tabelle `spec_slot` + Spiegel `src/lib/specs/`.
+3. ✅ **Grundgerüst** — Next.js 16 + Supabase-Auth (`@supabase/ssr`) + Drizzle-Anbindung, 9+5 Platzhalter-Routen,
+   `login`-Seite, Proxy-Schutz. Zwei Commits gepusht.
+   → user-seitig: `.env.local` mit Supabase-Werten füllen, dann `npm run db:push`.
+4. ⏳ **`relations.ts`** + **Service-Layer-Spezifikationen** (`src/lib/domain`): je ein Ablauf-Doc für die
+   ex-Trigger/Generatoren (Angebot→Auftrag, Positions-Generator, Auftragsstatus-State-Machine,
+   Arbeitsschritt-Trigger, Compliance-Schritte, Serien-Nr, Summen-Berechnung, Beleg-Erzeugung).
+5. ⏳ Import-Feld-Mapping je Kern-Tabelle → ETL-Skript (Ninox-Backup → Supabase via Drizzle).
+6. ⏳ Beleg-HTML-Templates aus `Druckausgaben/*.docx` (1 je Belegart, DE/EN + Steuerblock parametrisch)
+   + ZUGFeRD-XML-Mapping (7dd).
+
+**User-seitig offen:** E15 (Format XRechnung/ZUGFeRD mit Steuerbüro), `.env.local` + `db:push`,
+Vercel-Projekt anlegen, AVV mit Supabase + Vercel + Mail-Provider.
 **Geklärt:** Backend = Supabase-Frankfurt + Vercel (Haltung A); Preisermittlung = simpler Vertriebsweg-Lookup,
 Rabatte 100 % manuell (§6); Zahlung = manuelle Erfassung durch Büro/Johannes, keine Bank-Anbindung (§3.5).
