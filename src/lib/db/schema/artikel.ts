@@ -6,6 +6,7 @@ import { auditCols, softDelete } from "./_common";
 import {
   artikelgruppeEnum, artikeltypEnum, betriebsmittelKatEnum, einheitEnum,
 } from "./_enums";
+import { kunde } from "./adressen";
 
 /**
  * §3.3 Artikel. Ex WB (179 Felder) → Kern.
@@ -47,7 +48,7 @@ export const artikel = pgTable("artikel", {
   ekNettoEur: numeric("ek_netto_eur", { precision: 12, scale: 2 }),
   ekNettoUsd: numeric("ek_netto_usd", { precision: 12, scale: 2 }),
   hersteller: text("hersteller"),
-  lieferantId: uuid("lieferant_id"),            // -> kunde.id (kontaktart=LIEFERANT), relations
+  lieferantId: uuid("lieferant_id").references(() => kunde.id), // kontaktart=LIEFERANT
   lieferantArtikelNr: text("lieferant_artikel_nr"),
   bestandMin: numeric("bestand_min", { precision: 12, scale: 3 }),
   bestandMax: numeric("bestand_max", { precision: 12, scale: 3 }),

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean, date, integer, numeric, pgTable, primaryKey, text, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
@@ -47,7 +48,8 @@ export const staat = pgTable("staat", {
   region: regionEnum("region").notNull(),
   defaultSprache: spracheEnum("default_sprache"),
   defaultWaehrung: waehrungEnum("default_waehrung"),
-  defaultZahlungsbedingungId: uuid("default_zahlungsbedingung_id"), // -> zahlungsbedingung.id (relations)
+  defaultZahlungsbedingungId: uuid("default_zahlungsbedingung_id")
+    .references((): AnyPgColumn => zahlungsbedingung.id),
   ...auditCols,
 });
 

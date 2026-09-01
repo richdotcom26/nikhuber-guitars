@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean, check, date, integer, numeric, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
@@ -10,7 +11,7 @@ import {
 } from "./_enums";
 import { artikel } from "./artikel";
 import { kunde } from "./adressen";
-import { seriennummer } from "./stammdaten";
+import { seriennummer, staat } from "./stammdaten";
 
 /**
  * §3.5 Belege. Drei Header-Tabellen (Auftrag = Fertigung, Rechnung = Zahlung),
@@ -33,7 +34,7 @@ const kopf = () => ({
   kdStrasse: text("kd_strasse"),
   kdPlz: text("kd_plz"),
   kdOrt: text("kd_ort"),
-  kdStaatId: uuid("kd_staat_id"),                          // -> staat.id (relations)
+  kdStaatId: uuid("kd_staat_id").references(() => staat.id),
   kdRegion: regionEnum("kd_region"),
   kdWaehrung: waehrungEnum("kd_waehrung"),
   kdSprache: spracheEnum("kd_sprache"),
@@ -69,7 +70,8 @@ export const angebot = pgTable("angebot", {
   status: angebotStatusEnum("status").default("NEU").notNull(),
   angebotsdatum: date("angebotsdatum"),
   kopftext: text("kopftext"),                              // "Angebots Text"
-  erzeugtAusAuftragId: uuid("erzeugt_aus_auftrag_id"),     // echte FK statt Freitext (7m); relations
+  erzeugtAusAuftragId: uuid("erzeugt_aus_auftrag_id")
+    .references((): AnyPgColumn => auftrag.id),             // echte FK statt Freitext (7m)
   positionenAnzeigen: boolean("positionen_anzeigen").default(false).notNull(),
   schreibschutz: boolean("schreibschutz").default(false).notNull(),
   ...auditCols,
@@ -137,7 +139,8 @@ export const rechnung = pgTable("rechnung", {
   rechnungsdatum: date("rechnungsdatum"),
   lieferdatum: date("lieferdatum"),
   auftragId: uuid("auftrag_id").references(() => auftrag.id),      // echte FK (BC.G1)
-  referenzRechnungId: uuid("referenz_rechnung_id"),               // Storno/Gutschrift -> Original (relations)
+  referenzRechnungId: uuid("referenz_rechnung_id")
+    .references((): AnyPgColumn => rechnung.id),                   // Storno/Gutschrift -> Original
   teilgutschrift: boolean("teilgutschrift").default(false).notNull(), // GUTSCHRIFT-Untervariante (Ninox: Nummernpräfix "TGS")
   // Nummer bei Storno/Gutschrift = Präfix (S/GS/TGS) + Original.nummer — verbraucht keinen zaehler.
 

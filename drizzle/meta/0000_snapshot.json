@@ -1,5 +1,5 @@
 {
-  "id": "59c17afd-723c-4ff5-8f21-5a38c10e31f8",
+  "id": "f96b768c-8d10-4f1a-a80b-8ac85b180ab4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -352,7 +352,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "staat_default_zahlungsbedingung_id_zahlungsbedingung_id_fk": {
+          "name": "staat_default_zahlungsbedingung_id_zahlungsbedingung_id_fk",
+          "tableFrom": "staat",
+          "tableTo": "zahlungsbedingung",
+          "columnsFrom": [
+            "default_zahlungsbedingung_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -850,6 +864,19 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "kunde_zahlungsbedingung_id_zahlungsbedingung_id_fk": {
+          "name": "kunde_zahlungsbedingung_id_zahlungsbedingung_id_fk",
+          "tableFrom": "kunde",
+          "tableTo": "zahlungsbedingung",
+          "columnsFrom": [
+            "zahlungsbedingung_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1222,7 +1249,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "artikel_lieferant_id_kunde_id_fk": {
+          "name": "artikel_lieferant_id_kunde_id_fk",
+          "tableFrom": "artikel",
+          "tableTo": "kunde",
+          "columnsFrom": [
+            "lieferant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "artikel_artikel_nr_unique": {
@@ -1507,6 +1548,32 @@
           "tableTo": "artikel",
           "columnsFrom": [
             "modell_artikel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "spec_belegung_angebot_id_angebot_id_fk": {
+          "name": "spec_belegung_angebot_id_angebot_id_fk",
+          "tableFrom": "spec_belegung",
+          "tableTo": "angebot",
+          "columnsFrom": [
+            "angebot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "spec_belegung_auftrag_id_auftrag_id_fk": {
+          "name": "spec_belegung_auftrag_id_auftrag_id_fk",
+          "tableFrom": "spec_belegung",
+          "tableTo": "auftrag",
+          "columnsFrom": [
+            "auftrag_id"
           ],
           "columnsTo": [
             "id"
@@ -1932,12 +1999,38 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "angebot_kd_staat_id_staat_id_fk": {
+          "name": "angebot_kd_staat_id_staat_id_fk",
+          "tableFrom": "angebot",
+          "tableTo": "staat",
+          "columnsFrom": [
+            "kd_staat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "angebot_modell_artikel_id_artikel_id_fk": {
           "name": "angebot_modell_artikel_id_artikel_id_fk",
           "tableFrom": "angebot",
           "tableTo": "artikel",
           "columnsFrom": [
             "modell_artikel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "angebot_erzeugt_aus_auftrag_id_auftrag_id_fk": {
+          "name": "angebot_erzeugt_aus_auftrag_id_auftrag_id_fk",
+          "tableFrom": "angebot",
+          "tableTo": "auftrag",
+          "columnsFrom": [
+            "erzeugt_aus_auftrag_id"
           ],
           "columnsTo": [
             "id"
@@ -2406,6 +2499,19 @@
           "tableTo": "kunde",
           "columnsFrom": [
             "kunde_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "auftrag_kd_staat_id_staat_id_fk": {
+          "name": "auftrag_kd_staat_id_staat_id_fk",
+          "tableFrom": "auftrag",
+          "tableTo": "staat",
+          "columnsFrom": [
+            "kd_staat_id"
           ],
           "columnsTo": [
             "id"
@@ -3024,6 +3130,19 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "rechnung_kd_staat_id_staat_id_fk": {
+          "name": "rechnung_kd_staat_id_staat_id_fk",
+          "tableFrom": "rechnung",
+          "tableTo": "staat",
+          "columnsFrom": [
+            "kd_staat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "rechnung_modell_artikel_id_artikel_id_fk": {
           "name": "rechnung_modell_artikel_id_artikel_id_fk",
           "tableFrom": "rechnung",
@@ -3043,6 +3162,19 @@
           "tableTo": "auftrag",
           "columnsFrom": [
             "auftrag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "rechnung_referenz_rechnung_id_rechnung_id_fk": {
+          "name": "rechnung_referenz_rechnung_id_rechnung_id_fk",
+          "tableFrom": "rechnung",
+          "tableTo": "rechnung",
+          "columnsFrom": [
+            "referenz_rechnung_id"
           ],
           "columnsTo": [
             "id"
@@ -3174,6 +3306,19 @@
           "tableTo": "arbeitsschritt_vorrat",
           "columnsFrom": [
             "vorrat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "arbeitsschritt_erledigt_von_id_app_user_id_fk": {
+          "name": "arbeitsschritt_erledigt_von_id_app_user_id_fk",
+          "tableFrom": "arbeitsschritt",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "erledigt_von_id"
           ],
           "columnsTo": [
             "id"

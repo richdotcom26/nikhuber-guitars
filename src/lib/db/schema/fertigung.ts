@@ -4,6 +4,7 @@ import {
 import { auditCols } from "./_common";
 import { schrittStatusEnum, vorratGruppeEnum, vorratTypEnum } from "./_enums";
 import { auftrag } from "./belege";
+import { appUser } from "./users";
 
 /**
  * §3.6 Fertigung.
@@ -32,7 +33,7 @@ export const arbeitsschritt = pgTable("arbeitsschritt", {
   vorratId: uuid("vorrat_id").notNull().references(() => arbeitsschrittVorrat.id),
   status: schrittStatusEnum("status").default("OFFEN").notNull(),
   erledigtAm: timestamp("erledigt_am", { withTimezone: true }),
-  erledigtVonId: uuid("erledigt_von_id"),    // -> app_user.id (relations); ex 'MA', kein Freitext (7r)
+  erledigtVonId: uuid("erledigt_von_id").references(() => appUser.id), // ex 'MA', kein Freitext (7r)
   bemerkungBearbeiter: text("bemerkung_bearbeiter"),
   wartenAuf: text("warten_auf"),             // TODO: an app_user / kleine Partnerliste koppeln (7r)
   dauerMinuten: integer("dauer_minuten"),    // E13: optionale manuelle Zeiterfassung

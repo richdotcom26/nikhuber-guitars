@@ -6,7 +6,7 @@ import {
   anredeEnum, apPositionEnum, kontaktartEnum, regionEnum,
   spracheEnum, vertriebswegEnum, waehrungEnum,
 } from "./_enums";
-import { staat } from "./stammdaten";
+import { staat, zahlungsbedingung } from "./stammdaten";
 
 /**
  * §3.2 Adressen. Ex MC (103 Felder) → genutzte Kernfelder.
@@ -35,7 +35,7 @@ export const kunde = pgTable("kunde", {
   steuerpflichtig: boolean("steuerpflichtig"),
   waehrung: waehrungEnum("waehrung"),
   sprache: spracheEnum("sprache"),
-  zahlungsbedingungId: uuid("zahlungsbedingung_id"), // -> zahlungsbedingung.id (relations)
+  zahlungsbedingungId: uuid("zahlungsbedingung_id").references(() => zahlungsbedingung.id),
   ustIdNr: text("ust_id_nr"),
 
   // Sonderrabatt: manuell eingebbar für Artists/Musiker/besondere Händler.

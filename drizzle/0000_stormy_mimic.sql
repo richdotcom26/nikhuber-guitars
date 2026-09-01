@@ -765,17 +765,25 @@ CREATE TABLE "app_user" (
 	CONSTRAINT "app_user_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
+ALTER TABLE "staat" ADD CONSTRAINT "staat_default_zahlungsbedingung_id_zahlungsbedingung_id_fk" FOREIGN KEY ("default_zahlungsbedingung_id") REFERENCES "public"."zahlungsbedingung"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ansprechpartner" ADD CONSTRAINT "ansprechpartner_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kunde" ADD CONSTRAINT "kunde_staat_id_staat_id_fk" FOREIGN KEY ("staat_id") REFERENCES "public"."staat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "kunde" ADD CONSTRAINT "kunde_zahlungsbedingung_id_zahlungsbedingung_id_fk" FOREIGN KEY ("zahlungsbedingung_id") REFERENCES "public"."zahlungsbedingung"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "lieferadresse" ADD CONSTRAINT "lieferadresse_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "artikel" ADD CONSTRAINT "artikel_lieferant_id_kunde_id_fk" FOREIGN KEY ("lieferant_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "artikel_modell" ADD CONSTRAINT "artikel_modell_option_artikel_id_artikel_id_fk" FOREIGN KEY ("option_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "artikel_modell" ADD CONSTRAINT "artikel_modell_modell_artikel_id_artikel_id_fk" FOREIGN KEY ("modell_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "spec_belegung" ADD CONSTRAINT "spec_belegung_modell_artikel_id_artikel_id_fk" FOREIGN KEY ("modell_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "spec_belegung" ADD CONSTRAINT "spec_belegung_angebot_id_angebot_id_fk" FOREIGN KEY ("angebot_id") REFERENCES "public"."angebot"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "spec_belegung" ADD CONSTRAINT "spec_belegung_auftrag_id_auftrag_id_fk" FOREIGN KEY ("auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "spec_belegung" ADD CONSTRAINT "spec_belegung_slot_key_spec_slot_key_fk" FOREIGN KEY ("slot_key") REFERENCES "public"."spec_slot"("key") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "spec_belegung" ADD CONSTRAINT "spec_belegung_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "angebot" ADD CONSTRAINT "angebot_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "angebot" ADD CONSTRAINT "angebot_kd_staat_id_staat_id_fk" FOREIGN KEY ("kd_staat_id") REFERENCES "public"."staat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "angebot" ADD CONSTRAINT "angebot_modell_artikel_id_artikel_id_fk" FOREIGN KEY ("modell_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "angebot" ADD CONSTRAINT "angebot_erzeugt_aus_auftrag_id_auftrag_id_fk" FOREIGN KEY ("erzeugt_aus_auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_kd_staat_id_staat_id_fk" FOREIGN KEY ("kd_staat_id") REFERENCES "public"."staat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_modell_artikel_id_artikel_id_fk" FOREIGN KEY ("modell_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_seriennummer_id_seriennummer_id_fk" FOREIGN KEY ("seriennummer_id") REFERENCES "public"."seriennummer"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "beleg_position" ADD CONSTRAINT "beleg_position_angebot_id_angebot_id_fk" FOREIGN KEY ("angebot_id") REFERENCES "public"."angebot"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -783,10 +791,13 @@ ALTER TABLE "beleg_position" ADD CONSTRAINT "beleg_position_auftrag_id_auftrag_i
 ALTER TABLE "beleg_position" ADD CONSTRAINT "beleg_position_rechnung_id_rechnung_id_fk" FOREIGN KEY ("rechnung_id") REFERENCES "public"."rechnung"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "beleg_position" ADD CONSTRAINT "beleg_position_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "rechnung" ADD CONSTRAINT "rechnung_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "rechnung" ADD CONSTRAINT "rechnung_kd_staat_id_staat_id_fk" FOREIGN KEY ("kd_staat_id") REFERENCES "public"."staat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "rechnung" ADD CONSTRAINT "rechnung_modell_artikel_id_artikel_id_fk" FOREIGN KEY ("modell_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "rechnung" ADD CONSTRAINT "rechnung_auftrag_id_auftrag_id_fk" FOREIGN KEY ("auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "rechnung" ADD CONSTRAINT "rechnung_referenz_rechnung_id_rechnung_id_fk" FOREIGN KEY ("referenz_rechnung_id") REFERENCES "public"."rechnung"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "arbeitsschritt" ADD CONSTRAINT "arbeitsschritt_auftrag_id_auftrag_id_fk" FOREIGN KEY ("auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "arbeitsschritt" ADD CONSTRAINT "arbeitsschritt_vorrat_id_arbeitsschritt_vorrat_id_fk" FOREIGN KEY ("vorrat_id") REFERENCES "public"."arbeitsschritt_vorrat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "arbeitsschritt" ADD CONSTRAINT "arbeitsschritt_erledigt_von_id_app_user_id_fk" FOREIGN KEY ("erledigt_von_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "holz_volumen" ADD CONSTRAINT "holz_volumen_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "bestellposition" ADD CONSTRAINT "bestellposition_bestellung_id_bestellung_id_fk" FOREIGN KEY ("bestellung_id") REFERENCES "public"."bestellung"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "bestellposition" ADD CONSTRAINT "bestellposition_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
