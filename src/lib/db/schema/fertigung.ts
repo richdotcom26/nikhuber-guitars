@@ -34,6 +34,7 @@ export const arbeitsschritt = pgTable("arbeitsschritt", {
   status: schrittStatusEnum("status").default("OFFEN").notNull(),
   erledigtAm: timestamp("erledigt_am", { withTimezone: true }),
   erledigtVonId: uuid("erledigt_von_id").references(() => appUser.id), // ex 'MA', kein Freitext (7r)
+  maImport: text("ma_import"),                // Ninox 'MA'-Namensstring (Alt-Workaround, Historie)
   bemerkungBearbeiter: text("bemerkung_bearbeiter"),
   wartenAuf: text("warten_auf"),             // TODO: an app_user / kleine Partnerliste koppeln (7r)
   dauerMinuten: integer("dauer_minuten"),    // E13: optionale manuelle Zeiterfassung

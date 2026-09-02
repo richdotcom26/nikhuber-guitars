@@ -169,8 +169,7 @@ CREATE TABLE "kunde" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" uuid,
-	"deleted_at" timestamp with time zone,
-	CONSTRAINT "kunde_kunden_nr_unique" UNIQUE("kunden_nr")
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "lieferadresse" (
@@ -228,7 +227,6 @@ CREATE TABLE "artikel" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" uuid,
 	"deleted_at" timestamp with time zone,
-	CONSTRAINT "artikel_artikel_nr_unique" UNIQUE("artikel_nr"),
 	CONSTRAINT "artikel_nr_lfd_unique" UNIQUE("nr_lfd")
 );
 --> statement-breakpoint
@@ -328,8 +326,7 @@ CREATE TABLE "angebot" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_by" uuid,
-	CONSTRAINT "angebot_nummer_unique" UNIQUE("nummer")
+	"updated_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "auftrag" (
@@ -401,8 +398,7 @@ CREATE TABLE "auftrag" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_by" uuid,
-	CONSTRAINT "auftrag_nummer_unique" UNIQUE("nummer")
+	"updated_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "beleg_position" (
@@ -484,8 +480,7 @@ CREATE TABLE "rechnung" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_by" uuid,
-	CONSTRAINT "rechnung_nummer_unique" UNIQUE("nummer")
+	"updated_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "arbeitsschritt" (
@@ -495,6 +490,7 @@ CREATE TABLE "arbeitsschritt" (
 	"status" "schritt_status" DEFAULT 'OFFEN' NOT NULL,
 	"erledigt_am" timestamp with time zone,
 	"erledigt_von_id" uuid,
+	"ma_import" text,
 	"bemerkung_bearbeiter" text,
 	"warten_auf" text,
 	"dauer_minuten" integer,

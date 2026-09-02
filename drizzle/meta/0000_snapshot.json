@@ -1,5 +1,5 @@
 {
-  "id": "f96b768c-8d10-4f1a-a80b-8ac85b180ab4",
+  "id": "58e56322-073c-4aae-a500-375e3c5cd45a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -880,15 +880,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "kunde_kunden_nr_unique": {
-          "name": "kunde_kunden_nr_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "kunden_nr"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1266,13 +1258,6 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "artikel_artikel_nr_unique": {
-          "name": "artikel_artikel_nr_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "artikel_nr"
-          ]
-        },
         "artikel_nr_lfd_unique": {
           "name": "artikel_nr_lfd_unique",
           "nullsNotDistinct": false,
@@ -2040,15 +2025,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "angebot_nummer_unique": {
-          "name": "angebot_nummer_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "nummer"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2547,15 +2524,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "auftrag_nummer_unique": {
-          "name": "auftrag_nummer_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "nummer"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -3184,15 +3153,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "rechnung_nummer_unique": {
-          "name": "rechnung_nummer_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "nummer"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -3237,6 +3198,12 @@
         "erledigt_von_id": {
           "name": "erledigt_von_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ma_import": {
+          "name": "ma_import",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

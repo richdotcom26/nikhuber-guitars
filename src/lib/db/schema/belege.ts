@@ -26,7 +26,8 @@ import { seriennummer, staat } from "./stammdaten";
 // FACTORY: pro Tabelle frische Column-Builder — geteilte Builder-Instanzen mit .unique()/.references()
 // würden sonst denselben Constraint-Namen dreimal erzeugen.
 const kopf = () => ({
-  nummer: text("nummer").notNull().unique(),               // 'AN-2026-2544' / 'A-2026-4773' / 'RG-2026-3722'
+  nummer: text("nummer").notNull(),  // 'AN-2026-2544' / 'A-2026-4773' / 'RG-2026-3722'
+  // NICHT unique: Ninox-Altbestand hat Dubletten. Neuvergabe ist über `zaehler` eindeutig (Service).
   kundeId: uuid("kunde_id").references(() => kunde.id),
   kdFirma: text("kd_firma"),
   kdVorname: text("kd_vorname"),
