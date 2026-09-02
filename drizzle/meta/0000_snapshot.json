@@ -1,5 +1,5 @@
 {
-  "id": "0ff08675-d9ed-4553-a564-7870943037b3",
+  "id": "d84c0bbb-e23f-4078-80a0-4fb5b718572d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -47,6 +47,24 @@
         },
         "steuer_nr": {
           "name": "steuer_nr",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ust_id": {
+          "name": "ust_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "iban": {
+          "name": "iban",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bic": {
+          "name": "bic",
           "type": "text",
           "primaryKey": false,
           "notNull": false

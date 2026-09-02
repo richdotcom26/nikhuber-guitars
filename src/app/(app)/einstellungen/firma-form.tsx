@@ -38,10 +38,19 @@ export function FirmaForm({ setting }: { setting: Setting }) {
           <Field label="Land" htmlFor="land" errors={err.land}>
             <Input id="land" name="land" defaultValue={v(setting.land)} />
           </Field>
-          <Field label="Steuernummer / USt-IdNr." htmlFor="steuerNr" errors={err.steuerNr}>
+          <Field label="Steuernummer" htmlFor="steuerNr" errors={err.steuerNr}>
             <Input id="steuerNr" name="steuerNr" defaultValue={v(setting.steuerNr)} />
           </Field>
-          <Field label="Bankverbindung" htmlFor="bank" errors={err.bank} className="sm:col-span-2">
+          <Field label="USt-IdNr." htmlFor="ustId" errors={err.ustId} hint="für ZUGFeRD/E-Rechnung">
+            <Input id="ustId" name="ustId" defaultValue={v(setting.ustId)} placeholder="DE…" />
+          </Field>
+          <Field label="IBAN" htmlFor="iban" errors={err.iban}>
+            <Input id="iban" name="iban" defaultValue={v(setting.iban)} />
+          </Field>
+          <Field label="BIC" htmlFor="bic" errors={err.bic}>
+            <Input id="bic" name="bic" defaultValue={v(setting.bic)} />
+          </Field>
+          <Field label="Bankverbindung (Freitext für Beleg)" htmlFor="bank" errors={err.bank} className="sm:col-span-2">
             <Input id="bank" name="bank" defaultValue={v(setting.bank)} />
           </Field>
         </CardContent>

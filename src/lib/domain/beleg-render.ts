@@ -27,20 +27,26 @@ export interface BelegRenderData {
   waehrung: "EUR" | "USD";
   firma: {
     firma: string; strasse: string | null; plz: string | null; ort: string | null;
-    land: string | null; steuerNr: string | null; bank: string | null;
+    land: string | null; landCode: string; steuerNr: string | null; bank: string | null;
+    ustId: string | null; iban: string | null; bic: string | null;
   };
   titel: string;
+  belegart: string | null;   // rechnung: RECHNUNG | STORNORECHNUNG | GUTSCHRIFT
   nummer: string;
   datum: string | null;
   referenzNummer: string | null;
   auftragNummer: string | null;
   kopftext: string | null;
+  region: string | null;     // D | EU | WELT | ASIEN | USA — für die Steuerkategorie
   kunde: {
     briefkopf: string | null;
     name: string;
     strasse: string | null;
+    plz: string | null;
+    ort: string | null;
     plzOrt: string | null;
     land: string | null;
+    landCode: string | null;
     ustId: string | null;
   };
   positionen: BelegPos[];
@@ -58,6 +64,18 @@ export interface BelegRenderData {
   steuerHinweis: string | null;
   zahlungsbedingung: string | null;
   anzahlung: { brutto: string | null; datum: string | null; rechnungsbetrag: string | null } | null;
+}
+
+/** Freitext-Land grob auf ISO-2 abbilden (Firmensitz). Default DE. */
+function landZuCode(land: string | null): string {
+  const l = (land ?? "").trim().toLowerCase();
+  if (!l || /deutsch|german|^de$|brd/.test(l)) return "DE";
+  if (l.length === 2) return l.toUpperCase();
+  const map: Record<string, string> = {
+    österreich: "AT", austria: "AT", schweiz: "CH", switzerland: "CH",
+    frankreich: "FR", france: "FR", niederlande: "NL", netherlands: "NL",
+  };
+  return map[l] ?? "DE";
 }
 
 const HEAD = { angebot, auftrag, rechnung } as const;
@@ -111,9 +129,12 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
     .orderBy(sql`${belegPosition.posNr} is null`, asc(belegPosition.posNr), asc(belegPosition.createdAt));
 
   let staatName: string | null = null;
+  let staatCode: string | null = null;
   if (h.kdStaatId) {
-    const [s] = await db.select({ name: staat.name }).from(staat).where(eq(staat.id, h.kdStaatId));
-    staatName = s?.name ?? null;
+    const [st] = await db.select({ name: staat.name, kuerzel: staat.kuerzel })
+      .from(staat).where(eq(staat.id, h.kdStaatId));
+    staatName = st?.name ?? null;
+    staatCode = st?.kuerzel ?? null;
   }
 
   // Zahlungsbedingung: über den Kunden (Kopf hat keine eigene Referenz).
@@ -144,10 +165,16 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
       plz: fs.plz,
       ort: fs.ort,
       land: fs.land,
+      landCode: landZuCode(fs.land),
       steuerNr: fs.steuerNr,
       bank: fs.bank,
+      ustId: fs.ustId,
+      iban: fs.iban,
+      bic: fs.bic,
     },
     titel: titelFor(art, rr?.belegart ?? null, sprache),
+    belegart: rr?.belegart ?? null,
+    region: h.kdRegion ?? null,
     nummer: h.nummer,
     datum:
       art === "angebot" ? (h as typeof angebot.$inferSelect).angebotsdatum
@@ -162,8 +189,11 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
       briefkopf: h.kdBriefkopf,
       name: kdName,
       strasse: h.kdStrasse,
+      plz: h.kdPlz,
+      ort: h.kdOrt,
       plzOrt: [h.kdPlz, h.kdOrt].filter(Boolean).join(" ") || null,
       land: staatName,
+      landCode: staatCode,
       ustId: h.kdUstId,
     },
     positionen: rawPos.map((p) => ({

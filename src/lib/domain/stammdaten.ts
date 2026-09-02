@@ -61,6 +61,9 @@ export const firmaSettingSchema = z.object({
   ort: nullableText,
   land: nullableText,
   steuerNr: nullableText,
+  ustId: nullableText,
+  iban: nullableText,
+  bic: nullableText,
   bank: nullableText,
 
   mwstSatz: decimal({ min: 0, max: 100 }),

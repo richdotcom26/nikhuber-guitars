@@ -18,6 +18,9 @@ export const firmaSetting = pgTable("firma_setting", {
   ort: text("ort"),
   land: text("land"),
   steuerNr: text("steuer_nr"),
+  ustId: text("ust_id"),             // USt-IdNr. — für ZUGFeRD/E-Rechnung
+  iban: text("iban"),
+  bic: text("bic"),
   bank: text("bank"),
 
   mwstSatz: numeric("mwst_satz", { precision: 6, scale: 3 }).default("19.0").notNull(),

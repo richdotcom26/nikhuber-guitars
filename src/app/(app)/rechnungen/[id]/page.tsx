@@ -74,6 +74,9 @@ export default async function RechnungDetailPage({
             <Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>
             <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
             <a href={`/druck/rechnung/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>PDF</a>
+            {r.belegart === "RECHNUNG" || r.belegart === "GUTSCHRIFT" || r.belegart === "STORNORECHNUNG" ? (
+              <a href={`/druck/rechnung/${id}/pdf?zugferd=1`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="PDF/A-3 mit eingebettetem ZUGFeRD-XML (Beta)">E-Rechnung</a>
+            ) : null}
           </div>
         }
       />
