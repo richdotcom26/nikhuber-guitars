@@ -68,3 +68,33 @@ export async function saveStaatAction(
     return ok("Staat gespeichert.");
   });
 }
+
+/* ---- Benutzerverwaltung (ADMIN) ---- */
+
+export async function createBenutzerAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { createBenutzer, benutzerNeuSchema } = await import("@/lib/domain/benutzer");
+    const res = await createBenutzer(parseForm(benutzerNeuSchema, fd));
+    revalidatePath(`${BASE}?tab=benutzer`);
+    return ok(res.link
+      ? `Benutzer angelegt. Passwort-Link: ${res.link}`
+      : "Benutzer angelegt. Passwort-Link über die Aktion Passwort-Link erzeugen.");
+  });
+}
+
+export async function updateBenutzerAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { updateBenutzer, benutzerPatchSchema } = await import("@/lib/domain/benutzer");
+    await updateBenutzer(String(fd.get("id") ?? ""), parseForm(benutzerPatchSchema, fd));
+    revalidatePath(`${BASE}?tab=benutzer`);
+    return ok("Benutzer gespeichert.");
+  });
+}
+
+export async function benutzerRecoveryLinkAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { benutzerRecoveryLink } = await import("@/lib/domain/benutzer");
+    const link = await benutzerRecoveryLink(String(fd.get("id") ?? ""));
+    return ok(`Passwort-Link (an den Benutzer weitergeben): ${link}`);
+  });
+}
