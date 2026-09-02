@@ -60,6 +60,9 @@ export const artikel = pgTable("artikel", {
   bestandMin: numeric("bestand_min", { precision: 12, scale: 3 }),
   bestandMax: numeric("bestand_max", { precision: 12, scale: 3 }),
 
+  // Nur MODEL: Kapazitätsplanung (7k / E14). -> modellgruppe.id (FK via raw SQL, Zyklus artikel<->planung)
+  modellgruppeId: uuid("modellgruppe_id"),      // ex WB.N5 "MODELLGRUPPE"
+
   // NKS / Holz:
   geschuetztesHolzCites: boolean("geschuetztes_holz_cites").default(false).notNull(), // ex WB.LE
   holzartId: uuid("holzart_id"),               // -> holzart.id (relations); "NKS Holzart"

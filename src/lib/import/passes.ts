@@ -1150,3 +1150,50 @@ export async function importMailversand(ctx: Ctx) {
   await insertChunked(s.mailversand, rows, 400);
   ctx.log(`mailversand ${rows.length}`);
 }
+
+// ============================================================ modellgruppe (OD)
+export async function importModellgruppe(ctx: Ctx) {
+  const od = ctx.dump.typeIdByCaption("Modellgruppen");
+  if (!od) return ctx.log("Typ 'Modellgruppen' nicht gefunden");
+  const names = ctx.dump.choiceMap(od, "Modellgruppe");   // ninoxValue -> Name
+
+  // Ninox hat teils mehrere OD-Datensätze mit gleichem Gruppennamen -> nach Name dedupen,
+  // alle OD-IDs auf dieselbe UUID aliasen.
+  const rows: Record<string, unknown>[] = [];
+  const uuidByName = new Map<string, string>();
+  for (const { id, f: rec } of ctx.dump.rows(od)) {
+    const key = String(f(ctx, od, rec, "Modellgruppe"));
+    const name = names[key];
+    if (!name) continue;
+    let uuid = uuidByName.get(name);
+    if (!uuid) {
+      uuid = ctx.ids.get(od, id);
+      uuidByName.set(name, uuid);
+      rows.push({
+        id: uuid,
+        name,
+        minMengeMonat: ninoxNum(f(ctx, od, rec, "Mindesmenge je Monat")) as unknown as number | null,
+        maxMengeMonat: ninoxNum(f(ctx, od, rec, "Maximalmenge je Monat")) as unknown as number | null,
+      });
+    }
+    ctx.ids.alias(`OD:${id}`, uuid);
+  }
+  await upsert(s.modellgruppe, rows, s.modellgruppe.id);
+
+  // Modell-Artikel ihrer Gruppe zuordnen (WB.N5 -> OD-Datensatz)
+  const wb = ctx.dump.typeIdByCaption("Artikel");
+  let zugeordnet = 0;
+  if (wb) {
+    for (const { id, f: rec } of ctx.dump.rows(wb)) {
+      const n5 = f(ctx, wb, rec, "MODELLGRUPPE");
+      if (n5 == null) continue;
+      const mgId = ctx.ids.aliasLookup(`OD:${n5}`);
+      if (!mgId) continue;
+      await db.update(s.artikel)
+        .set({ modellgruppeId: mgId })
+        .where(sql`id = ${ctx.ids.get(wb, id)}`);
+      zugeordnet++;
+    }
+  }
+  ctx.log(`modellgruppe ${rows.length}, artikel zugeordnet ${zugeordnet}`);
+}

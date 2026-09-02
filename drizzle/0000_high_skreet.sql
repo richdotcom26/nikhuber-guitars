@@ -223,6 +223,7 @@ CREATE TABLE "artikel" (
 	"lieferant_artikel_nr" text,
 	"bestand_min" numeric(12, 3),
 	"bestand_max" numeric(12, 3),
+	"modellgruppe_id" uuid,
 	"geschuetztes_holz_cites" boolean DEFAULT false NOT NULL,
 	"holzart_id" uuid,
 	"gewicht_kg" numeric(10, 3),

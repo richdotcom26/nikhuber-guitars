@@ -1,5 +1,5 @@
 {
-  "id": "b1ba6966-0789-46c1-8b8d-4f82ee171c39",
+  "id": "c4890673-fccf-4f87-a4b6-523fdc1c7705",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1196,6 +1196,12 @@
         "bestand_max": {
           "name": "bestand_max",
           "type": "numeric(12, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modellgruppe_id": {
+          "name": "modellgruppe_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
