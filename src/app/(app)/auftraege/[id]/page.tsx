@@ -22,6 +22,7 @@ import {
   generatePositionenAction, setGesamtrabattAction, updatePositionAction,
 } from "../actions";
 import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
+import { CreateRechnungButton } from "../create-rechnung-button";
 import { KopfForm } from "../kopf-form";
 import { SetKundeButton } from "../set-kunde-form";
 import { StatusChanger } from "../status-changer";
@@ -203,9 +204,10 @@ export default async function AuftragDetailPage({
       {active === "rechnung" ? (
         <Card>
           <CardHeader><CardTitle>Rechnungen</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-3 text-sm">
+            <CreateRechnungButton auftragId={id} />
             {data.rechnungen.length === 0 ? (
-              <p className="text-neutral-400">Noch keine Rechnung. (Rechnungserstellung folgt im Bereich Rechnungen.)</p>
+              <p className="text-neutral-400">Noch keine Rechnung.</p>
             ) : (
               <ul className="divide-y divide-neutral-100">
                 {data.rechnungen.map((r) => (

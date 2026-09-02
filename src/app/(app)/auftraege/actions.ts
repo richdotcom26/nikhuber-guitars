@@ -19,6 +19,7 @@ import {
   getArtikelForPosition, setGesamtrabatt, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
+import { createRechnungFromAuftrag } from "@/lib/domain/rechnung";
 
 function rev(id: string) {
   revalidatePath(`/auftraege/${id}`);
@@ -192,6 +193,16 @@ export async function saveSchrittBemerkungAction(_p: ActionState, fd: FormData):
     rev(auftragId);
     return ok("Bemerkung gespeichert.");
   });
+}
+
+export async function createRechnungAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let rechnungId: string | null = null;
+  const res = await runAction(async () => {
+    rechnungId = await createRechnungFromAuftrag(String(fd.get("id") ?? ""));
+    return ok("Rechnung erstellt.");
+  });
+  if (rechnungId) redirect(`/rechnungen/${rechnungId}`);
+  return res;
 }
 
 export async function addComplianceSchrittAction(_p: ActionState, fd: FormData): Promise<ActionState> {
