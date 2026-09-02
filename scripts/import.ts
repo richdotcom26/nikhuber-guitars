@@ -16,7 +16,7 @@ import { parseNinoxDump } from "../src/lib/import/ninox";
 import type { Ctx } from "../src/lib/import/passes";
 import {
   importZahlungsbedingung, importStaat, importHolzart,
-  importArtikel, importKunde, importModellSpecs,
+  importKunde, importArtikel, importArtikelModell, importModellSpecs,
   importAngebote, importAuftraege, importRechnungen,
 } from "../src/lib/import/passes";
 
@@ -38,14 +38,15 @@ async function main() {
     `(${((Date.now() - t0) / 1000).toFixed(1)} s)`);
 
   const ids = new IdMap(IDMAP);
-  const ctx: Ctx = { dump, ids, log: (m) => console.log("  " + m) };
+  const ctx: Ctx = { dump, ids, log: (m) => console.log("  " + m), staatRegion: new Map() };
 
   const passes: Array<[string, (c: Ctx) => Promise<void>]> = [
     ["Zahlungsbedingungen", importZahlungsbedingung],
     ["Staaten", importStaat],
     ["Holzarten", importHolzart],
-    ["Artikel", importArtikel],
     ["Kunden", importKunde],
+    ["Artikel", importArtikel],
+    ["Artikel-Modell-Zuordnung", importArtikelModell],
     ["Modell-Specs", importModellSpecs],
     ["Angebote", importAngebote],
     ["Aufträge", importAuftraege],

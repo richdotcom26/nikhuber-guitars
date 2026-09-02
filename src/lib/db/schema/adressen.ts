@@ -16,7 +16,7 @@ import { staat, zahlungsbedingung } from "./stammdaten";
  */
 export const kunde = pgTable("kunde", {
   id: uuid("id").primaryKey().defaultRandom(),
-  kundenNr: text("kunden_nr").unique(),
+  kundenNr: text("kunden_nr"), // Ninox erlaubte Duplikate -> nicht unique
   kontaktart: kontaktartEnum("kontaktart").notNull(),
 
   firma: text("firma"),

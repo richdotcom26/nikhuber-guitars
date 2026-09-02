@@ -15,8 +15,8 @@ import { kunde } from "./adressen";
  */
 export const artikel = pgTable("artikel", {
   id: uuid("id").primaryKey().defaultRandom(),
-  artikelNr: text("artikel_nr").unique(),        // 'A#####'
-  nrLfd: integer("nr_lfd").unique(),             // ex WB.T7 "Nr" — Referenzschlüssel der Spec-Slots (Import!)
+  artikelNr: text("artikel_nr"),                 // 'A#####' (Ninox: teils leer/doppelt -> nicht unique)
+  nrLfd: integer("nr_lfd").unique(),             // ex WB.T7 "Nr" = Ninox _id — Spec-Slot-Referenzschlüssel
 
   artikelgruppe: artikelgruppeEnum("artikelgruppe").notNull(),
   artikeltyp: artikeltypEnum("artikeltyp"),      // E9: HOLZ | HANDELSWARE | null (Modell/Konfig)
