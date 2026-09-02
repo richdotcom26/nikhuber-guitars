@@ -1,5 +1,5 @@
 {
-  "id": "725cb4ac-5ab0-4361-9683-77e87ad33e7d",
+  "id": "fba8b82b-ccc1-4de5-b9db-7b2d171709f0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -262,10 +262,11 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "seriennummer_lfd_unique": {
-          "name": "seriennummer_lfd_unique",
+        "seriennummer_praefix_lfd_uq": {
+          "name": "seriennummer_praefix_lfd_uq",
           "nullsNotDistinct": false,
           "columns": [
+            "jahr_praefix",
             "lfd"
           ]
         }

@@ -13,8 +13,10 @@ import { getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
 import { listPositionen } from "@/lib/domain/belege";
 import { isDomainError } from "@/lib/domain/errors";
+import { getAuftragSeriennummer } from "@/lib/domain/seriennummer";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate } from "@/lib/utils";
+import { SeriennummerPanel } from "../seriennummer-panel";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import { SpecsEditor } from "../../specs-editor";
 import {
@@ -89,6 +91,10 @@ export default async function AuftragDetailPage({
             <Card>
               <CardHeader><CardTitle>Status</CardTitle></CardHeader>
               <CardContent><StatusChanger id={id} status={a.status} /></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Seriennummer</CardTitle></CardHeader>
+              <CardContent><SeriennummerCard id={id} bauplandatum={a.bauplandatum} auftragsart={a.auftragsart} /></CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Kunde</CardTitle></CardHeader>
@@ -282,5 +288,23 @@ async function DetailsTab({
         }}
       />
     </div>
+  );
+}
+
+async function SeriennummerCard({
+  id, bauplandatum, auftragsart,
+}: {
+  id: string;
+  bauplandatum: string | null;
+  auftragsart: string;
+}) {
+  const { seriennummer: sn } = await getAuftragSeriennummer(id);
+  return (
+    <SeriennummerPanel
+      auftragId={id}
+      serial={sn ? { anzeige: sn.anzeige, lfd: sn.lfd, manuell: sn.manuell, vergebenAm: sn.vergebenAm } : null}
+      bauplandatum={bauplandatum}
+      auftragsart={auftragsart}
+    />
   );
 }

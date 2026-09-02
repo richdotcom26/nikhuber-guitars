@@ -20,6 +20,9 @@ import {
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
 import { createRechnungFromAuftrag } from "@/lib/domain/rechnung";
+import {
+  loescheSeriennummer, vergebeSeriennummerAuto, vergebeSeriennummerManuell,
+} from "@/lib/domain/seriennummer";
 
 function rev(id: string) {
   revalidatePath(`/auftraege/${id}`);
@@ -192,6 +195,36 @@ export async function saveSchrittBemerkungAction(_p: ActionState, fd: FormData):
     );
     rev(auftragId);
     return ok("Bemerkung gespeichert.");
+  });
+}
+
+export async function vergebeSerAutoAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await vergebeSeriennummerAuto(id);
+    rev(id);
+    revalidatePath("/seriennummern");
+    return ok("Seriennummer vergeben.");
+  });
+}
+
+export async function vergebeSerManuellAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await vergebeSeriennummerManuell(id, String(fd.get("eingabe") ?? ""));
+    rev(id);
+    revalidatePath("/seriennummern");
+    return ok("Seriennummer gespeichert.");
+  });
+}
+
+export async function loescheSerAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await loescheSeriennummer(id);
+    rev(id);
+    revalidatePath("/seriennummern");
+    return ok("Seriennummer entfernt.");
   });
 }
 

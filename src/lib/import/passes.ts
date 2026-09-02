@@ -910,3 +910,56 @@ export async function importRechnungen(ctx: Ctx) {
   ctx.log(`rechnung ${headers.length} (${refUpdates.length}× Storno/Gutschrift-Bezug), ` +
     `positionen ${positions.length}`);
 }
+
+// ========================================================= seriennummer (7w)
+export async function importSeriennummer(ctx: Ctx) {
+  const a = ctx.dump.typeIdByCaption("Aufträge");
+  if (!a) return ctx.log("Typ 'Aufträge' nicht gefunden");
+
+  const snRows: Record<string, unknown>[] = [];
+  const auftragUpdates: { auftragId: string; snId: string; vergebenAm: string | null }[] = [];
+  const seen = new Set<string>();
+
+  for (const { id, f: rec } of ctx.dump.rows(a)) {
+    const lfdRaw = f(ctx, a, rec, "Seriennummer lfd");
+    const serStr = ninoxStr(f(ctx, a, rec, "Seriennummer"));
+    if (lfdRaw == null && !serStr) continue;
+    const lfd = ninoxNum(lfdRaw) != null ? Number(ninoxNum(lfdRaw)) : null;
+    // Jahrpräfix aus dem String "4 4809" (Teil vor dem Leerzeichen), sonst aus Bauplandatum-Jahr
+    let praefix = serStr && serStr.includes(" ") ? serStr.split(" ")[0].trim() : null;
+    if (!praefix) {
+      const bp = ninoxDate(f(ctx, a, rec, "Bauplandatum"));
+      const jahr = bp ? bp.getUTCFullYear() : new Date().getUTCFullYear();
+      praefix = jahr <= 2025 ? String(jahr % 10) : String(jahr % 100);
+    }
+    const nLfd = lfd ?? (serStr && serStr.includes(" ") ? Number(serStr.split(" ")[1]) : null);
+    if (nLfd == null || Number.isNaN(nLfd)) continue;
+
+    const key = `${praefix}|${nLfd}`;
+    if (seen.has(key)) continue;           // Alt-Dubletten je (praefix, lfd) überspringen
+    seen.add(key);
+
+    const auftragId = ctx.ids.get(a, id);
+    const snId = ctx.ids.get(a, id + 9_000_000); // deterministische zweite ID je Auftrag
+    const vergebenAm = ninoxDateOnly(f(ctx, a, rec, "SerNr vergeben"));
+    snRows.push({
+      id: snId,
+      lfd: nLfd,
+      jahrPraefix: praefix,
+      auftragId,
+      manuell: ninoxBool(f(ctx, a, rec, "SerNr wurde manuell vergeben")),
+      vergebenAm,
+      geloescht: false,
+    });
+    auftragUpdates.push({ auftragId, snId, vergebenAm });
+  }
+
+  await db.delete(s.seriennummer);
+  await insertChunked(s.seriennummer, snRows, 500);
+  for (const u of auftragUpdates) {
+    await db.update(s.auftrag)
+      .set({ seriennummerId: u.snId, sernrVergebenAm: u.vergebenAm })
+      .where(sql`id = ${u.auftragId}`);
+  }
+  ctx.log(`seriennummer ${snRows.length}, auftrag-verknüpft ${auftragUpdates.length}`);
+}

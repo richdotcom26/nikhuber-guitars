@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
-  boolean, date, integer, numeric, pgTable, primaryKey, text, uuid,
+  boolean, date, integer, numeric, pgTable, primaryKey, text, unique, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { regionEnum, spracheEnum, waehrungEnum, zaehlerArtEnum } from "./_enums";
@@ -75,18 +75,22 @@ export const zaehler = pgTable("zaehler", {
 }));
 
 /**
- * Seriennummer-Sequenz (E6: monoton). Statt Ninox-Lücken-Reuse.
- * `lfd` kommt aus einer Postgres-SEQUENCE `seriennummer_lfd_seq` START WITH <max(bestand)+1> MINVALUE 4900.
- * Gelöschte Seriennummer => Zeile bleibt (auftrag_id = null, geloescht = true) => dauerhafte Lücke.
+ * Seriennummer-Register (E6: monoton — kein Lücken-Reuse).
+ * Auto-Vergabe: `lfd := max(lfd)+1` (mind. `firma_setting.serien_start`).
+ * `lfd` ist NICHT global eindeutig (Alt-/Manuell-Einträge können dieselbe lfd mit
+ * anderem Jahrpräfix führen, z. B. "5 5555" + "26 5555") → unique auf (jahr_praefix, lfd).
+ * Gelöschte Seriennummer: Zeile bleibt (auftrag_id = null, geloescht = true) → dauerhafte Lücke.
  */
 export const seriennummer = pgTable("seriennummer", {
   id: uuid("id").primaryKey().defaultRandom(),
-  lfd: integer("lfd").notNull().unique(),
-  jahrPraefix: text("jahr_praefix").notNull(),   // "5" (Jahr <= 2025) | "26" (>= 2026)
+  lfd: integer("lfd").notNull(),
+  jahrPraefix: text("jahr_praefix").notNull(),   // "4" (Jahr 2024) · "5" (2025) · "26" (2026)
   anzeige: text("anzeige").generatedAlwaysAs(sql`(jahr_praefix || ' ' || lfd::text)`), // "26 5404"
   auftragId: uuid("auftrag_id"),                  // -> auftrag.id (relations); null = gelöscht/frei
   manuell: boolean("manuell").default(false).notNull(),
   vergebenAm: date("vergeben_am"),
   geloescht: boolean("geloescht").default(false).notNull(),
   ...auditCols,
-});
+}, (t) => ({
+  uqAnzeige: unique("seriennummer_praefix_lfd_uq").on(t.jahrPraefix, t.lfd),
+}));

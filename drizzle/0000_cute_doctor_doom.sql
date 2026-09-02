@@ -77,7 +77,7 @@ CREATE TABLE "seriennummer" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" uuid,
-	CONSTRAINT "seriennummer_lfd_unique" UNIQUE("lfd")
+	CONSTRAINT "seriennummer_praefix_lfd_uq" UNIQUE("jahr_praefix","lfd")
 );
 --> statement-breakpoint
 CREATE TABLE "staat" (

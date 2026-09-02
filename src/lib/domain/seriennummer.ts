@@ -1,0 +1,177 @@
+import "server-only";
+import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { artikel, auftrag, seriennummer } from "@/lib/db/schema";
+import { assertRolle, requireUser } from "./context";
+import { DomainError } from "./errors";
+import { getFirmaSetting } from "./stammdaten";
+
+/** Jahrpräfix nach der historischen Regel (7w): ≤2025 → letzte Ziffer, ≥2026 → letzte zwei. */
+export function jahrPraefixFuer(jahr: number): string {
+  return jahr <= 2025 ? String(jahr % 10) : String(jahr % 100);
+}
+
+/* ---------------------------------------------------------------------- liste */
+
+export async function listSeriennummern(params: { q?: string; page?: number } = {}) {
+  await requireUser();
+  const pageSize = 60;
+  const page = Math.max(params.page ?? 1, 1);
+
+  const filters = [eq(seriennummer.geloescht, false)];
+  if (params.q?.trim()) {
+    const like = `%${params.q.trim()}%`;
+    filters.push(or(
+      ilike(seriennummer.anzeige, like),
+      ilike(auftrag.nummer, like),
+      ilike(auftrag.kdFirma, like),
+      ilike(auftrag.kdNachname, like),
+    )!);
+  }
+  const where = and(...filters);
+
+  const rows = await db
+    .select({
+      id: seriennummer.id,
+      anzeige: seriennummer.anzeige,
+      lfd: seriennummer.lfd,
+      jahrPraefix: seriennummer.jahrPraefix,
+      manuell: seriennummer.manuell,
+      vergebenAm: seriennummer.vergebenAm,
+      auftragId: seriennummer.auftragId,
+      auftragNummer: auftrag.nummer,
+      kdFirma: auftrag.kdFirma,
+      kdNachname: auftrag.kdNachname,
+      kdVorname: auftrag.kdVorname,
+      kdOrt: auftrag.kdOrt,
+      modellName: artikel.nameLang,
+    })
+    .from(seriennummer)
+    .leftJoin(auftrag, eq(auftrag.id, seriennummer.auftragId))
+    .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
+    .where(where)
+    .orderBy(desc(seriennummer.lfd))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(seriennummer)
+    .leftJoin(auftrag, eq(auftrag.id, seriennummer.auftragId))
+    .where(where);
+
+  return { rows, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
+}
+
+/** `max(lfd)+1`, mindestens `firma_setting.serien_start` (E6: monoton, kein Lücken-Reuse). */
+export async function naechsteLfd(): Promise<number> {
+  const fs = await getFirmaSetting();
+  const [{ max }] = await db
+    .select({ max: sql<number>`coalesce(max(${seriennummer.lfd}), 0)` })
+    .from(seriennummer);
+  return Math.max(Number(max) + 1, fs.serienStart);
+}
+
+/* ------------------------------------------------------------------ vergeben */
+
+export async function getAuftragSeriennummer(auftragId: string) {
+  const [a] = await db.select().from(auftrag).where(eq(auftrag.id, auftragId));
+  if (!a) throw new DomainError("NOT_FOUND", "Auftrag nicht gefunden.");
+  if (!a.seriennummerId) return { auftrag: a, seriennummer: null };
+  const [sn] = await db.select().from(seriennummer).where(eq(seriennummer.id, a.seriennummerId));
+  return { auftrag: a, seriennummer: sn ?? null };
+}
+
+export async function vergebeSeriennummerAuto(auftragId: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const [a] = await db.select().from(auftrag).where(eq(auftrag.id, auftragId));
+  if (!a) throw new DomainError("NOT_FOUND", "Auftrag nicht gefunden.");
+  if (a.seriennummerId) throw new DomainError("CONFLICT", "Es ist bereits eine Seriennummer vergeben.");
+  if (!a.bauplandatum) throw new DomainError("STATE", "Kein Bauplandatum — Seriennummer kann nicht vergeben werden.");
+
+  const jahr = Number(a.bauplandatum.slice(0, 4));
+  const praefix = jahrPraefixFuer(jahr);
+  const lfd = await naechsteLfd();
+  const heute = new Date().toISOString().slice(0, 10);
+
+  await db.transaction(async (tx) => {
+    const [sn] = await tx.insert(seriennummer).values({
+      lfd, jahrPraefix: praefix, auftragId, manuell: false, vergebenAm: heute,
+      createdBy: user.id, updatedBy: user.id,
+    }).returning({ id: seriennummer.id });
+    await tx.update(auftrag)
+      .set({ seriennummerId: sn.id, sernrVergebenAm: heute, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(auftrag.id, auftragId));
+  });
+}
+
+export async function vergebeSeriennummerManuell(auftragId: string, eingabe: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const [a] = await db.select().from(auftrag).where(eq(auftrag.id, auftragId));
+  if (!a) throw new DomainError("NOT_FOUND", "Auftrag nicht gefunden.");
+  if (a.seriennummerId) throw new DomainError("CONFLICT", "Es ist bereits eine Seriennummer vergeben.");
+
+  // Eingabe "26 5404" oder "5404"
+  const parts = eingabe.trim().split(/\s+/);
+  let praefix: string;
+  let lfd: number;
+  if (parts.length >= 2) {
+    praefix = parts[0];
+    lfd = Number(parts[1]);
+  } else {
+    lfd = Number(parts[0]);
+    praefix = jahrPraefixFuer(a.bauplandatum ? Number(a.bauplandatum.slice(0, 4)) : new Date().getFullYear());
+  }
+  if (!Number.isInteger(lfd) || lfd <= 0) throw new DomainError("VALIDATION", "Ungültige Seriennummer.");
+
+  const [dup] = await db
+    .select({ id: seriennummer.id })
+    .from(seriennummer)
+    .where(and(eq(seriennummer.jahrPraefix, praefix), eq(seriennummer.lfd, lfd), eq(seriennummer.geloescht, false)));
+  if (dup) throw new DomainError("CONFLICT", `Seriennummer ${praefix} ${lfd} ist bereits vergeben.`);
+
+  const heute = new Date().toISOString().slice(0, 10);
+  await db.transaction(async (tx) => {
+    const [sn] = await tx.insert(seriennummer).values({
+      lfd, jahrPraefix: praefix, auftragId, manuell: true, vergebenAm: heute,
+      createdBy: user.id, updatedBy: user.id,
+    }).returning({ id: seriennummer.id });
+    await tx.update(auftrag)
+      .set({ seriennummerId: sn.id, sernrVergebenAm: heute, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(auftrag.id, auftragId));
+  });
+}
+
+/** Seriennummer entfernen — Zeile bleibt als Lücke (geloescht=true, auftrag_id=null). */
+export async function loescheSeriennummer(auftragId: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const [a] = await db.select().from(auftrag).where(eq(auftrag.id, auftragId));
+  if (!a || !a.seriennummerId) throw new DomainError("STATE", "Keine Seriennummer vergeben.");
+  await db.transaction(async (tx) => {
+    await tx.update(seriennummer)
+      .set({ geloescht: true, auftragId: null, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(seriennummer.id, a.seriennummerId!));
+    await tx.update(auftrag)
+      .set({ seriennummerId: null, sernrVergebenAm: null, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(auftrag.id, auftragId));
+  });
+}
+
+/** Aufträge ohne Seriennummer (für den Vergabe-Picker im Register). */
+export async function auftraegeOhneSeriennummer(q: string, limit = 15) {
+  await requireUser();
+  const filters = [isNull(auftrag.seriennummerId), eq(auftrag.auftragsart, "PRODUKTION")];
+  if (q.trim()) {
+    const like = `%${q.trim()}%`;
+    filters.push(or(ilike(auftrag.nummer, like), ilike(auftrag.kdFirma, like), ilike(auftrag.kdNachname, like))!);
+  }
+  return db
+    .select({ id: auftrag.id, nummer: auftrag.nummer, kdFirma: auftrag.kdFirma, kdNachname: auftrag.kdNachname })
+    .from(auftrag)
+    .where(and(...filters))
+    .orderBy(desc(auftrag.createdAt))
+    .limit(limit);
+}
