@@ -34,6 +34,26 @@ Rechnungen, Holz-/Materialwirtschaft, CITES/Lacey, E-Rechnung).
 - Ex-Ninox-Trigger/Generatoren → `src/lib/domain/*` (nicht als DB-Trigger).
 - Spec-Slots: eine Definition (`src/lib/db/schema/specs.ts` → `SPEC_SLOTS`), gespiegelt in `src/lib/specs`.
 
+## UI-/Domain-Muster (ab Phase 2)
+
+- **Service-Layer** `src/lib/domain/<bereich>.ts` (`import "server-only"`): reine Daten + Autorisierung.
+  - `requireUser()` / `assertRolle(user, …)` aus `domain/context.ts` — Profil = `app_user` (id == auth.users.id).
+  - Lese-Funktionen frei; schreibende Funktionen rufen `requireUser()` + `assertRolle()` und setzen Audit
+    (`updatedAt: new Date()`, `updatedBy: user.id`).
+  - Fehler: `throw new DomainError(code, msg, fieldErrors?)` (`domain/errors.ts`).
+- **Server Actions** `src/app/(app)/<bereich>/actions.ts` (`"use server"`): dünn.
+  `runAction(() => { … })` + `parseForm(zodSchema, formData)` (`domain/action-state.ts`) → `ActionState`
+  (`{ok:true,message?}` | `{ok:false,message,fieldErrors?}`). Nach Erfolg `revalidatePath(...)`.
+- **Seiten** = Server Components: laden über den Service, rendern. Tabs via `?tab=` (`components/ui/tabs.tsx`).
+- **Formulare** = Client Components mit `useActionState(action, IDLE)`.
+  Inline-Edit-Zeilen nach Speichern zurückklappen: Zeilen-`key` mit `updatedAt` → Remount im Ansichtsmodus
+  (kein `setState` im Effect).
+- **UI-Bausteine** in `src/components/ui/` (handgerollt, Tailwind, kein Radix): `button`, `input`
+  (`Input`/`Textarea`/`Select`), `field` (`Field`/`Label`), `card`, `table`, `tabs`, `form`
+  (`SubmitButton`/`FormMessage`). `cn()` + `formatMoney`/`formatDate` in `src/lib/utils.ts`.
+- **Preview:** Dev-Server läuft über die Parent-`.claude/launch.json` als `nikhuber-dev` auf **Port 3001**
+  (`npm run dev --prefix … -- -p 3001`), damit Port 3000 (bandohneproben) frei bleibt.
+
 ## Setup
 
 1. `cp .env.example .env.local`, Supabase-Werte eintragen.

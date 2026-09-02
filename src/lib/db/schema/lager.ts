@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean, date, integer, numeric, pgTable, text, uuid,
+  date, integer, numeric, pgTable, text, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import {

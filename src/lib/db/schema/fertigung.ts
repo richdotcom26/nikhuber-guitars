@@ -1,5 +1,5 @@
 import {
-  boolean, integer, pgTable, text, timestamp, uuid,
+  integer, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { schrittStatusEnum, vorratGruppeEnum, vorratTypEnum } from "./_enums";

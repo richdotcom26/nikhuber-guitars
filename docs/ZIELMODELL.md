@@ -668,7 +668,7 @@ Preispflege**, kein Beleg-Baustein — bei Bedarf als kleiner Rechner im Artikel
 | E12 | Kalkulation (Modell) | ✅ **Neuentwurf** — echte Stücklisten-/Arbeitszeitkalkulation, Deckungsbeitrag je Tier (7y) |
 | E13 | Zeiterfassung an Arbeitsschritten | ✅ **optional, manuelle Eingabe** durch Benutzer: Feld `arbeitsschritt.dauer_minuten` (nullable), Aggregat `auftrag.arbeitsstunden` → speist E12-Kalkulation. Kein Timer-Zwang |
 | E14 | Bauplanung-Monats-Board | ✅ **Neuentwurf** + **automatischer Bau-Vorschlag je Monat** über Regel-Query (§9.3) |
-| E15 | **E-Rechnung**-Format (Pflicht ab 1.1.2027; Zieltermin 11/2026) | 🟡 **ZUGFeRD 2.x Profil EN 16931**; XRechnung-XML zusätzlich falls Kunde verlangt. **User klärt XRechnung vs. ZUGFeRD mit Steuerbüro.** Pflichtfeld-Mapping: MIGRATION 7dd. Erzeugung in der PDF-Vercel-Function (E2) |
+| E15 | **E-Rechnung**-Format (Pflicht ab 1.1.2027; Zieltermin 11/2026) | ✅ **ZUGFeRD 2.x, Profil EN 16931** — mit dem Steuerbüro abgestimmt (02.09.2026). Begründung: das PDF/A-3 bleibt für Menschen lesbar, das EN-16931-XML ist eingebettet. Kein separates XRechnung-XML nötig (ZUGFeRD EN 16931 ist konform; reine XRechnung nur bei B2G-Pflicht — für NHG nicht relevant). Pflichtfeld-Mapping: MIGRATION 7dd. Erzeugung in der PDF-Vercel-Function (E2) |
 | E16 | Steuer-/Preis-Feinheiten | ✅ Steuer = Kundenfeld `steuerpflichtig` (Matrix s. u.). `vk_eur_net = vk_eur / (1 + mwst_satz/100)` — an `firma_setting.mwst_satz` gekoppelt |
 | E19 | **Kunden-Sonderrabatt** auf VK_EUR/VK_US (Artists, Musiker, besondere Händler) | ✅ Feld `kunde.sonderrabatt_prozent` (nullable); **hat Vorrang** vor der Vertriebsweg-Logik (§6); auf Beleg gesnapshottet |
 | E17 | Supabase Free-Tier reicht zum Bauen (500 MB DB, 1 GB Storage)? Import der 5.528 Altdateien? | 🟡 **Free zum Bauen ok**; produktiv **Pro** (~25 $/M, 8 GB DB, 100 GB Storage). Altdateien-Volumen beim Import prüfen |
@@ -747,7 +747,8 @@ modellgruppe                 -- ex OD (Kapazitätsbänder)
 6. ⏳ Beleg-HTML-Templates aus `Druckausgaben/*.docx` (1 je Belegart, DE/EN + Steuerblock parametrisch)
    + ZUGFeRD-XML-Mapping (7dd).
 
-**User-seitig offen:** E15 (Format XRechnung/ZUGFeRD mit Steuerbüro), `.env.local` + `db:push`,
-Vercel-Projekt anlegen, AVV mit Supabase + Vercel + Mail-Provider.
+**User-seitig offen:** Vercel-Projekt anlegen, AVV mit Supabase + Vercel + Mail-Provider.
 **Geklärt:** Backend = Supabase-Frankfurt + Vercel (Haltung A); Preisermittlung = simpler Vertriebsweg-Lookup,
-Rabatte 100 % manuell (§6); Zahlung = manuelle Erfassung durch Büro/Johannes, keine Bank-Anbindung (§3.5).
+Rabatte 100 % manuell (§6); Zahlung = manuelle Erfassung durch Büro/Johannes, keine Bank-Anbindung (§3.5);
+**E-Rechnung = ZUGFeRD 2.x Profil EN 16931** (E15, mit Steuerbüro abgestimmt); `.env.local` + Schema-`db:push` erledigt;
+**Ninox-Import komplett** (~340k Zeilen).
