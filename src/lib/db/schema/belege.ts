@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
-  boolean, check, date, integer, numeric, pgTable, text, timestamp, uuid,
+  boolean, check, date, index, integer, numeric, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import {
@@ -76,7 +76,7 @@ export const angebot = pgTable("angebot", {
   positionenAnzeigen: boolean("positionen_anzeigen").default(false).notNull(),
   schreibschutz: boolean("schreibschutz").default(false).notNull(),
   ...auditCols,
-});
+}, (t) => ({ nummerIdx: index("angebot_nummer_idx").on(t.nummer) }));
 
 // -------------------------------------------------------------------- AUFTRAG
 export const auftrag = pgTable("auftrag", {
@@ -128,7 +128,7 @@ export const auftrag = pgTable("auftrag", {
   endrechnungVorab: boolean("endrechnung_vorab").default(false).notNull(),
   positionenAnzeigen: boolean("positionen_anzeigen").default(false).notNull(),
   ...auditCols,
-});
+}, (t) => ({ nummerIdx: index("auftrag_nummer_idx").on(t.nummer) }));
 
 // -------------------------------------------------------------------- RECHNUNG
 export const rechnung = pgTable("rechnung", {
@@ -164,7 +164,7 @@ export const rechnung = pgTable("rechnung", {
   // E-Rechnung (7dd): erzeugtes ZUGFeRD-PDF unveränderbar archivieren
   erechnungAssetId: uuid("erechnung_asset_id"),
   ...auditCols,
-});
+}, (t) => ({ nummerIdx: index("rechnung_nummer_idx").on(t.nummer) }));
 
 // -------------------------------------------------------------- BELEG_POSITION
 export const belegPosition = pgTable("beleg_position", {

@@ -815,4 +815,7 @@ ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_angebot_id_angebot_id_fk" 
 ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_auftrag_id_auftrag_id_fk" FOREIGN KEY ("auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_rechnung_id_rechnung_id_fk" FOREIGN KEY ("rechnung_id") REFERENCES "public"."rechnung"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "modell_kalkulation" ADD CONSTRAINT "modell_kalkulation_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "modell_kalkulation" ADD CONSTRAINT "modell_kalkulation_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "angebot_nummer_idx" ON "angebot" USING btree ("nummer");--> statement-breakpoint
+CREATE INDEX "auftrag_nummer_idx" ON "auftrag" USING btree ("nummer");--> statement-breakpoint
+CREATE INDEX "rechnung_nummer_idx" ON "rechnung" USING btree ("nummer");

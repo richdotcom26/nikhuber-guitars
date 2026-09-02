@@ -1,5 +1,5 @@
 {
-  "id": "58e56322-073c-4aae-a500-375e3c5cd45a",
+  "id": "34b96ce0-57ec-4235-b9cb-86c50e55afc3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1969,7 +1969,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "angebot_nummer_idx": {
+          "name": "angebot_nummer_idx",
+          "columns": [
+            {
+              "expression": "nummer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "angebot_kunde_id_kunde_id_fk": {
           "name": "angebot_kunde_id_kunde_id_fk",
@@ -2468,7 +2484,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "auftrag_nummer_idx": {
+          "name": "auftrag_nummer_idx",
+          "columns": [
+            {
+              "expression": "nummer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "auftrag_kunde_id_kunde_id_fk": {
           "name": "auftrag_kunde_id_kunde_id_fk",
@@ -3084,7 +3116,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "rechnung_nummer_idx": {
+          "name": "rechnung_nummer_idx",
+          "columns": [
+            {
+              "expression": "nummer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "rechnung_kunde_id_kunde_id_fk": {
           "name": "rechnung_kunde_id_kunde_id_fk",
