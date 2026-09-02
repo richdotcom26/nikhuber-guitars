@@ -204,6 +204,13 @@ artikel_modell         -- M:N: "diese Option wird bei folgenden Modellen angebot
   primary key (option_artikel_id, modell_artikel_id)
 ```
 
+> **Modelselect / `artikel_modell` — Redesign-Kandidat (Rainer, 02.09.2026).** In Ninox nie
+> konsequent benutzt, lückenhaft und schlecht gepflegt. Die Idee (Optionen je Modell einschränken)
+> ist gut, muss aber **neu gedacht** werden — Ninox-Altdaten (Bitmaske) werden **nicht importiert**.
+> Bis dahin zeigt der Specs-Editor alle aktiven Artikel der passenden Artikelgruppe (kein Modell-Filter).
+> Denkbar für die Neufassung: Whitelist je Modell **mit sinnvollen Defaults** (z. B. Modellgruppe erbt),
+> „Standard-Spec je Modell", Kennzeichnung *empfohlen / möglich / gesperrt* statt binär.
+
 **Preis-Deltas der Options-Artikel:** `vk_eur` etc. eines Nicht-Modell-Artikels ist der **Aufpreis**
 (kann negativ sein, z. B. „Body Finish – Open Pore" −305 €, 7y). Modellpreis = Modell-`vk_eur` +
 Σ Deltas der aufpreisrelevanten Specs.

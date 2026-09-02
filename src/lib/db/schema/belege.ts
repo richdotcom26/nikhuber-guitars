@@ -84,6 +84,7 @@ export const auftrag = pgTable("auftrag", {
   ...kopf(),
   auftragsart: auftragsartEnum("auftragsart").default("PRODUKTION").notNull(),
   status: auftragStatusEnum("status").default("BACKORDER").notNull(),
+  angebotId: uuid("angebot_id").references((): AnyPgColumn => angebot.id), // ex String "Übernahme aus Angebot" (7e)
   auftragsdatum: date("auftragsdatum"),
   prio: integer("prio"),
   besonderes: text("besonderes"),                          // ex GF (nur 1 Satz) → Freitext/Enum, TODO

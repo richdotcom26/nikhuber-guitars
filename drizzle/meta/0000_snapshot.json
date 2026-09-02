@@ -1,5 +1,5 @@
 {
-  "id": "943d2876-3d40-4fd4-9190-d455f07f1ce3",
+  "id": "450a1ae5-d461-4edb-9e38-6f8ecb456cd0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2284,6 +2284,12 @@
           "notNull": true,
           "default": "'BACKORDER'"
         },
+        "angebot_id": {
+          "name": "angebot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "auftragsdatum": {
           "name": "auftragsdatum",
           "type": "date",
@@ -2558,6 +2564,19 @@
           "tableTo": "artikel",
           "columnsFrom": [
             "modell_artikel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "auftrag_angebot_id_angebot_id_fk": {
+          "name": "auftrag_angebot_id_angebot_id_fk",
+          "tableFrom": "auftrag",
+          "tableTo": "angebot",
+          "columnsFrom": [
+            "angebot_id"
           ],
           "columnsTo": [
             "id"

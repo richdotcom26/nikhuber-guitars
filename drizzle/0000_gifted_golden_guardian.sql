@@ -367,6 +367,7 @@ CREATE TABLE "auftrag" (
 	"drucktemplate_id" uuid,
 	"auftragsart" "auftragsart" DEFAULT 'PRODUKTION' NOT NULL,
 	"status" "auftrag_status" DEFAULT 'BACKORDER' NOT NULL,
+	"angebot_id" uuid,
 	"auftragsdatum" date,
 	"prio" integer,
 	"besonderes" text,
@@ -785,6 +786,7 @@ ALTER TABLE "angebot" ADD CONSTRAINT "angebot_erzeugt_aus_auftrag_id_auftrag_id_
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_kd_staat_id_staat_id_fk" FOREIGN KEY ("kd_staat_id") REFERENCES "public"."staat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_modell_artikel_id_artikel_id_fk" FOREIGN KEY ("modell_artikel_id") REFERENCES "public"."artikel"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_angebot_id_angebot_id_fk" FOREIGN KEY ("angebot_id") REFERENCES "public"."angebot"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "auftrag" ADD CONSTRAINT "auftrag_seriennummer_id_seriennummer_id_fk" FOREIGN KEY ("seriennummer_id") REFERENCES "public"."seriennummer"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "beleg_position" ADD CONSTRAINT "beleg_position_angebot_id_angebot_id_fk" FOREIGN KEY ("angebot_id") REFERENCES "public"."angebot"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "beleg_position" ADD CONSTRAINT "beleg_position_auftrag_id_auftrag_id_fk" FOREIGN KEY ("auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
