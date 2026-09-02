@@ -6,8 +6,10 @@ import { buttonClasses } from "@/components/ui/button";
 import { artikelName, gruppeLabel } from "@/lib/artikel-shared";
 import { getArtikel, listLieferanten } from "@/lib/domain/artikel";
 import { isDomainError } from "@/lib/domain/errors";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArtikelActionsBar } from "../artikel-actions-bar";
 import { ArtikelForm } from "../artikel-form";
+import { AnhangCard } from "../../_components/anhang-card";
 
 export default async function ArtikelDetailPage({
   params,
@@ -59,6 +61,12 @@ export default async function ArtikelDetailPage({
           label: l.firma || l.nachname || l.kurzname || l.id,
         }))}
       />
+      <Card>
+        <CardHeader><CardTitle>Bilder &amp; Dokumente</CardTitle></CardHeader>
+        <CardContent>
+          <AnhangCard traeger="artikel" id={a.id} revalidate={`/artikel/${a.id}`} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

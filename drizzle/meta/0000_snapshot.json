@@ -1,5 +1,5 @@
 {
-  "id": "ef06aa1e-b33f-4077-a973-386eafe6e882",
+  "id": "0ff08675-d9ed-4553-a564-7870943037b3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -4613,6 +4613,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "artikel_id": {
+          "name": "artikel_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "holz_inventar_id": {
+          "name": "holz_inventar_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "todo_id": {
+          "name": "todo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "art": {
           "name": "art",
           "type": "anhang_art",
@@ -4671,7 +4689,38 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "anhang_auftrag_idx": {
+          "name": "anhang_auftrag_idx",
+          "columns": [
+            {
+              "expression": "auftrag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "anhang_artikel_idx": {
+          "name": "anhang_artikel_idx",
+          "columns": [
+            {
+              "expression": "artikel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "anhang_mailversand_id_mailversand_id_fk": {
           "name": "anhang_mailversand_id_mailversand_id_fk",

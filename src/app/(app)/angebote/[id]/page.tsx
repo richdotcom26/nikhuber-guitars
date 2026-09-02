@@ -15,6 +15,7 @@ import { listPositionen } from "@/lib/domain/belege";
 import { isDomainError } from "@/lib/domain/errors";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate } from "@/lib/utils";
+import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
   addPositionAction, deleteAllePositionenAction, deletePositionAction,
@@ -122,6 +123,13 @@ export default async function AngebotDetailPage({
                 angebotsdatum={a.angebotsdatum}
                 kopftext={a.kopftext}
               />
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>Dokumente</CardTitle></CardHeader>
+            <CardContent>
+              <AnhangCard traeger="angebot" id={id} revalidate={`/angebote/${id}`} />
             </CardContent>
           </Card>
         </div>

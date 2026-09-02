@@ -11,6 +11,7 @@ import {
 import { isDomainError } from "@/lib/domain/errors";
 import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
 import { formatDate, formatMoney } from "@/lib/utils";
+import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
   addPositionAction, deletePositionAction, noGenerateAction, updatePositionAction,
@@ -89,20 +90,28 @@ export default async function RechnungDetailPage({
 
       {active === "rechnung" ? (
         <div className="grid gap-5 lg:grid-cols-2">
-          <Card>
-            <CardHeader><CardTitle>Beleg</CardTitle></CardHeader>
-            <CardContent>
-              <KopfForm
-                id={id}
-                status={r.status}
-                rechnungsdatum={r.rechnungsdatum}
-                lieferdatum={r.lieferdatum}
-                reportMonat={r.reportMonat}
-                bemerkungRechnung={r.bemerkungRechnung}
-                gebuchtBeimSteuerbuero={gebucht}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-5">
+            <Card>
+              <CardHeader><CardTitle>Beleg</CardTitle></CardHeader>
+              <CardContent>
+                <KopfForm
+                  id={id}
+                  status={r.status}
+                  rechnungsdatum={r.rechnungsdatum}
+                  lieferdatum={r.lieferdatum}
+                  reportMonat={r.reportMonat}
+                  bemerkungRechnung={r.bemerkungRechnung}
+                  gebuchtBeimSteuerbuero={gebucht}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Dokumente</CardTitle></CardHeader>
+              <CardContent>
+                <AnhangCard traeger="rechnung" id={id} revalidate={`/rechnungen/${id}`} />
+              </CardContent>
+            </Card>
+          </div>
           <div className="space-y-5">
             <Card>
               <CardHeader><CardTitle>Bezug</CardTitle></CardHeader>

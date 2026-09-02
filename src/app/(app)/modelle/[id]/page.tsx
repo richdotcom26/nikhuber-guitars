@@ -14,6 +14,7 @@ import { SECTION_LABEL } from "@/lib/specs/slots";
 import { formatMoney } from "@/lib/utils";
 import { ArtikelActionsBar } from "../../artikel/artikel-actions-bar";
 import { ArtikelForm } from "../../artikel/artikel-form";
+import { AnhangCard } from "../../_components/anhang-card";
 import { SpecsEditor } from "../../specs-editor";
 
 const TABS: readonly TabItem[] = [
@@ -75,12 +76,20 @@ async function ArtikelTab({ id }: { id: string }) {
   const [{ artikel: a }, lieferanten] = await Promise.all([getArtikel(id), listLieferanten()]);
   const formValues = { ...a };
   return (
-    <ArtikelForm
-      mode="edit"
-      isModell
-      values={formValues}
-      lieferanten={lieferanten.map((l) => ({ id: l.id, label: l.firma || l.nachname || l.kurzname || l.id }))}
-    />
+    <div className="space-y-5">
+      <ArtikelForm
+        mode="edit"
+        isModell
+        values={formValues}
+        lieferanten={lieferanten.map((l) => ({ id: l.id, label: l.firma || l.nachname || l.kurzname || l.id }))}
+      />
+      <Card>
+        <CardHeader><CardTitle>Bilder &amp; Dokumente</CardTitle></CardHeader>
+        <CardContent>
+          <AnhangCard traeger="artikel" id={id} revalidate={`/modelle/${id}`} />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

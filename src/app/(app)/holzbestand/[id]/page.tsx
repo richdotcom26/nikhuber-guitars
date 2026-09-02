@@ -7,6 +7,7 @@ import { getHolz, holzFormOptionen, holzhaendlerListe } from "@/lib/domain/holz"
 import { isDomainError } from "@/lib/domain/errors";
 import { DeleteHolzButton, StatusUndReservierung } from "../holz-actions";
 import { HolzForm } from "../holz-form";
+import { AnhangCard } from "../../_components/anhang-card";
 
 export default async function HolzDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,6 +52,12 @@ export default async function HolzDetailPage({ params }: { params: Promise<{ id:
         unterarten={unterarten}
         strukturen={strukturen}
       />
+      <Card>
+        <CardHeader><CardTitle>Bilder &amp; Dokumente</CardTitle></CardHeader>
+        <CardContent>
+          <AnhangCard traeger="holzInventar" id={h.id} revalidate={`/holzbestand/${h.id}`} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

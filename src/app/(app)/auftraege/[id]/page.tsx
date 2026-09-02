@@ -17,6 +17,7 @@ import { getAuftragSeriennummer } from "@/lib/domain/seriennummer";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate } from "@/lib/utils";
 import { SeriennummerPanel } from "../seriennummer-panel";
+import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import { SpecsEditor } from "../../specs-editor";
 import {
@@ -130,24 +131,32 @@ export default async function AuftragDetailPage({
             </Card>
           </div>
 
-          <Card>
-            <CardHeader><CardTitle>Kopf</CardTitle></CardHeader>
-            <CardContent>
-              <KopfForm
-                v={{
-                  id,
-                  auftragsart: a.auftragsart,
-                  prio: a.prio,
-                  produktionsort: a.produktionsort,
-                  besonderes: a.besonderes,
-                  spezialauftrag: a.spezialauftrag,
-                  bauplandatum: a.bauplandatum,
-                  umsatzerwartung: a.umsatzerwartung,
-                  anzahlung: a.anzahlung,
-                }}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-5">
+            <Card>
+              <CardHeader><CardTitle>Kopf</CardTitle></CardHeader>
+              <CardContent>
+                <KopfForm
+                  v={{
+                    id,
+                    auftragsart: a.auftragsart,
+                    prio: a.prio,
+                    produktionsort: a.produktionsort,
+                    besonderes: a.besonderes,
+                    spezialauftrag: a.spezialauftrag,
+                    bauplandatum: a.bauplandatum,
+                    umsatzerwartung: a.umsatzerwartung,
+                    anzahlung: a.anzahlung,
+                  }}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Dokumente &amp; Bilder</CardTitle></CardHeader>
+              <CardContent>
+                <AnhangCard traeger="auftrag" id={id} revalidate={`/auftraege/${id}`} />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       ) : null}
 

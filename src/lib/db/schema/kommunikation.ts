@@ -1,5 +1,5 @@
 import {
-  boolean, date, integer, pgTable, text, timestamp, uuid,
+  boolean, date, index, integer, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import {
@@ -56,10 +56,17 @@ export const anhang = pgTable("anhang", {
   angebotId: uuid("angebot_id").references(() => angebot.id, { onDelete: "cascade" }),
   auftragId: uuid("auftrag_id").references(() => auftrag.id, { onDelete: "cascade" }),
   rechnungId: uuid("rechnung_id").references(() => rechnung.id, { onDelete: "cascade" }),
+  // Weitere Träger — FK via raw SQL (Import-Zyklus artikel/lager/planung <-> kommunikation):
+  artikelId: uuid("artikel_id"),         // -> artikel.id
+  holzInventarId: uuid("holz_inventar_id"), // -> holz_inventar.id
+  todoId: uuid("todo_id"),               // -> todo.id
   art: anhangArtEnum("art"),
   dateiname: text("dateiname"),
   pfad: text("pfad"),                    // Supabase-Storage-Key
   groesse: integer("groesse"),
   mime: text("mime"),
   ...auditCols,
-});
+}, (t) => ({
+  auftragIdx: index("anhang_auftrag_idx").on(t.auftragId),
+  artikelIdx: index("anhang_artikel_idx").on(t.artikelId),
+}));

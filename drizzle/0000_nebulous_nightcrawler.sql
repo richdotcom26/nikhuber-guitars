@@ -682,6 +682,9 @@ CREATE TABLE "anhang" (
 	"angebot_id" uuid,
 	"auftrag_id" uuid,
 	"rechnung_id" uuid,
+	"artikel_id" uuid,
+	"holz_inventar_id" uuid,
+	"todo_id" uuid,
 	"art" "anhang_art",
 	"dateiname" text,
 	"pfad" text,
@@ -871,5 +874,7 @@ ALTER TABLE "todo" ADD CONSTRAINT "todo_auftrag_id_auftrag_id_fk" FOREIGN KEY ("
 CREATE INDEX "angebot_nummer_idx" ON "angebot" USING btree ("nummer");--> statement-breakpoint
 CREATE INDEX "auftrag_nummer_idx" ON "auftrag" USING btree ("nummer");--> statement-breakpoint
 CREATE INDEX "rechnung_nummer_idx" ON "rechnung" USING btree ("nummer");--> statement-breakpoint
+CREATE INDEX "anhang_auftrag_idx" ON "anhang" USING btree ("auftrag_id");--> statement-breakpoint
+CREATE INDEX "anhang_artikel_idx" ON "anhang" USING btree ("artikel_id");--> statement-breakpoint
 CREATE INDEX "todo_empfaenger_idx" ON "todo" USING btree ("empfaenger_id");--> statement-breakpoint
 CREATE INDEX "todo_status_idx" ON "todo" USING btree ("status");
