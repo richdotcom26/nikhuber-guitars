@@ -45,7 +45,7 @@ export default async function HolzDetailPage({ params }: { params: Promise<{ id:
       <HolzForm
         mode="edit"
         values={formValues}
-        holzarten={arten.map((a) => ({ id: a.id, label: a.holz }))}
+        holzarten={arten.map((a) => ({ id: a.id, label: a.holz, grob: a.grob }))}
         lagerorte={orte.map((o) => ({ id: o.id, label: `${o.code}${o.bezeichnung ? ` – ${o.bezeichnung}` : ""}` }))}
         holzhaendler={haendler.map((x) => ({ id: x.id, label: x.firma || x.nachname || x.kurzname || x.id }))}
         unterarten={unterarten}

@@ -1,5 +1,5 @@
 {
-  "id": "5a0dbd9a-7dcd-47d7-a3f1-d23a6a3f0159",
+  "id": "725cb4ac-5ab0-4361-9683-77e87ad33e7d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3565,6 +3565,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "holzart_grob": {
+          "name": "holzart_grob",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "botanischer_name": {
           "name": "botanischer_name",
           "type": "text",
@@ -4136,8 +4142,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "holzart_label": {
-          "name": "holzart_label",
+        "holzart_grob": {
+          "name": "holzart_grob",
           "type": "text",
           "primaryKey": false,
           "notNull": false

@@ -12,6 +12,7 @@ import { IDLE } from "@/lib/domain/action-state";
 import { createHolzAction, updateHolzAction } from "./actions";
 
 interface Opt { id: string; label: string }
+interface HolzartOpt { id: string; label: string; grob: string | null }
 
 export interface HolzFormValues {
   id?: string;
@@ -49,10 +50,10 @@ export function HolzForm({
 }: {
   mode: "neu" | "edit";
   values: HolzFormValues;
-  holzarten: Opt[];
+  holzarten: HolzartOpt[];
   lagerorte: Opt[];
   holzhaendler: Opt[];
-  unterarten?: { holzartLabel: string | null; name: string }[];
+  unterarten?: { holzartGrob: string | null; name: string }[];
   strukturen?: string[];
 }) {
   const [state, action] = useActionState(mode === "neu" ? createHolzAction : updateHolzAction, IDLE);
@@ -60,18 +61,19 @@ export function HolzForm({
   const v = (x: string | number | null | undefined) => (x == null ? "" : String(x));
 
   const [holzartId, setHolzartId] = useState(v(values.holzartId));
-  const holzartName = useMemo(
-    () => holzarten.find((h) => h.id === holzartId)?.label.toLowerCase() ?? "",
+  const grob = useMemo(
+    () => holzarten.find((h) => h.id === holzartId)?.grob ?? null,
     [holzarten, holzartId],
   );
-  const unterartVorschlaege = useMemo(() => {
-    const all = unterarten.map((u) => u.name);
-    if (!holzartName) return [...new Set(all)];
-    const matched = unterarten
-      .filter((u) => u.holzartLabel && holzartName.includes(u.holzartLabel.toLowerCase()))
-      .map((u) => u.name);
-    return matched.length ? [...new Set(matched)] : [...new Set(all)];
-  }, [unterarten, holzartName]);
+  const unterartOptionen = useMemo(() => {
+    const names = grob
+      ? unterarten.filter((u) => u.holzartGrob === grob).map((u) => u.name)
+      : unterarten.map((u) => u.name);
+    const uniq = [...new Set(names)];
+    // aktuellen Wert erhalten, falls nicht (mehr) in der Liste
+    if (values.unterart && !uniq.includes(values.unterart)) uniq.unshift(values.unterart);
+    return uniq;
+  }, [unterarten, grob, values.unterart]);
 
   return (
     <form action={action} className="max-w-3xl space-y-5">
@@ -91,17 +93,21 @@ export function HolzForm({
               {holzarten.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
             </Select>
           </Field>
-          <Field label="Unterart" htmlFor="unterart">
-            <Input id="unterart" name="unterart" list="dl-unterart" defaultValue={v(values.unterart)} />
-            <datalist id="dl-unterart">
-              {unterartVorschlaege.map((u) => <option key={u} value={u} />)}
-            </datalist>
+          <Field label="Unterart" htmlFor="unterart"
+            hint={grob ? `abhängig von: ${grob}` : "Holzart wählen für passende Unterarten"}>
+            <Select id="unterart" name="unterart" defaultValue={v(values.unterart)} key={grob ?? "all"}>
+              <option value="">–</option>
+              {unterartOptionen.map((u) => <option key={u} value={u}>{u}</option>)}
+            </Select>
           </Field>
           <Field label="Struktur" htmlFor="struktur">
-            <Input id="struktur" name="struktur" list="dl-struktur" defaultValue={v(values.struktur)} />
-            <datalist id="dl-struktur">
-              {strukturen.map((st) => <option key={st} value={st} />)}
-            </datalist>
+            <Select id="struktur" name="struktur" defaultValue={v(values.struktur)}>
+              <option value="">–</option>
+              {strukturen.map((st) => <option key={st} value={st}>{st}</option>)}
+              {values.struktur && !strukturen.includes(values.struktur) ? (
+                <option value={values.struktur}>{values.struktur}</option>
+              ) : null}
+            </Select>
           </Field>
           <Field label="Besonderes" htmlFor="besonderes"><Input id="besonderes" name="besonderes" defaultValue={v(values.besonderes)} /></Field>
 

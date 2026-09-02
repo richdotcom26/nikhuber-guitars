@@ -17,6 +17,7 @@ import { artikel } from "./artikel";
 export const holzart = pgTable("holzart", {
   id: uuid("id").primaryKey().defaultRandom(),
   holz: text("holz").notNull(),
+  holzartGrob: text("holzart_grob"),   // grobe Bezeichnung (z. B. "Rosewood" für alle Rosewood-*) — Filter/Unterart-Abhängigkeit
   botanischerName: text("botanischer_name"),
   herkunft: text("herkunft"),
   holzdichte: numeric("holzdichte", { precision: 8, scale: 3 }),

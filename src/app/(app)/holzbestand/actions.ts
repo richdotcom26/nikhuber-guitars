@@ -6,8 +6,10 @@ import {
   type ActionState, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  createHolz, deleteHolz, deleteLagerort, holzartSchema, holzSchema, lagerortSchema,
-  reserviereHolz, saveHolzart, saveLagerort, setHolzStatus, updateHolz,
+  createHolz, deleteHolz, deleteHolzStruktur, deleteHolzUnterart, deleteLagerort,
+  holzartSchema, holzSchema, holzStrukturSchema, holzUnterartSchema, lagerortSchema,
+  reserviereHolz, saveHolzart, saveHolzStruktur, saveHolzUnterart, saveLagerort,
+  setHolzStatus, updateHolz,
 } from "@/lib/domain/holz";
 
 const BASE = "/holzbestand";
@@ -74,6 +76,42 @@ export async function saveHolzartAction(_p: ActionState, fd: FormData): Promise<
     await saveHolzart(typeof id === "string" && id ? id : null, parseForm(holzartSchema, fd));
     revalidatePath(`${BASE}?tab=holzarten`);
     return ok("Holzart gespeichert.");
+  });
+}
+
+/* ---- Holz-Unterart ---- */
+
+export async function saveHolzUnterartAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = fd.get("id");
+    await saveHolzUnterart(typeof id === "string" && id ? id : null, parseForm(holzUnterartSchema, fd));
+    revalidatePath(`${BASE}?tab=unterarten`);
+    return ok("Unterart gespeichert.");
+  });
+}
+export async function deleteHolzUnterartAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await deleteHolzUnterart(String(fd.get("id") ?? ""));
+    revalidatePath(`${BASE}?tab=unterarten`);
+    return ok("Unterart gelöscht.");
+  });
+}
+
+/* ---- Holz-Struktur ---- */
+
+export async function saveHolzStrukturAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = fd.get("id");
+    await saveHolzStruktur(typeof id === "string" && id ? id : null, parseForm(holzStrukturSchema, fd));
+    revalidatePath(`${BASE}?tab=strukturen`);
+    return ok("Struktur gespeichert.");
+  });
+}
+export async function deleteHolzStrukturAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await deleteHolzStruktur(String(fd.get("id") ?? ""));
+    revalidatePath(`${BASE}?tab=strukturen`);
+    return ok("Struktur gelöscht.");
   });
 }
 

@@ -532,6 +532,7 @@ CREATE TABLE "holz_volumen" (
 CREATE TABLE "holzart" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"holz" text NOT NULL,
+	"holzart_grob" text,
 	"botanischer_name" text,
 	"herkunft" text,
 	"holzdichte" numeric(8, 3),
@@ -611,7 +612,7 @@ CREATE TABLE "holz_struktur" (
 --> statement-breakpoint
 CREATE TABLE "holz_unterart" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"holzart_label" text,
+	"holzart_grob" text,
 	"name" text NOT NULL,
 	"reihenfolge" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,

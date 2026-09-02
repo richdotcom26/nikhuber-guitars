@@ -50,6 +50,8 @@ export async function listHolz(params: { q?: string; status?: string; holzartId?
       ilike(holzInventar.unterart, like),
       ilike(holzInventar.struktur, like),
       ilike(holzInventar.besonderes, like),
+      ilike(holzart.holz, like),
+      ilike(holzart.holzartGrob, like),
     )!);
   }
   const where = filters.length ? and(...filters) : undefined;
@@ -84,13 +86,14 @@ export async function listHolz(params: { q?: string; status?: string; holzartId?
 /** Holzart-Auswahl + Lagerort-Auswahl + Vokabeln (Unterart/Struktur) für Formulare. */
 export async function holzFormOptionen() {
   const [arten, orte, unterarten, strukturen] = await Promise.all([
-    db.select({ id: holzart.id, holz: holzart.holz }).from(holzart).orderBy(asc(holzart.holz)),
+    db.select({ id: holzart.id, holz: holzart.holz, grob: holzart.holzartGrob }).from(holzart).orderBy(asc(holzart.holz)),
     db.select({ id: lagerort.id, code: lagerort.code, bezeichnung: lagerort.bezeichnung }).from(lagerort).orderBy(asc(lagerort.code)),
-    db.select({ holzartLabel: holzUnterart.holzartLabel, name: holzUnterart.name })
-      .from(holzUnterart).orderBy(asc(holzUnterart.holzartLabel), asc(holzUnterart.name)),
+    db.select({ holzartGrob: holzUnterart.holzartGrob, name: holzUnterart.name })
+      .from(holzUnterart)
+      .orderBy(asc(holzUnterart.holzartGrob), asc(holzUnterart.reihenfolge), asc(holzUnterart.name)),
     db.select({ name: holzStruktur.name }).from(holzStruktur).orderBy(asc(holzStruktur.name)),
   ]);
-  return { arten, orte, unterarten, strukturen: strukturen.map((s) => s.name) };
+  return { arten, orte, unterarten, strukturen: strukturen.map((x) => x.name) };
 }
 
 /* --------------------------------------------------------------------- detail */
@@ -232,6 +235,7 @@ export async function listHolzarten() {
 
 export const holzartSchema = z.object({
   holz: z.string().trim().min(1, "Pflichtfeld"),
+  holzartGrob: nullableText,
   botanischerName: nullableText,
   herkunft: nullableText,
   holzdichte: decimalOrNull,
@@ -244,12 +248,84 @@ export type HolzartInput = z.infer<typeof holzartSchema>;
 export async function saveHolzart(id: string | null, input: HolzartInput) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  const values = { ...input, holzartGrob: input.holzartGrob?.trim() || input.holz };
   if (id) {
-    const res = await db.update(holzart).set({ ...input, updatedAt: new Date(), updatedBy: user.id }).where(eq(holzart.id, id)).returning({ id: holzart.id });
+    const res = await db.update(holzart).set({ ...values, updatedAt: new Date(), updatedBy: user.id }).where(eq(holzart.id, id)).returning({ id: holzart.id });
     if (res.length === 0) throw new DomainError("NOT_FOUND", "Holzart nicht gefunden.");
   } else {
-    await db.insert(holzart).values({ ...input, createdBy: user.id, updatedBy: user.id });
+    await db.insert(holzart).values({ ...values, createdBy: user.id, updatedBy: user.id });
   }
+}
+
+/* ---------------------------------------------------------- Holz-Unterart */
+
+export async function listHolzUnterarten() {
+  return db.select().from(holzUnterart)
+    .orderBy(asc(holzUnterart.holzartGrob), asc(holzUnterart.reihenfolge), asc(holzUnterart.name));
+}
+
+/** Distinkte grobe Holzbezeichnungen (für Unterart-Zuordnung). */
+export async function listHolzartGrob(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ grob: holzart.holzartGrob })
+    .from(holzart)
+    .orderBy(asc(holzart.holzartGrob));
+  return rows.map((r) => r.grob).filter((x): x is string => !!x);
+}
+
+export const holzUnterartSchema = z.object({
+  holzartGrob: nullableText,
+  name: z.string().trim().min(1, "Pflichtfeld"),
+  reihenfolge: intOrNull,
+});
+export type HolzUnterartInput = z.infer<typeof holzUnterartSchema>;
+
+export async function saveHolzUnterart(id: string | null, input: HolzUnterartInput) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  if (id) {
+    const res = await db.update(holzUnterart).set({ ...input, updatedAt: new Date(), updatedBy: user.id }).where(eq(holzUnterart.id, id)).returning({ id: holzUnterart.id });
+    if (res.length === 0) throw new DomainError("NOT_FOUND", "Unterart nicht gefunden.");
+  } else {
+    await db.insert(holzUnterart).values({ ...input, createdBy: user.id, updatedBy: user.id });
+  }
+}
+
+export async function deleteHolzUnterart(id: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  await db.delete(holzUnterart).where(eq(holzUnterart.id, id));
+}
+
+/* ---------------------------------------------------------- Holz-Struktur */
+
+export async function listHolzStrukturen() {
+  return db.select().from(holzStruktur).orderBy(asc(holzStruktur.name));
+}
+
+export const holzStrukturSchema = z.object({ name: z.string().trim().min(1, "Pflichtfeld") });
+export type HolzStrukturInput = z.infer<typeof holzStrukturSchema>;
+
+export async function saveHolzStruktur(id: string | null, input: HolzStrukturInput) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  try {
+    if (id) {
+      const res = await db.update(holzStruktur).set({ ...input, updatedAt: new Date(), updatedBy: user.id }).where(eq(holzStruktur.id, id)).returning({ id: holzStruktur.id });
+      if (res.length === 0) throw new DomainError("NOT_FOUND", "Struktur nicht gefunden.");
+    } else {
+      await db.insert(holzStruktur).values({ ...input, createdBy: user.id, updatedBy: user.id });
+    }
+  } catch (e) {
+    if (e instanceof DomainError) throw e;
+    throw new DomainError("CONFLICT", "Struktur-Name bereits vorhanden.");
+  }
+}
+
+export async function deleteHolzStruktur(id: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  await db.delete(holzStruktur).where(eq(holzStruktur.id, id));
 }
 
 /* ----------------------------------------------------------------- Lagerorte */

@@ -9,12 +9,18 @@ import { Tabs, type TabItem } from "@/components/ui/tabs";
 import {
   HOLZ_STATUS, HOLZ_STATUS_LABEL, HOLZ_STATUS_TONE, type HolzStatus,
 } from "@/lib/holz-shared";
-import { listHolz, listHolzarten, listLagerorte } from "@/lib/domain/holz";
-import { HolzartenPanel, LagerortePanel } from "./masters";
+import {
+  listHolz, listHolzarten, listHolzartGrob, listHolzStrukturen, listHolzUnterarten, listLagerorte,
+} from "@/lib/domain/holz";
+import {
+  HolzartenPanel, LagerortePanel, StrukturenPanel, UnterartenPanel,
+} from "./masters";
 
 const TABS: readonly TabItem[] = [
   { key: "holz", label: "Holz" },
   { key: "holzarten", label: "Holzarten" },
+  { key: "unterarten", label: "Unterarten" },
+  { key: "strukturen", label: "Strukturen" },
   { key: "lagerorte", label: "Lagerorte" },
 ];
 
@@ -43,8 +49,15 @@ export default async function HolzbestandPage({
       <Tabs items={TABS} active={active} basePath="/holzbestand" className="mb-5" />
 
       {active === "holz" ? <HolzListe q={q} status={status} page={page} /> : null}
-      {active === "holzarten" ? <HolzartenPanel rows={(await listHolzarten()).map(mapHolzart)} /> : null}
-      {active === "lagerorte" ? <LagerortePanel rows={(await listLagerorte()).map(mapLagerort)} /> : null}
+      {active === "holzarten" ? <HolzartenPanel rows={(await listHolzarten()).map((r) => ({ ...r }))} /> : null}
+      {active === "unterarten" ? (
+        <UnterartenPanel
+          rows={(await listHolzUnterarten()).map((r) => ({ ...r }))}
+          grobOptionen={await listHolzartGrob()}
+        />
+      ) : null}
+      {active === "strukturen" ? <StrukturenPanel rows={(await listHolzStrukturen()).map((r) => ({ ...r }))} /> : null}
+      {active === "lagerorte" ? <LagerortePanel rows={(await listLagerorte()).map((r) => ({ ...r }))} /> : null}
     </div>
   );
 }
@@ -139,13 +152,3 @@ function ChipLink({ href, active, children }: { href: string; active: boolean; c
   );
 }
 
-function mapHolzart(r: {
-  id: string; holz: string; botanischerName: string | null; herkunft: string | null;
-  holzdichte: string | null; species: string | null; genus: string | null; info: string | null;
-  updatedAt: Date;
-}) {
-  return { ...r };
-}
-function mapLagerort(r: { id: string; code: string; bezeichnung: string | null; updatedAt: Date }) {
-  return { ...r };
-}

@@ -99,19 +99,30 @@ export async function importStaat(ctx: Ctx) {
 }
 
 // ============================================================= holzart
+// grobe Bezeichnung: alle Rosewood-* -> "Rosewood", Khaya/Sapeli/Swietenia -> "Mahogany",
+// "Macassar Ebony" -> "Ebony", sonst = Name selbst.
+const HOLZART_GROB: Record<string, string> = {
+  "Macassar Ebony": "Ebony", "Khaya": "Mahogany", "Sapeli": "Mahogany", "Swietenia": "Mahogany",
+  "Rosewood Brazilian": "Rosewood", "Rosewood East-Indian": "Rosewood", "Rosewood Madagascar": "Rosewood",
+};
+
 export async function importHolzart(ctx: Ctx) {
   const tid = ctx.dump.typeIdByCaption("NKS Holzarten");
   if (!tid) return ctx.log("Typ nicht gefunden");
-  const rows = ctx.dump.rows(tid).map(({ id, f: rec }) => ({
+  const rows = ctx.dump.rows(tid).map(({ id, f: rec }) => {
+    const holz = ninoxStr(f(ctx, tid, rec, "Holz")) ?? `#${id}`;
+    return {
     id: ctx.ids.get(tid, id),
-    holz: ninoxStr(f(ctx, tid, rec, "Holz")) ?? `#${id}`,
+    holz,
+    holzartGrob: HOLZART_GROB[holz] ?? holz,
     botanischerName: ninoxStr(f(ctx, tid, rec, "Botanischer Name")),
     herkunft: ninoxStr(f(ctx, tid, rec, "Herkunft")),
     holzdichte: ninoxNum(f(ctx, tid, rec, "Holzdichte")),
     species: ninoxStr(f(ctx, tid, rec, "Species")),
     genus: ninoxStr(f(ctx, tid, rec, "Genus")),
     info: ninoxStr(f(ctx, tid, rec, "Info")),
-  }));
+    };
+  });
   ctx.log(`${await upsert(s.holzart, rows, s.holzart.id)}`);
 }
 
@@ -135,7 +146,7 @@ export async function importHolzVokabeln(ctx: Ctx) {
       const haRaw = f(ctx, kfId, rec, "Holzart");
       return {
         id: ctx.ids.get(kfId, id),
-        holzartLabel: haRaw != null ? hfLabel.get(String(haRaw)) ?? null : null,
+        holzartGrob: haRaw != null ? hfLabel.get(String(haRaw)) ?? null : null,
         name: ninoxStr(f(ctx, kfId, rec, "Unterart")) ?? `#${id}`,
         reihenfolge: ninoxNum(f(ctx, kfId, rec, "Sortierung")) as unknown as number | null,
       };

@@ -15,7 +15,7 @@ export default async function NeuHolzPage() {
       <HolzForm
         mode="neu"
         values={{}}
-        holzarten={arten.map((a) => ({ id: a.id, label: a.holz }))}
+        holzarten={arten.map((a) => ({ id: a.id, label: a.holz, grob: a.grob }))}
         lagerorte={orte.map((o) => ({ id: o.id, label: `${o.code}${o.bezeichnung ? ` – ${o.bezeichnung}` : ""}` }))}
         holzhaendler={haendler.map((h) => ({ id: h.id, label: h.firma || h.nachname || h.kurzname || h.id }))}
         unterarten={unterarten}
