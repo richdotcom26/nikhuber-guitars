@@ -68,7 +68,12 @@ export default async function RechnungDetailPage({
             ) : null}
           </span>
         }
-        actions={<Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>
+            <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Druck</a>
+          </div>
+        }
       />
 
       {r.belegart === "RECHNUNG" && !gebucht ? (

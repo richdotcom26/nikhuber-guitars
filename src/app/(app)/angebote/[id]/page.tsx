@@ -70,6 +70,7 @@ export default async function AngebotDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Link href="/angebote" className={buttonClasses("outline")}>Zurück</Link>
+            <a href={`/druck/angebot/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Druck</a>
             <ToAuftragButton id={a.id} disabled={a.status === "AUFTRAG"} />
           </div>
         }
