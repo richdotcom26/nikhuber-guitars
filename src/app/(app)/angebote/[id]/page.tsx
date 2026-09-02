@@ -18,13 +18,13 @@ import { formatDate } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
-  addPositionAction, deleteAllePositionenAction, deletePositionAction,
+  addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
   generatePositionenAction, updatePositionAction,
 } from "../actions";
 import { KopfForm } from "../kopf-form";
 import { SetKundeButton } from "../set-kunde-form";
 import { ToAuftragButton } from "../to-auftrag-button";
-import { VorlagePicker } from "../vorlage-picker";
+import { VorlagePicker } from "../../_components/vorlage-picker";
 import { SpecsEditor } from "../../specs-editor";
 
 const TABS: readonly TabItem[] = [
@@ -221,6 +221,7 @@ async function DetailsTab({
             id={id}
             hasVorlage={!!modellArtikelId}
             modelle={modelle.rows.map((m) => ({ id: m.id, name: m.nameBelege || m.nameLang || m.id }))}
+            action={applyVorlageAction}
           />
         </CardContent>
       </Card>

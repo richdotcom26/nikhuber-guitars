@@ -9,6 +9,7 @@ import { Tabs, type TabItem } from "@/components/ui/tabs";
 import {
   AUFTRAGSART_LABEL, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
+import { listArtikel } from "@/lib/domain/artikel";
 import { getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
 import { listPositionen } from "@/lib/domain/belege";
@@ -20,8 +21,9 @@ import { SeriennummerPanel } from "../seriennummer-panel";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import { SpecsEditor } from "../../specs-editor";
+import { VorlagePicker } from "../../_components/vorlage-picker";
 import {
-  addPositionAction, deleteAllePositionenAction, deletePositionAction,
+  addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
   generatePositionenAction, setGesamtrabattAction, updatePositionAction,
 } from "../actions";
 import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
@@ -277,14 +279,28 @@ async function DetailsTab({
     freitextNeck: string | null; freitextAssembly: string | null;
   };
 }) {
-  const [rows, candidates] = await Promise.all([getSpecs("auftrag", id), candidatesBySlot()]);
+  const [rows, candidates, modelle] = await Promise.all([
+    getSpecs("auftrag", id),
+    candidatesBySlot(),
+    listArtikel({ modelle: "nur", pageSize: 200 }),
+  ]);
   return (
     <div className="space-y-4">
-      {!model.modellArtikelId ? (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Keine Modellvorlage — Specs am besten über ein Angebot setzen und übernehmen.
-        </p>
-      ) : null}
+      <Card>
+        <CardHeader><CardTitle>Modellvorlage</CardTitle></CardHeader>
+        <CardContent>
+          <VorlagePicker
+            id={id}
+            hasVorlage={!!model.modellArtikelId}
+            modelle={modelle.rows.map((m) => ({ id: m.id, name: m.nameBelege || m.nameLang || m.id }))}
+            action={applyVorlageAction}
+          />
+          <p className="mt-2 text-xs text-muted">
+            Übernimmt die Standard-Ausstattung des gewählten Modells in die Specs — für Aufträge,
+            die ohne vorheriges Angebot erfasst werden. Positionen danach im Positionen-Tab erzeugen.
+          </p>
+        </CardContent>
+      </Card>
       <SpecsEditor
         traeger="auftrag"
         traegerId={id}

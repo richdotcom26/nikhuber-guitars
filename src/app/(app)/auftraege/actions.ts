@@ -15,7 +15,7 @@ import {
   refreshFortschritt, setAuftragKunde, updateAuftragKopf,
 } from "@/lib/domain/auftrag";
 import {
-  addPosition, deleteAllePositionen, deletePosition, generatePositionen,
+  addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
   getArtikelForPosition, setGesamtrabatt, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
@@ -77,6 +77,20 @@ export async function convertArtAction(_p: ActionState, fd: FormData): Promise<A
     await convertAuftragsart(id, String(fd.get("art") ?? "") as Auftragsart);
     rev(id);
     return ok("Auftragsart geändert.");
+  });
+}
+
+/* ---- Modellvorlage (träger = auftrag) ---- */
+
+export async function applyVorlageAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const modellId = String(fd.get("modellId") ?? "");
+    const overwrite = fd.get("overwrite") === "true";
+    if (!modellId) return fail("Kein Modell gewählt.");
+    await applyModellvorlage("auftrag", id, modellId, overwrite);
+    rev(id);
+    return ok("Modellvorlage übernommen.");
   });
 }
 
