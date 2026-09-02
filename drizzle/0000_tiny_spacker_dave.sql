@@ -31,6 +31,8 @@ CREATE TYPE "public"."rolle" AS ENUM('ADMIN', 'BUERO', 'WERKSTATT');--> statemen
 CREATE TYPE "public"."schritt_status" AS ENUM('OFFEN', 'ERLEDIGT', 'WARTEN_AUF', 'KISTE_VOLLSTAENDIG');--> statement-breakpoint
 CREATE TYPE "public"."spec_section" AS ENUM('BODY', 'FINISH_COLOUR', 'NECK', 'ASSEMBLY');--> statement-breakpoint
 CREATE TYPE "public"."sprache" AS ENUM('DE', 'EN');--> statement-breakpoint
+CREATE TYPE "public"."todo_prio" AS ENUM('DRINGEND', 'GELEGENTLICH');--> statement-breakpoint
+CREATE TYPE "public"."todo_status" AS ENUM('BESTELLUNG', 'IN_ARBEIT', 'KLAEREN', 'ERLEDIGT');--> statement-breakpoint
 CREATE TYPE "public"."vertriebsweg" AS ENUM('NET1', 'NET2', 'NET_US', 'VK_US', 'VK_EUR');--> statement-breakpoint
 CREATE TYPE "public"."vorrat_gruppe" AS ENUM('HOLZAUSWAHL', 'HOLZ_VERLEIMEN', 'CNC', 'HOLZSCHLIFF', 'LACKIEREN', 'OBERFLAECHE', 'ENDMONTAGE', 'ENDKONTROLLE_VERSAND', 'PFUSCH');--> statement-breakpoint
 CREATE TYPE "public"."vorrat_typ" AS ENUM('WERKSTATT', 'OFFICE');--> statement-breakpoint
@@ -772,6 +774,24 @@ CREATE TABLE "report_monat" (
 	"kostenziel_monat_eur" numeric(14, 2)
 );
 --> statement-breakpoint
+CREATE TABLE "todo" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"aufgabe" text NOT NULL,
+	"empfaenger_id" uuid,
+	"absender_id" uuid,
+	"prio" "todo_prio" DEFAULT 'GELEGENTLICH' NOT NULL,
+	"status" "todo_status" DEFAULT 'BESTELLUNG' NOT NULL,
+	"auftrag_id" uuid,
+	"faellig_bis" date,
+	"in_arbeit_seit" date,
+	"erledigt_am" date,
+	"erinnerung" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_by" uuid
+);
+--> statement-breakpoint
 CREATE TABLE "app_user" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -844,6 +864,9 @@ ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_auftrag_id_auftrag_id_fk" 
 ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_rechnung_id_rechnung_id_fk" FOREIGN KEY ("rechnung_id") REFERENCES "public"."rechnung"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mailversand" ADD CONSTRAINT "mailversand_kunde_id_kunde_id_fk" FOREIGN KEY ("kunde_id") REFERENCES "public"."kunde"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "modell_kalkulation" ADD CONSTRAINT "modell_kalkulation_artikel_id_artikel_id_fk" FOREIGN KEY ("artikel_id") REFERENCES "public"."artikel"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "todo" ADD CONSTRAINT "todo_auftrag_id_auftrag_id_fk" FOREIGN KEY ("auftrag_id") REFERENCES "public"."auftrag"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "angebot_nummer_idx" ON "angebot" USING btree ("nummer");--> statement-breakpoint
 CREATE INDEX "auftrag_nummer_idx" ON "auftrag" USING btree ("nummer");--> statement-breakpoint
-CREATE INDEX "rechnung_nummer_idx" ON "rechnung" USING btree ("nummer");
+CREATE INDEX "rechnung_nummer_idx" ON "rechnung" USING btree ("nummer");--> statement-breakpoint
+CREATE INDEX "todo_empfaenger_idx" ON "todo" USING btree ("empfaenger_id");--> statement-breakpoint
+CREATE INDEX "todo_status_idx" ON "todo" USING btree ("status");

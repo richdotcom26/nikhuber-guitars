@@ -1,8 +1,10 @@
 import {
-  integer, numeric, pgTable, text, uuid,
+  boolean, date, index, integer, numeric, pgTable, text, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
+import { todoPrioEnum, todoStatusEnum } from "./_enums";
 import { artikel } from "./artikel";
+import { auftrag } from "./belege";
 
 /**
  * §9 Neuentwurf-Module: Bauplanung (E14) + Kalkulation (E12).
@@ -30,6 +32,28 @@ export const modellKalkulation = pgTable("modell_kalkulation", {
   //   = GENERATED bzw. View (§9.2)
   ...auditCols,
 });
+
+/**
+ * ToDo-Board — ex Ninox TE „ToDo". Pro-Mitarbeiter-Aufgaben mit Absender/Empfänger
+ * (beide app_user mit kann_todo). Verknüpfung „zu Auftrag" optional.
+ */
+export const todo = pgTable("todo", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  aufgabe: text("aufgabe").notNull(),
+  empfaengerId: uuid("empfaenger_id"),          // -> app_user (relations)
+  absenderId: uuid("absender_id"),              // -> app_user (relations)
+  prio: todoPrioEnum("prio").default("GELEGENTLICH").notNull(),
+  status: todoStatusEnum("status").default("BESTELLUNG").notNull(),
+  auftragId: uuid("auftrag_id").references(() => auftrag.id, { onDelete: "set null" }),
+  faelligBis: date("faellig_bis"),
+  inArbeitSeit: date("in_arbeit_seit"),
+  erledigtAm: date("erledigt_am"),
+  erinnerung: boolean("erinnerung").default(false).notNull(),
+  ...auditCols,
+}, (t) => ({
+  empfaengerIdx: index("todo_empfaenger_idx").on(t.empfaengerId),
+  statusIdx: index("todo_status_idx").on(t.status),
+}));
 
 /** §9.1 Monatsreport — Struktur je nach KPI-Katalog (7z); befüllt per Cron. Platzhalter. */
 export const reportMonat = pgTable("report_monat", {

@@ -999,3 +999,97 @@ export async function importBetriebsmittel(ctx: Ctx) {
   await upsert(s.betriebsmittel, rows, s.betriebsmittel.id);
   ctx.log(`betriebsmittel ${rows.length}`);
 }
+
+// ================================================= mitarbeiter -> app_user (NB)
+const MA_ADMIN = new Set(["Nik", "Aaron", "Christine", "Rainer"]);
+
+export async function importMitarbeiter(ctx: Ctx) {
+  const nb = ctx.dump.typeIdByCaption("Mitarbeiter");
+  if (!nb) return ctx.log("Typ 'Mitarbeiter' nicht gefunden");
+
+  const existing = await db.select({
+    id: s.appUser.id, email: s.appUser.email, name: s.appUser.name,
+  }).from(s.appUser);
+  const byLowerName = new Map(existing.map((u) => [u.name.trim().toLowerCase(), u]));
+  const rainer = existing.find((u) => u.email === "rw@wuelbeck.de");
+
+  const rows: Record<string, unknown>[] = [];
+  let matched = 0;
+  for (const { id, f: rec } of ctx.dump.rows(nb)) {
+    const name = ninoxStr(f(ctx, nb, rec, "Name"));
+    if (!name) continue;
+    const kannTodo = ninoxBool(f(ctx, nb, rec, "ToDo"));
+    const kannWerkstatt = ninoxBool(f(ctx, nb, rec, "Arbeitsschritte"));
+    const aktiv = !ninoxBool(f(ctx, nb, rec, "inaktiv"));
+
+    // Rainer -> bestehendes Auth-Konto
+    if (rainer && name.toLowerCase() === "rainer") {
+      ctx.ids.alias(`NB:${id}`, rainer.id);
+      await db.update(s.appUser).set({ kannTodo, kannWerkstatt }).where(sql`id = ${rainer.id}`);
+      matched++;
+      continue;
+    }
+    const hit = byLowerName.get(name.toLowerCase());
+    const uuid = hit?.id ?? ctx.ids.get(nb, id);
+    ctx.ids.alias(`NB:${id}`, uuid);
+    if (hit) { matched++; continue; }   // vorhandenes Konto unangetastet lassen
+
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "") || `ma${id}`;
+    rows.push({
+      id: uuid,
+      name,
+      email: `${slug}@team.nikhuber.local`,
+      aktiv,
+      rolle: MA_ADMIN.has(name) ? "ADMIN" : "WERKSTATT",
+      kannWerkstatt,
+      kannTodo,
+      initialen: name.slice(0, 2).toUpperCase(),
+    });
+  }
+  await upsert(s.appUser, rows, s.appUser.id);
+  ctx.log(`app_user: ${rows.length} neu, ${matched} vorhanden`);
+}
+
+// ================================================================= todo (TE)
+const TODO_PRIO: Record<string, string> = { "1": "DRINGEND", "3": "GELEGENTLICH" };
+const TODO_STATUS: Record<string, string> = {
+  "1": "BESTELLUNG", "2": "IN_ARBEIT", "4": "KLAEREN",   // "3" = Erledigt -> nicht importiert
+};
+
+export async function importTodo(ctx: Ctx) {
+  const te = ctx.dump.typeIdByCaption("ToDo");
+  if (!te) return ctx.log("Typ 'ToDo' nicht gefunden");
+  const aId = ctx.dump.typeIdByCaption("Aufträge");
+
+  const rows: Record<string, unknown>[] = [];
+  let skippedDone = 0;
+  for (const { id, f: rec } of ctx.dump.rows(te)) {
+    const statusRaw = String(f(ctx, te, rec, "Status") ?? "");
+    if (statusRaw === "3") { skippedDone++; continue; }   // erledigte nicht übernehmen
+    const aufgabe = ninoxStr(f(ctx, te, rec, "Aufgabe"));
+    if (!aufgabe) continue;
+
+    const empfRaw = f(ctx, te, rec, "Empfänger - Receiver");
+    const absRaw = f(ctx, te, rec, "Absender - Sender");
+    const auftragRaw = f(ctx, te, rec, "Aufträge");
+
+    rows.push({
+      id: ctx.ids.get(te, id),
+      aufgabe,
+      empfaengerId: empfRaw != null ? ctx.ids.aliasLookup(`NB:${empfRaw}`) ?? null : null,
+      absenderId: absRaw != null ? ctx.ids.aliasLookup(`NB:${absRaw}`) ?? null : null,
+      prio: TODO_PRIO[String(f(ctx, te, rec, "Prio"))] ?? "GELEGENTLICH",
+      status: TODO_STATUS[statusRaw] ?? "BESTELLUNG",
+      auftragId: aId && auftragRaw != null ? ctx.ids.lookup(aId, auftragRaw as number) ?? null : null,
+      faelligBis: ninoxDateOnly(f(ctx, te, rec, "Fällig bis")),
+      inArbeitSeit: ninoxDateOnly(f(ctx, te, rec, "in Arbeit seit")),
+      erledigtAm: ninoxDateOnly(f(ctx, te, rec, "erledigt am")),
+      erinnerung: ninoxBool(f(ctx, te, rec, "Erinnerung")),
+      createdAt: ninoxDate(rec._cd) ?? new Date(),
+      updatedAt: ninoxDate(rec._md) ?? new Date(),
+    });
+  }
+  await db.delete(s.todo);
+  await insertChunked(s.todo, rows, 500);
+  ctx.log(`todo ${rows.length} offen (${skippedDone} erledigte übersprungen)`);
+}

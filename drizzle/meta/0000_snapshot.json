@@ -1,5 +1,5 @@
 {
-  "id": "fba8b82b-ccc1-4de5-b9db-7b2d171709f0",
+  "id": "b1ba6966-0789-46c1-8b8d-4f82ee171c39",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -5278,6 +5278,162 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.todo": {
+      "name": "todo",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "aufgabe": {
+          "name": "aufgabe",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "empfaenger_id": {
+          "name": "empfaenger_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "absender_id": {
+          "name": "absender_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prio": {
+          "name": "prio",
+          "type": "todo_prio",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'GELEGENTLICH'"
+        },
+        "status": {
+          "name": "status",
+          "type": "todo_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'BESTELLUNG'"
+        },
+        "auftrag_id": {
+          "name": "auftrag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "faellig_bis": {
+          "name": "faellig_bis",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "in_arbeit_seit": {
+          "name": "in_arbeit_seit",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "erledigt_am": {
+          "name": "erledigt_am",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "erinnerung": {
+          "name": "erinnerung",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "todo_empfaenger_idx": {
+          "name": "todo_empfaenger_idx",
+          "columns": [
+            {
+              "expression": "empfaenger_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "todo_status_idx": {
+          "name": "todo_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "todo_auftrag_id_auftrag_id_fk": {
+          "name": "todo_auftrag_id_auftrag_id_fk",
+          "tableFrom": "todo",
+          "tableTo": "auftrag",
+          "columnsFrom": [
+            "auftrag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.app_user": {
       "name": "app_user",
       "schema": "",
@@ -5777,6 +5933,24 @@
       "values": [
         "DE",
         "EN"
+      ]
+    },
+    "public.todo_prio": {
+      "name": "todo_prio",
+      "schema": "public",
+      "values": [
+        "DRINGEND",
+        "GELEGENTLICH"
+      ]
+    },
+    "public.todo_status": {
+      "name": "todo_status",
+      "schema": "public",
+      "values": [
+        "BESTELLUNG",
+        "IN_ARBEIT",
+        "KLAEREN",
+        "ERLEDIGT"
       ]
     },
     "public.vertriebsweg": {

@@ -126,5 +126,11 @@ export const betriebsmittelKatEnum = pgEnum("betriebsmittel_kat", [
   "TONABNEHMER", "HARDWARE", "MECHANIK",
 ]);
 
+// --- ToDo (ex TE ToDo) -------------------------------------------------------------
+export const todoPrioEnum = pgEnum("todo_prio", ["DRINGEND", "GELEGENTLICH"]);
+export const todoStatusEnum = pgEnum("todo_status", [
+  "BESTELLUNG", "IN_ARBEIT", "KLAEREN", "ERLEDIGT",
+]);
+
 // --- Benutzer -------------------------------------------------------------
 export const rolleEnum = pgEnum("rolle", ["ADMIN", "BUERO", "WERKSTATT"]);
