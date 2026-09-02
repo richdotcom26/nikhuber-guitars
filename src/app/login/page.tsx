@@ -40,29 +40,34 @@ function LoginForm() {
     router.refresh();
   }
 
+  const inputCls =
+    "w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink shadow-sm " +
+    "placeholder:text-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-1 " +
+    "focus-visible:outline-brand focus-visible:border-brand";
+
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-3">
       <input
         type="email" required placeholder="E-Mail" value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded border px-3 py-2 text-sm"
+        className={inputCls}
       />
       <input
         type="password" required placeholder="Passwort" value={passwort}
         onChange={(e) => setPasswort(e.target.value)}
-        className="w-full rounded border px-3 py-2 text-sm"
+        className={inputCls}
       />
       {fehler && <p className="text-sm text-red-600">{fehler}</p>}
-      {hinweis && <p className="text-sm text-green-700">{hinweis}</p>}
+      {hinweis && <p className="text-sm text-brand-bright">{hinweis}</p>}
       <button
         type="submit" disabled={busy}
-        className="w-full rounded bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+        className="w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
       >
         {busy ? "…" : "Anmelden"}
       </button>
       <button
         type="button" onClick={passwortVergessen} disabled={busy}
-        className="w-full text-xs text-neutral-500 hover:underline disabled:opacity-50"
+        className="w-full text-xs text-muted hover:text-brand hover:underline disabled:opacity-50"
       >
         Passwort vergessen?
       </button>
@@ -72,12 +77,19 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="mx-auto mt-24 max-w-sm px-4">
-      <h1 className="text-lg font-semibold">Nik Huber Guitars</h1>
-      <p className="mt-1 text-sm text-neutral-500">Anmelden</p>
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+    <div className="grid min-h-screen place-items-center bg-page px-4">
+      <div className="w-full max-w-sm rounded-xl border border-line bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-brand text-sm font-bold text-white">NH</span>
+          <div>
+            <h1 className="text-base font-semibold text-navy">Nik Huber Guitars</h1>
+            <p className="text-xs text-muted">Auftrags- und Fertigungsverwaltung</p>
+          </div>
+        </div>
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+      </div>
     </div>
   );
 }

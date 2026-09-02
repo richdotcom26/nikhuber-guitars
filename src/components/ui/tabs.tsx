@@ -24,7 +24,7 @@ export function Tabs({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap gap-1 border-b border-neutral-200", className)}>
+    <div className={cn("flex flex-wrap gap-1 border-b border-line", className)}>
       {items.map((t) => {
         const isActive = t.key === active;
         return (
@@ -32,10 +32,10 @@ export function Tabs({
             key={t.key}
             href={`${basePath}?${param}=${t.key}`}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm",
+              "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
               isActive
-                ? "border-neutral-900 font-medium text-neutral-900"
-                : "border-transparent text-neutral-500 hover:text-neutral-800",
+                ? "border-brand font-semibold text-brand"
+                : "border-transparent text-muted hover:text-navy",
             )}
           >
             {t.label}

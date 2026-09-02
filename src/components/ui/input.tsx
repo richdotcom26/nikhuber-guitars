@@ -2,9 +2,10 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full rounded-md border border-neutral-300 bg-white px-2.5 text-sm text-neutral-900 " +
-  "placeholder:text-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-1 " +
-  "focus-visible:outline-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-500 " +
+  "w-full rounded-md border border-line bg-white px-2.5 text-sm text-ink shadow-sm transition-colors " +
+  "placeholder:text-neutral-400 hover:border-neutral-300 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand focus-visible:border-brand " +
+  "disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-500 " +
   "aria-[invalid=true]:border-red-500";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(

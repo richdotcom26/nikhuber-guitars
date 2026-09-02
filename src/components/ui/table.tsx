@@ -12,7 +12,10 @@ export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTab
 export function THead({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={cn("border-b border-neutral-200 text-left text-xs text-neutral-500", className)}
+      className={cn(
+        "border-b border-line bg-neutral-50/70 text-left text-[11px] font-medium uppercase tracking-wide text-muted",
+        className,
+      )}
       {...props}
     />
   );
@@ -24,14 +27,17 @@ export function TBody(props: React.HTMLAttributes<HTMLTableSectionElement>) {
 
 export function TR({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn("border-b border-neutral-100 last:border-0 hover:bg-neutral-50", className)} {...props} />
+    <tr
+      className={cn("border-b border-line last:border-0 transition-colors hover:bg-brand-soft/50", className)}
+      {...props}
+    />
   );
 }
 
 export function TH({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn("px-2.5 py-2 font-medium", className)} {...props} />;
+  return <th className={cn("px-2.5 py-2.5 font-medium", className)} {...props} />;
 }
 
 export function TD({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-2.5 py-1.5 align-middle", className)} {...props} />;
+  return <td className={cn("px-2.5 py-2 align-middle", className)} {...props} />;
 }

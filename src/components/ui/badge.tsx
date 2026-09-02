@@ -1,15 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "violet";
+type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "violet" | "brand";
 
 const TONE: Record<Tone, string> = {
   neutral: "bg-neutral-100 text-neutral-700",
-  blue: "bg-blue-100 text-blue-800",
-  green: "bg-green-100 text-green-800",
+  blue: "bg-sky-100 text-sky-800",
+  green: "bg-emerald-100 text-emerald-800",
   amber: "bg-amber-100 text-amber-800",
   red: "bg-red-100 text-red-800",
   violet: "bg-violet-100 text-violet-800",
+  brand: "bg-brand-soft text-brand",
 };
 
 export function Badge({

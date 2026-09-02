@@ -5,10 +5,10 @@ type Variant = "default" | "outline" | "ghost" | "destructive";
 type Size = "sm" | "md";
 
 const VARIANT: Record<Variant, string> = {
-  default: "bg-neutral-900 text-white hover:bg-neutral-800 disabled:bg-neutral-400",
-  outline: "border border-neutral-300 bg-white hover:bg-neutral-50 disabled:opacity-50",
-  ghost: "hover:bg-neutral-100 disabled:opacity-50",
-  destructive: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
+  default: "bg-brand text-white shadow-sm hover:bg-brand-hover disabled:bg-neutral-400 disabled:shadow-none",
+  outline: "border border-line bg-white text-ink hover:bg-brand-soft hover:border-brand/40 disabled:opacity-50",
+  ghost: "text-ink hover:bg-brand-soft hover:text-brand disabled:opacity-50",
+  destructive: "bg-red-600 text-white shadow-sm hover:bg-red-700 disabled:bg-red-300",
 };
 const SIZE: Record<Size, string> = {
   sm: "h-8 px-2.5 text-xs",
@@ -24,7 +24,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export function buttonClasses(variant: Variant = "default", size: Size = "md", className?: string) {
   return cn(
     "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
-    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900",
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
     "disabled:cursor-not-allowed",
     VARIANT[variant],
     SIZE[size],

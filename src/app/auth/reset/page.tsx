@@ -50,42 +50,50 @@ export default function ResetPage() {
     setTimeout(() => router.replace("/login"), 1500);
   }
 
+  const inputCls =
+    "w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink shadow-sm " +
+    "placeholder:text-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-1 " +
+    "focus-visible:outline-brand focus-visible:border-brand";
+
   return (
-    <div className="mx-auto mt-24 max-w-sm px-4">
-      <h1 className="text-lg font-semibold">Nik Huber Guitars</h1>
-      <p className="mt-1 text-sm text-neutral-500">Passwort setzen</p>
+    <div className="grid min-h-screen place-items-center bg-page px-4">
+      <div className="w-full max-w-sm rounded-xl border border-line bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-brand text-sm font-bold text-white">NH</span>
+          <div>
+            <h1 className="text-base font-semibold text-navy">Nik Huber Guitars</h1>
+            <p className="text-xs text-muted">Passwort setzen</p>
+          </div>
+        </div>
 
-      {phase === "pruefe" && <p className="mt-6 text-sm text-neutral-500">Link wird geprüft …</p>}
+        {phase === "pruefe" && <p className="mt-6 text-sm text-muted">Link wird geprüft …</p>}
+        {phase === "fehler" && <p className="mt-6 text-sm text-red-600">{meldung}</p>}
+        {phase === "fertig" && (
+          <p className="mt-6 text-sm text-brand-bright">Passwort gespeichert. Weiter zur Anmeldung …</p>
+        )}
 
-      {phase === "fehler" && (
-        <p className="mt-6 text-sm text-red-600">{meldung}</p>
-      )}
-
-      {phase === "fertig" && (
-        <p className="mt-6 text-sm text-green-700">Passwort gespeichert. Weiter zur Anmeldung …</p>
-      )}
-
-      {phase === "bereit" && (
-        <form onSubmit={onSubmit} className="mt-6 space-y-3">
-          <input
-            type="password" required placeholder="Neues Passwort" value={pw1}
-            onChange={(e) => setPw1(e.target.value)}
-            className="w-full rounded border px-3 py-2 text-sm"
-          />
-          <input
-            type="password" required placeholder="Wiederholen" value={pw2}
-            onChange={(e) => setPw2(e.target.value)}
-            className="w-full rounded border px-3 py-2 text-sm"
-          />
-          {meldung && <p className="text-sm text-red-600">{meldung}</p>}
-          <button
-            type="submit" disabled={busy}
-            className="w-full rounded bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-50"
-          >
-            {busy ? "…" : "Passwort speichern"}
-          </button>
-        </form>
-      )}
+        {phase === "bereit" && (
+          <form onSubmit={onSubmit} className="mt-6 space-y-3">
+            <input
+              type="password" required placeholder="Neues Passwort" value={pw1}
+              onChange={(e) => setPw1(e.target.value)}
+              className={inputCls}
+            />
+            <input
+              type="password" required placeholder="Wiederholen" value={pw2}
+              onChange={(e) => setPw2(e.target.value)}
+              className={inputCls}
+            />
+            {meldung && <p className="text-sm text-red-600">{meldung}</p>}
+            <button
+              type="submit" disabled={busy}
+              className="w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
+            >
+              {busy ? "…" : "Passwort speichern"}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
