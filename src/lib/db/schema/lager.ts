@@ -25,6 +25,27 @@ export const lagerort = pgTable("lagerort", {
   ...auditCols,
 });
 
+/**
+ * Kuratierte Unterart-Liste je Holz (ex Ninox KF „Unterart").
+ * `holzart_label` = grobe Holzbezeichnung aus Ninox HF (17 Namen, gröber als die
+ * 23 botanischen `holzart`), z. B. "Rosewood", "Ebony". Im Formular als Eingabehilfe
+ * (datalist) genutzt, per Namens-Match gegen die gewählte `holzart`.
+ */
+export const holzUnterart = pgTable("holz_unterart", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  holzartLabel: text("holzart_label"),
+  name: text("name").notNull(),
+  reihenfolge: integer("reihenfolge"),
+  ...auditCols,
+});
+
+/** Flache Struktur-Vokabelliste (ex Ninox JF „Struktur"). */
+export const holzStruktur = pgTable("holz_struktur", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  ...auditCols,
+});
+
 export const holzInventar = pgTable("holz_inventar", {
   id: uuid("id").primaryKey().defaultRandom(),
   inventarId: text("inventar_id").notNull().unique(),          // scan-/QR-fähig ('JFYNY')

@@ -15,9 +15,9 @@ import { IdMap } from "../src/lib/import/idmap";
 import { parseNinoxDump } from "../src/lib/import/ninox";
 import type { Ctx } from "../src/lib/import/passes";
 import {
-  importZahlungsbedingung, importStaat, importHolzart,
+  importZahlungsbedingung, importStaat, importHolzart, importHolzVokabeln, importLagerort,
   importKunde, importArtikel, importArtikelModell, importModellSpecs,
-  importAngebote, importAuftraege, importRechnungen,
+  importAngebote, importAuftraege, importRechnungen, importHolzInventar,
 } from "../src/lib/import/passes";
 
 const DATA_DB = resolve(process.env.NINOX_DATA_DB ?? "ninox-dump/data.db");
@@ -44,6 +44,8 @@ async function main() {
     ["Zahlungsbedingungen", importZahlungsbedingung],
     ["Staaten", importStaat],
     ["Holzarten", importHolzart],
+    ["Holz-Vokabeln", importHolzVokabeln],
+    ["Lagerorte", importLagerort],
     ["Kunden", importKunde],
     ["Artikel", importArtikel],
     ["Artikel-Modell-Zuordnung", importArtikelModell],
@@ -51,6 +53,7 @@ async function main() {
     ["Angebote", importAngebote],
     ["Aufträge", importAuftraege],
     ["Rechnungen", importRechnungen],
+    ["Holzbestand", importHolzInventar],
   ];
 
   for (const [name, fn] of passes) {

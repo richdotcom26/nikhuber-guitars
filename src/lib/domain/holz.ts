@@ -3,7 +3,7 @@ import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
-  auftrag, holzart, holzInventar, kunde, lagerort,
+  auftrag, holzart, holzInventar, holzStruktur, holzUnterart, kunde, lagerort,
 } from "@/lib/db/schema";
 import { HOLZ_STATUS_VALUES, neueInventarId } from "@/lib/holz-shared";
 import { assertRolle, requireUser } from "./context";
@@ -81,13 +81,16 @@ export async function listHolz(params: { q?: string; status?: string; holzartId?
   return { rows, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
 }
 
-/** Holzart-Auswahl + Lagerort-Auswahl für Formulare. */
+/** Holzart-Auswahl + Lagerort-Auswahl + Vokabeln (Unterart/Struktur) für Formulare. */
 export async function holzFormOptionen() {
-  const [arten, orte] = await Promise.all([
+  const [arten, orte, unterarten, strukturen] = await Promise.all([
     db.select({ id: holzart.id, holz: holzart.holz }).from(holzart).orderBy(asc(holzart.holz)),
     db.select({ id: lagerort.id, code: lagerort.code, bezeichnung: lagerort.bezeichnung }).from(lagerort).orderBy(asc(lagerort.code)),
+    db.select({ holzartLabel: holzUnterart.holzartLabel, name: holzUnterart.name })
+      .from(holzUnterart).orderBy(asc(holzUnterart.holzartLabel), asc(holzUnterart.name)),
+    db.select({ name: holzStruktur.name }).from(holzStruktur).orderBy(asc(holzStruktur.name)),
   ]);
-  return { arten, orte };
+  return { arten, orte, unterarten, strukturen: strukturen.map((s) => s.name) };
 }
 
 /* --------------------------------------------------------------------- detail */

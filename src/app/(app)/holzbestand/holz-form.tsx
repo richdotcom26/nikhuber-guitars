@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
@@ -44,16 +44,34 @@ export function HolzForm({
   holzarten,
   lagerorte,
   holzhaendler,
+  unterarten = [],
+  strukturen = [],
 }: {
   mode: "neu" | "edit";
   values: HolzFormValues;
   holzarten: Opt[];
   lagerorte: Opt[];
   holzhaendler: Opt[];
+  unterarten?: { holzartLabel: string | null; name: string }[];
+  strukturen?: string[];
 }) {
   const [state, action] = useActionState(mode === "neu" ? createHolzAction : updateHolzAction, IDLE);
   const err = (state && !state.ok && state.fieldErrors) || {};
   const v = (x: string | number | null | undefined) => (x == null ? "" : String(x));
+
+  const [holzartId, setHolzartId] = useState(v(values.holzartId));
+  const holzartName = useMemo(
+    () => holzarten.find((h) => h.id === holzartId)?.label.toLowerCase() ?? "",
+    [holzarten, holzartId],
+  );
+  const unterartVorschlaege = useMemo(() => {
+    const all = unterarten.map((u) => u.name);
+    if (!holzartName) return [...new Set(all)];
+    const matched = unterarten
+      .filter((u) => u.holzartLabel && holzartName.includes(u.holzartLabel.toLowerCase()))
+      .map((u) => u.name);
+    return matched.length ? [...new Set(matched)] : [...new Set(all)];
+  }, [unterarten, holzartName]);
 
   return (
     <form action={action} className="max-w-3xl space-y-5">
@@ -68,13 +86,23 @@ export function HolzForm({
             <Input id="inventarId" name="inventarId" defaultValue={v(values.inventarId)} className="font-mono uppercase" />
           </Field>
           <Field label="Holzart" htmlFor="holzartId" errors={err.holzartId} className="sm:col-span-2">
-            <Select id="holzartId" name="holzartId" defaultValue={v(values.holzartId)}>
+            <Select id="holzartId" name="holzartId" value={holzartId} onChange={(e) => setHolzartId(e.target.value)}>
               <option value="">–</option>
               {holzarten.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
             </Select>
           </Field>
-          <Field label="Unterart" htmlFor="unterart"><Input id="unterart" name="unterart" defaultValue={v(values.unterart)} /></Field>
-          <Field label="Struktur" htmlFor="struktur"><Input id="struktur" name="struktur" defaultValue={v(values.struktur)} /></Field>
+          <Field label="Unterart" htmlFor="unterart">
+            <Input id="unterart" name="unterart" list="dl-unterart" defaultValue={v(values.unterart)} />
+            <datalist id="dl-unterart">
+              {unterartVorschlaege.map((u) => <option key={u} value={u} />)}
+            </datalist>
+          </Field>
+          <Field label="Struktur" htmlFor="struktur">
+            <Input id="struktur" name="struktur" list="dl-struktur" defaultValue={v(values.struktur)} />
+            <datalist id="dl-struktur">
+              {strukturen.map((st) => <option key={st} value={st} />)}
+            </datalist>
+          </Field>
           <Field label="Besonderes" htmlFor="besonderes"><Input id="besonderes" name="besonderes" defaultValue={v(values.besonderes)} /></Field>
 
           <Field label="Qualität" htmlFor="qualitaet">

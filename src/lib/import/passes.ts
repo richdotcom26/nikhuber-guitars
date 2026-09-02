@@ -115,6 +115,184 @@ export async function importHolzart(ctx: Ctx) {
   ctx.log(`${await upsert(s.holzart, rows, s.holzart.id)}`);
 }
 
+// ==================================================== holz-vokabeln (KF/JF)
+export async function importHolzVokabeln(ctx: Ctx) {
+  // KF.Holzart ist eine dchoice auf HF „Holzart" (17 grobe Namen, NICHT die 23 botanischen TF).
+  const hfId = ctx.dump.typeIdByCaption("Holzart"); // HF
+  const kfId = ctx.dump.typeIdByCaption("Unterart");
+  const jfId = ctx.dump.typeIdByCaption("Struktur");
+
+  const hfLabel = new Map<string, string>();
+  if (hfId) {
+    for (const { id, f: rec } of ctx.dump.rows(hfId)) {
+      const nm = ninoxStr(f(ctx, hfId, rec, "Holzart"));
+      if (nm) hfLabel.set(String(id), nm);
+    }
+  }
+
+  if (kfId) {
+    const rows = ctx.dump.rows(kfId).map(({ id, f: rec }) => {
+      const haRaw = f(ctx, kfId, rec, "Holzart");
+      return {
+        id: ctx.ids.get(kfId, id),
+        holzartLabel: haRaw != null ? hfLabel.get(String(haRaw)) ?? null : null,
+        name: ninoxStr(f(ctx, kfId, rec, "Unterart")) ?? `#${id}`,
+        reihenfolge: ninoxNum(f(ctx, kfId, rec, "Sortierung")) as unknown as number | null,
+      };
+    });
+    ctx.log(`Unterart: ${await upsert(s.holzUnterart, rows, s.holzUnterart.id)}`);
+  }
+
+  if (jfId) {
+    const seen = new Set<string>();
+    const rows = ctx.dump.rows(jfId).flatMap(({ id, f: rec }) => {
+      const name = ninoxStr(f(ctx, jfId, rec, "Struktur"));
+      if (!name || seen.has(name)) return [];
+      seen.add(name);
+      return [{ id: ctx.ids.get(jfId, id), name }];
+    });
+    ctx.log(`Struktur: ${await upsert(s.holzStruktur, rows, s.holzStruktur.name)}`);
+  }
+}
+
+// ============================================================= lagerort
+// Ninox "Lagerorte" (IF): Choice-Kombi Lagerraum(F) / Regal(D) / Fach(E).
+// Anzeige-Code = "<Lagerraum>-<Regal><Fach>", z. B. "L1-B3".
+const LO_REGAL: Record<string, string> = {
+  "1": "A", "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G",
+  "8": "H", "9": "I", "10": "J", "11": "K", "12": "L", "13": "M", "14": "N",
+};
+const LO_RAUM: Record<string, string> = { "1": "L1", "2": "L2", "3": "L3" };
+
+export async function importLagerort(ctx: Ctx) {
+  const tid = ctx.dump.typeIdByCaption("Lagerorte");
+  if (!tid) return ctx.log("Typ 'Lagerorte' nicht gefunden");
+  const rows = ctx.dump.rows(tid).map(({ id, f: rec }) => {
+    const raum = LO_RAUM[String(f(ctx, tid, rec, "Lagerraum"))] ?? "?";
+    const regal = LO_REGAL[String(f(ctx, tid, rec, "Regal"))] ?? "?";
+    const fach = ninoxStr(f(ctx, tid, rec, "Fach")) ?? "?";
+    return {
+      id: ctx.ids.get(tid, id),
+      code: `${raum}-${regal}${fach}`,
+      bezeichnung: `Lagerraum ${raum}, Regal ${regal}, Fach ${fach}`,
+    };
+  });
+  // Natürlicher Schlüssel = code (Alt-Import ohne IdMap möglich).
+  const seen = new Set<string>();
+  const unique = rows.filter((r) => (seen.has(r.code) ? false : (seen.add(r.code), true)));
+  ctx.log(`${await upsert(s.lagerort, unique, s.lagerort.code)}`);
+}
+
+// ======================================================= holz_inventar (FF)
+const FF_QUALITAET: Record<string, "STANDARD" | "EXCEPTIONAL"> = { "1": "EXCEPTIONAL", "2": "STANDARD" };
+const FF_DICKE: Record<string, "DUENN" | "DICK"> = { "1": "DICK", "2": "DUENN" };
+const FF_GROESSE: Record<string, "STANDARD" | "RIETBERGEN"> = { "1": "STANDARD", "2": "RIETBERGEN" };
+const FF_PIECE: Record<string, "EIN_PC" | "ZWEI_PC"> = { "1": "ZWEI_PC", "2": "EIN_PC" };
+const FF_CNC: Record<string, "STANDARD" | "DICK_59" | "HOLLOW_BODY" | "HONEYCOMB"> = {
+  "1": "STANDARD", "2": "DICK_59", "3": "HOLLOW_BODY", "4": "HONEYCOMB",
+};
+const FF_STATUS: Record<string, "FREI" | "RESERVIERT" | "VERBAUT" | "VERKAUFT"> = {
+  "1": "FREI", "2": "RESERVIERT", "3": "VERKAUFT",
+};
+const FF_FUER: Record<string, "TOP" | "BODY" | "NECK" | "FRETBOARD"> = {
+  "1": "TOP", "2": "BODY", "3": "NECK", "4": "FRETBOARD",
+};
+const JF_NAME: Record<string, string> = { "1": "Burl", "2": "Flamed", "3": "Quilted", "4": "xtra Birdseye", "5": "xtra Spalted" };
+
+export async function importHolzInventar(ctx: Ctx) {
+  const ffId = ctx.dump.typeIdByCaption("Holzbestand");
+  if (!ffId) return ctx.log("Typ 'Holzbestand' nicht gefunden");
+  const hfId = ctx.dump.typeIdByCaption("Holzart");   // HF
+  const kfId = ctx.dump.typeIdByCaption("Unterart");  // KF
+  const ifId = ctx.dump.typeIdByCaption("Lagerorte"); // IF
+  const tfId = ctx.dump.typeIdByCaption("NKS Holzarten");
+  const mcId = ctx.dump.typeIdByCaption("Adressen");
+  const aId = ctx.dump.typeIdByCaption("Aufträge");
+
+  // HF-id -> Name -> holzart(TF).id  (Namensmatch)
+  const holzartByName = new Map<string, string>();
+  if (tfId) {
+    for (const { id, f: rec } of ctx.dump.rows(tfId)) {
+      const nm = ninoxStr(f(ctx, tfId, rec, "Holz"));
+      if (nm) holzartByName.set(nm.toLowerCase(), ctx.ids.get(tfId, id));
+    }
+  }
+  const hfName = new Map<string, string>();
+  if (hfId) for (const { id, f: rec } of ctx.dump.rows(hfId)) {
+    const nm = ninoxStr(f(ctx, hfId, rec, "Holzart"));
+    if (nm) hfName.set(String(id), nm);
+  }
+  const kfName = new Map<string, string>();
+  if (kfId) for (const { id, f: rec } of ctx.dump.rows(kfId)) {
+    const nm = ninoxStr(f(ctx, kfId, rec, "Unterart"));
+    if (nm) kfName.set(String(id), nm);
+  }
+  const ifCode = new Map<string, string>();
+  if (ifId) for (const { id, f: rec } of ctx.dump.rows(ifId)) {
+    const raum = LO_RAUM[String(f(ctx, ifId, rec, "Lagerraum"))] ?? "?";
+    const regal = LO_REGAL[String(f(ctx, ifId, rec, "Regal"))] ?? "?";
+    const fach = ninoxStr(f(ctx, ifId, rec, "Fach")) ?? "?";
+    ifCode.set(String(id), `${raum}-${regal}${fach}`);
+  }
+  const lagerortByCode = new Map<string, string>(
+    (await db.select({ id: s.lagerort.id, code: s.lagerort.code }).from(s.lagerort)).map((r) => [r.code, r.id]),
+  );
+
+  let unresolvedLo = 0;
+  const rows = ctx.dump.rows(ffId).map(({ id, f: rec }) => {
+    const hfRaw = f(ctx, ffId, rec, "Holzart");
+    const hfNm = hfRaw != null ? hfName.get(String(hfRaw)) : undefined;
+    const holzartId = hfNm ? holzartByName.get(hfNm.toLowerCase()) ?? null : null;
+
+    const kfRaw = f(ctx, ffId, rec, "Unterart");
+    const unterart = kfRaw != null ? kfName.get(String(kfRaw)) ?? String(kfRaw) : null;
+
+    const lRaw = f(ctx, ffId, rec, "Struktur");
+    const struktur = lRaw == null ? null
+      : /^\d+$/.test(String(lRaw)) ? JF_NAME[String(lRaw)] ?? String(lRaw) : String(lRaw);
+
+    const loRaw = f(ctx, ffId, rec, "Lagerort");
+    const loCode = loRaw != null ? ifCode.get(String(loRaw)) : undefined;
+    const lagerortId = loCode ? lagerortByCode.get(loCode) ?? null : null;
+    if (loRaw != null && !lagerortId) unresolvedLo++;
+
+    const hhRaw = f(ctx, ffId, rec, "Holzhändler");
+    const holzhaendlerId = mcId && hhRaw != null ? ctx.ids.lookup(mcId, hhRaw as number) : null;
+    const resRaw = f(ctx, ffId, rec, "Reservierung für Auftrag");
+    const reserviertFuerAuftragId = aId && resRaw != null ? ctx.ids.lookup(aId, resRaw as number) : null;
+
+    const fuerRaw = f(ctx, ffId, rec, "für");
+    const fuer = fuerRaw != null ? FF_FUER[String(fuerRaw).split(",")[0]] ?? null : null;
+
+    return {
+      id: ctx.ids.get(ffId, id),
+      inventarId: ninoxStr(f(ctx, ffId, rec, "Inventar-ID")) ?? `FF-${id}`,
+      holzartId,
+      unterart,
+      struktur,
+      besonderes: ninoxStr(f(ctx, ffId, rec, "Besonderes")),
+      qualitaet: FF_QUALITAET[String(f(ctx, ffId, rec, "Qualität"))] ?? null,
+      dicke: FF_DICKE[String(f(ctx, ffId, rec, "Dicke"))] ?? null,
+      groesse: FF_GROESSE[String(f(ctx, ffId, rec, "Größe"))] ?? null,
+      piece: FF_PIECE[String(f(ctx, ffId, rec, "Piece"))] ?? null,
+      fuer,
+      cnc: FF_CNC[String(f(ctx, ffId, rec, "CNC"))] ?? null,
+      gewichtG: ninoxNum(f(ctx, ffId, rec, "Gewicht (in Gramm)")) as unknown as number | null,
+      bemerkung: ninoxStr(f(ctx, ffId, rec, "Bemerkungen")),
+      eingangAm: ninoxDateOnly(f(ctx, ffId, rec, "Eingang am")),
+      lagerortId,
+      status: FF_STATUS[String(f(ctx, ffId, rec, "Status"))] ?? "FREI",
+      statusGeaendertAm: ninoxDateOnly(f(ctx, ffId, rec, "Statusänderung am")),
+      reserviertFuerAuftragId: reserviertFuerAuftragId ?? null,
+      holzhaendlerId: holzhaendlerId ?? null,
+      einkaufspreis: ninoxNum(f(ctx, ffId, rec, "Einkaufspreis")),
+      verkaufspreis: ninoxNum(f(ctx, ffId, rec, "Verkaufspreis")),
+    };
+  });
+  ctx.log(`${await upsert(s.holzInventar, rows, s.holzInventar.inventarId)}` +
+    (unresolvedLo ? ` (${unresolvedLo}× Lagerort unaufgelöst)` : ""));
+}
+
 // =============================================================== kunde
 const KONTAKTART: Record<string, string> = {
   "1": "KUNDE", "2": "LIEFERANT", "3": "HAENDLER", "4": "ARTIST",

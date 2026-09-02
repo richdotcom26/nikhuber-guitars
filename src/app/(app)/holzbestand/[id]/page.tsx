@@ -19,7 +19,7 @@ export default async function HolzDetailPage({ params }: { params: Promise<{ id:
     throw e;
   }
   const h = data.holz;
-  const [{ arten, orte }, haendler] = await Promise.all([holzFormOptionen(), holzhaendlerListe()]);
+  const [{ arten, orte, unterarten, strukturen }, haendler] = await Promise.all([holzFormOptionen(), holzhaendlerListe()]);
   const formValues = { ...h };
 
   return (
@@ -48,6 +48,8 @@ export default async function HolzDetailPage({ params }: { params: Promise<{ id:
         holzarten={arten.map((a) => ({ id: a.id, label: a.holz }))}
         lagerorte={orte.map((o) => ({ id: o.id, label: `${o.code}${o.bezeichnung ? ` – ${o.bezeichnung}` : ""}` }))}
         holzhaendler={haendler.map((x) => ({ id: x.id, label: x.firma || x.nachname || x.kurzname || x.id }))}
+        unterarten={unterarten}
+        strukturen={strukturen}
       />
     </div>
   );

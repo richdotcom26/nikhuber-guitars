@@ -599,6 +599,27 @@ CREATE TABLE "holz_inventar" (
 	CONSTRAINT "holz_inventar_inventar_id_unique" UNIQUE("inventar_id")
 );
 --> statement-breakpoint
+CREATE TABLE "holz_struktur" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_by" uuid,
+	CONSTRAINT "holz_struktur_name_unique" UNIQUE("name")
+);
+--> statement-breakpoint
+CREATE TABLE "holz_unterart" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"holzart_label" text,
+	"name" text NOT NULL,
+	"reihenfolge" integer,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_by" uuid
+);
+--> statement-breakpoint
 CREATE TABLE "inventur" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"stichtag" date NOT NULL,
