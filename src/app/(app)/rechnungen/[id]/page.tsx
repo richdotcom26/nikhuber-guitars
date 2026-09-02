@@ -72,7 +72,8 @@ export default async function RechnungDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>
-            <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Druck</a>
+            <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
+            <a href={`/druck/rechnung/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>PDF</a>
           </div>
         }
       />

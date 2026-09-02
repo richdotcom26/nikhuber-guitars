@@ -27,8 +27,19 @@ export default async function DruckPage({
 
   return (
     <div style={{ padding: "24px 16px", background: "#f5f5f5", minHeight: "100vh" }}>
-      <div className="no-print" style={{ maxWidth: "186mm", margin: "0 auto 16px", display: "flex", gap: 8 }}>
+      <div className="no-print" style={{ maxWidth: "186mm", margin: "0 auto 16px", display: "flex", gap: 8, alignItems: "center" }}>
         <PrintButton />
+        <a
+          href={`/druck/${art}/${id}/pdf`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            fontSize: 13, padding: "6px 14px", borderRadius: 6,
+            border: "1px solid #d4d4d4", background: "#fff", color: "#111",
+          }}
+        >
+          PDF herunterladen
+        </a>
         <a
           href={art === "auftrag" ? `/auftraege/${id}` : `/${art}e/${id}`}
           style={{ fontSize: 13, color: "#2563eb", alignSelf: "center" }}

@@ -80,7 +80,8 @@ export default async function AuftragDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Link href="/auftraege" className={buttonClasses("outline")}>Zurück</Link>
-            <a href={`/druck/auftrag/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Druck AB</a>
+            <a href={`/druck/auftrag/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
+            <a href={`/druck/auftrag/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>PDF</a>
           </div>
         }
       />
