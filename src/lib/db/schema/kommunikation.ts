@@ -1,5 +1,5 @@
 import {
-  boolean, date, integer, pgTable, text, uuid,
+  boolean, date, integer, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import {
@@ -45,6 +45,8 @@ export const mailversand = pgTable("mailversand", {
   betreff: text("betreff"),
   bodyHtml: text("body_html"),
   wiedervorlage: date("wiedervorlage"),
+  gesendetAm: timestamp("gesendet_am", { withTimezone: true }),   // gesetzt beim erfolgreichen SMTP-Versand
+  fehlerText: text("fehler_text"),                                // letzte Versand-Fehlermeldung
   ...auditCols,   // erzeugen != senden — Versand ist separater Schritt
 });
 

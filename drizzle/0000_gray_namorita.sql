@@ -731,6 +731,8 @@ CREATE TABLE "mailversand" (
 	"betreff" text,
 	"body_html" text,
 	"wiedervorlage" date,
+	"gesendet_am" timestamp with time zone,
+	"fehler_text" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,

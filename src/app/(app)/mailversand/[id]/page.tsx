@@ -10,7 +10,7 @@ import {
   MAIL_ART_LABEL, MAIL_STATUS_LABEL, type MailArt, type MailStatus,
 } from "@/lib/mailversand-shared";
 import { formatDate } from "@/lib/utils";
-import { DeleteMailButton, MailStatusControl } from "../mail-controls";
+import { DeleteMailButton, MailStatusControl, SendMail } from "../mail-controls";
 
 /** Bodys wurden beim Import entschärft; hier noch Skripte/Styles/Handler entfernen. */
 function safeBody(html: string | null): string {
@@ -72,6 +72,14 @@ export default async function MailversandDetailPage({ params }: { params: Promis
             <Row label="Kunde" value={row.kundeName} href={m.kundeId ? `/adressen/${m.kundeId}` : undefined} />
             {bezug ? <Row label="Bezug" value={bezug.label} href={bezug.href} /> : null}
             {m.wiedervorlage ? <Row label="Wiedervorlage" value={formatDate(m.wiedervorlage)} /> : null}
+            <div className="border-t border-neutral-100 pt-3">
+              <SendMail
+                id={m.id}
+                an={m.an}
+                gesendetAm={m.gesendetAm ? m.gesendetAm.toISOString() : null}
+                fehlerText={m.fehlerText}
+              />
+            </div>
             <div className="border-t border-neutral-100 pt-3">
               <MailStatusControl id={m.id} status={m.status as MailStatus} />
             </div>

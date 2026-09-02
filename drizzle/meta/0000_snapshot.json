@@ -1,5 +1,5 @@
 {
-  "id": "c4890673-fccf-4f87-a4b6-523fdc1c7705",
+  "id": "ef06aa1e-b33f-4077-a973-386eafe6e882",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -4959,6 +4959,18 @@
         "wiedervorlage": {
           "name": "wiedervorlage",
           "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gesendet_am": {
+          "name": "gesendet_am",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fehler_text": {
+          "name": "fehler_text",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

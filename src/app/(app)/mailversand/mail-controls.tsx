@@ -8,7 +8,51 @@ import { IDLE } from "@/lib/domain/action-state";
 import {
   MAIL_STATUS, MAIL_STATUS_LABEL, MAIL_STATUS_TONE, type MailStatus,
 } from "@/lib/mailversand-shared";
-import { deleteMailversandAction, setMailStatusAction } from "./actions";
+import { formatDate } from "@/lib/utils";
+import { deleteMailversandAction, sendeMailAction, setMailStatusAction } from "./actions";
+
+export function SendMail({
+  id,
+  an,
+  gesendetAm,
+  fehlerText,
+}: {
+  id: string;
+  an: string | null;
+  gesendetAm: string | null;
+  fehlerText: string | null;
+}) {
+  const [state, action] = useActionState(sendeMailAction, IDLE);
+  const empfaengerOk = !!an && an.includes("@");
+
+  if (gesendetAm) {
+    return (
+      <p className="text-sm text-green-700">
+        Versendet am {formatDate(gesendetAm)}{an ? ` an ${an}` : ""}.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <form
+        action={action}
+        onSubmit={(e) => { if (!confirm(`Mail jetzt an ${an} senden?`)) e.preventDefault(); }}
+      >
+        <input type="hidden" name="id" value={id} />
+        <SubmitButton size="sm" disabled={!empfaengerOk} pendingText="sende …">
+          Jetzt senden
+        </SubmitButton>
+        {!empfaengerOk ? (
+          <span className="ml-2 text-xs text-neutral-400">gültige Empfänger-Adresse nötig</span>
+        ) : null}
+      </form>
+      {state ? <FormMessage state={state} /> : null}
+      {!state && fehlerText ? (
+        <p className="text-xs text-red-600">Letzter Fehler: {fehlerText}</p>
+      ) : null}
+    </div>
+  );
+}
 
 export function MailStatusControl({ id, status }: { id: string; status: MailStatus }) {
   const [state, action] = useActionState(setMailStatusAction, IDLE);

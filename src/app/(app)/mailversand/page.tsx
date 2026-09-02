@@ -9,7 +9,7 @@ import {
   MAIL_ART, MAIL_ART_LABEL, MAIL_STATUS, MAIL_STATUS_LABEL, MAIL_STATUS_TONE,
   type MailArt, type MailStatus,
 } from "@/lib/mailversand-shared";
-import { listMailversand } from "@/lib/domain/mailversand";
+import { listMailversand, mailKonfigStatus } from "@/lib/domain/mailversand";
 import { formatDate } from "@/lib/utils";
 
 function bezug(r: {
@@ -34,7 +34,10 @@ export default async function MailversandPage({
   const status = sp.status ?? "";
   const page = Number(sp.page) || 1;
 
-  const { rows, total, pageCount } = await listMailversand({ q, art, status, page });
+  const [{ rows, total, pageCount }, smtp] = await Promise.all([
+    listMailversand({ q, art, status, page }),
+    mailKonfigStatus(),
+  ]);
 
   const linkWith = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -123,8 +126,13 @@ export default async function MailversandPage({
       ) : null}
 
       <p className="mt-4 text-xs text-neutral-400">
-        Archiv der versendeten Belege und Korrespondenz aus Ninox. Automatischer Versand
-        (Provider-Anbindung) folgt; neue Einträge sind zunächst manuelle Notizen.
+        Archiv der Korrespondenz aus Ninox. Versand über SMTP:{" "}
+        {smtp.konfiguriert
+          ? (smtp.ok
+            ? <span className="text-green-600">verbunden ({smtp.info})</span>
+            : <span className="text-red-600">Fehler – {smtp.info}</span>)
+          : <span className="text-neutral-500">nicht konfiguriert</span>}
+        . Einen Eintrag öffnen und dort senden.
       </p>
     </div>
   );

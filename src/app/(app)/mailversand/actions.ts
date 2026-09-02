@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
-  type ActionState, ok, parseForm, runAction,
+  type ActionState, fail, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  createMailversand, deleteMailversand, mailversandSchema, setMailStatus,
+  createMailversand, deleteMailversand, mailversandSchema, sendeMailversand, setMailStatus,
 } from "@/lib/domain/mailversand";
 
 const BASE = "/mailversand";
@@ -28,6 +28,16 @@ export async function setMailStatusAction(_p: ActionState, fd: FormData): Promis
     revalidatePath(`${BASE}/${id}`);
     revalidatePath(BASE);
     return ok("Status geändert.");
+  });
+}
+
+export async function sendeMailAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const res = await sendeMailversand(id);
+    revalidatePath(`${BASE}/${id}`);
+    revalidatePath(BASE);
+    return res.ok ? ok(res.message) : fail(res.message);
   });
 }
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { angebot, auftrag, kunde, mailversand, rechnung } from "@/lib/db/schema";
 import { MAIL_ART_VALUES, MAIL_STATUS_VALUES } from "@/lib/mailversand-shared";
+import { getTransport, mailKonfig, pruefeSmtp } from "@/lib/mail/transport";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 
@@ -171,4 +172,65 @@ export async function deleteMailversand(id: string) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
   await db.delete(mailversand).where(eq(mailversand.id, id));
+}
+
+/* -------------------------------------------------------------------- Versand */
+
+/** SMTP-Verbindung prüfen (für die Statusanzeige). */
+export async function mailKonfigStatus() {
+  await requireUser();
+  const cfg = mailKonfig();
+  const check = await pruefeSmtp();
+  return { konfiguriert: !!cfg, from: cfg?.from ?? null, ...check };
+}
+
+/**
+ * Einen Mailversand-Eintrag per SMTP verschicken.
+ * Erfolg → status ERFOLG + gesendet_am; Fehler → status FEHLER + fehler_text (kein Werfen).
+ */
+export async function sendeMailversand(id: string): Promise<{ ok: boolean; message: string }> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+
+  const [row] = await db.select().from(mailversand).where(eq(mailversand.id, id));
+  if (!row) throw new DomainError("NOT_FOUND", "Mail-Eintrag nicht gefunden.");
+  if (row.gesendetAm) throw new DomainError("CONFLICT", "Diese Mail wurde bereits versendet.");
+
+  const an = row.an?.trim();
+  if (!an || !an.includes("@")) {
+    throw new DomainError("VALIDATION", "Keine gültige Empfänger-Adresse im Feld An hinterlegt.");
+  }
+  if (!row.betreff?.trim()) throw new DomainError("VALIDATION", "Betreff fehlt.");
+  if (!mailKonfig()) throw new DomainError("STATE", "SMTP ist nicht konfiguriert.");
+
+  const html = row.bodyHtml ?? "";
+  const text = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim();
+
+  try {
+    const info = await getTransport().sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: an,
+      cc: row.cc?.trim() || undefined,
+      bcc: row.bcc?.trim() || undefined,
+      subject: row.betreff,
+      html: html || undefined,
+      text: text || row.betreff,
+    });
+    await db.update(mailversand)
+      .set({
+        status: "ERFOLG",
+        gesendetAm: new Date(),
+        fehlerText: null,
+        updatedAt: new Date(),
+        updatedBy: user.id,
+      })
+      .where(eq(mailversand.id, id));
+    return { ok: true, message: `Gesendet an ${an} (${info.messageId}).` };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await db.update(mailversand)
+      .set({ status: "FEHLER", fehlerText: msg, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(mailversand.id, id));
+    return { ok: false, message: `Versand fehlgeschlagen: ${msg}` };
+  }
 }
