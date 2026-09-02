@@ -6,12 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
-import { IDLE } from "@/lib/domain/action-state";
+import { type ActionState, IDLE } from "@/lib/domain/action-state";
 import { formatMoney } from "@/lib/utils";
-import {
-  addPositionAction, deleteAllePositionenAction, deletePositionAction,
-  generatePositionenAction, updatePositionAction,
-} from "./actions";
 import { type ArtikelHit, searchArtikelAction } from "./artikel-search-action";
 
 export interface PositionRow {
@@ -27,34 +23,54 @@ export interface PositionRow {
   herkunftSlotKey: string | null;
 }
 
-interface Summen {
+export interface Summen {
   summePositionen: string | null;
   summeNetto: string | null;
   summeMwst: string | null;
   summeBrutto: string | null;
 }
 
+type Act = (prev: ActionState, fd: FormData) => Promise<ActionState>;
+
+export interface PositionenActions {
+  generate: Act;
+  deleteAll: Act;
+  add: Act;
+  update: Act;
+  remove: Act;
+}
+
 export function PositionenPanel({
-  angebotId,
+  belegId,
   rows,
   summen,
   waehrung,
   vertriebsweg,
-  hasVorlage,
+  canGenerate,
+  actions,
+  gesamtrabatt,
 }: {
-  angebotId: string;
+  belegId: string;
   rows: PositionRow[];
   summen: Summen;
   waehrung: string | null;
   vertriebsweg: string | null;
-  hasVorlage: boolean;
+  canGenerate: boolean;
+  actions: PositionenActions;
+  gesamtrabatt?: {
+    aktiv: boolean;
+    prozent: string | null;
+    wert: string | null;
+    action: Act;
+  };
 }) {
   const cur = waehrung === "USD" ? "USD" : "EUR";
   const [onlyRelevant, setOnlyRelevant] = useState(false);
   const shown = onlyRelevant ? rows.filter((r) => r.reRelevant) : rows;
 
-  const [genState, genAction] = useActionState(generatePositionenAction, IDLE);
-  const [delAllState, delAllAction] = useActionState(deleteAllePositionenAction, IDLE);
+  const [genState, genAction] = useActionState(actions.generate, IDLE);
+  const [delAllState, delAllAction] = useActionState(actions.deleteAll, IDLE);
+  const [grState, grAction] = useActionState(gesamtrabatt?.action ?? actions.update, IDLE);
 
   return (
     <Card>
@@ -66,16 +82,14 @@ export function PositionenPanel({
             nur relevante
           </label>
           <form action={genAction}>
-            <input type="hidden" name="id" value={angebotId} />
-            <SubmitButton size="sm" variant="outline" disabled={!hasVorlage} pendingText="…">
+            <input type="hidden" name="id" value={belegId} />
+            <SubmitButton size="sm" variant="outline" disabled={!canGenerate} pendingText="…">
               Aus Specs generieren
             </SubmitButton>
           </form>
           <form action={delAllAction}>
-            <input type="hidden" name="id" value={angebotId} />
-            <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">
-              Alle löschen
-            </SubmitButton>
+            <input type="hidden" name="id" value={belegId} />
+            <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">Alle löschen</SubmitButton>
           </form>
         </div>
       </CardHeader>
@@ -98,8 +112,10 @@ export function PositionenPanel({
           </THead>
           <TBody>
             {shown.map((r) => (
-              <PosRow key={`${r.id}:${r.anzahl}:${r.einzelpreis}:${r.rabattProzent}:${r.reRelevant}`}
-                angebotId={angebotId} row={r} cur={cur} />
+              <PosRow
+                key={`${r.id}:${r.anzahl}:${r.einzelpreis}:${r.rabattProzent}:${r.reRelevant}`}
+                belegId={belegId} row={r} cur={cur} updateAct={actions.update} removeAct={actions.remove}
+              />
             ))}
             {shown.length === 0 ? (
               <TR><TD colSpan={8} className="py-4 text-center text-neutral-400">Keine Positionen.</TD></TR>
@@ -107,7 +123,22 @@ export function PositionenPanel({
           </TBody>
         </Table>
 
-        <NewPosition angebotId={angebotId} waehrung={waehrung} vertriebsweg={vertriebsweg} />
+        <NewPosition belegId={belegId} waehrung={waehrung} vertriebsweg={vertriebsweg} addAct={actions.add} />
+
+        {gesamtrabatt ? (
+          <form action={grAction} className="ml-auto flex max-w-sm items-end gap-2">
+            <input type="hidden" name="id" value={belegId} />
+            <label className="flex items-center gap-1 text-xs text-neutral-500">
+              <input type="checkbox" name="aktiv" defaultChecked={gesamtrabatt.aktiv} />
+              Gesamtrabatt
+            </label>
+            <Input name="prozent" defaultValue={gesamtrabatt.prozent ?? ""} inputMode="decimal"
+              placeholder="%" className="h-7 w-20 text-right" />
+            <span className="text-xs text-neutral-400">= {formatMoney(gesamtrabatt.wert, cur)}</span>
+            <SubmitButton size="sm" variant="outline" pendingText="…">OK</SubmitButton>
+            {grState && !grState.ok ? <span className="text-xs text-red-600">{grState.message}</span> : null}
+          </form>
+        ) : null}
 
         <dl className="ml-auto grid max-w-xs grid-cols-2 gap-x-4 gap-y-1 text-sm">
           <dt className="text-neutral-500">Summe Positionen</dt>
@@ -124,9 +155,17 @@ export function PositionenPanel({
   );
 }
 
-function PosRow({ angebotId, row, cur }: { angebotId: string; row: PositionRow; cur: "EUR" | "USD" }) {
-  const [state, action] = useActionState(updatePositionAction, IDLE);
-  const [delState, delAction] = useActionState(deletePositionAction, IDLE);
+function PosRow({
+  belegId, row, cur, updateAct, removeAct,
+}: {
+  belegId: string;
+  row: PositionRow;
+  cur: "EUR" | "USD";
+  updateAct: Act;
+  removeAct: Act;
+}) {
+  const [state, action] = useActionState(updateAct, IDLE);
+  const [delState, delAction] = useActionState(removeAct, IDLE);
 
   return (
     <TR className={row.reRelevant ? "" : "opacity-60"}>
@@ -139,22 +178,20 @@ function PosRow({ angebotId, row, cur }: { angebotId: string; row: PositionRow; 
       </TD>
       <TD colSpan={5}>
         <form action={action} className="flex items-center justify-end gap-1.5">
-          <input type="hidden" name="id" value={angebotId} />
+          <input type="hidden" name="id" value={belegId} />
           <input type="hidden" name="posId" value={row.id} />
           <Input name="anzahl" defaultValue={row.anzahl} inputMode="decimal" className="h-7 w-16 text-right" />
           <Input name="einzelpreis" defaultValue={row.einzelpreis ?? ""} inputMode="decimal" className="h-7 w-24 text-right" />
           <Input name="rabattProzent" defaultValue={row.rabattProzent} inputMode="decimal" className="h-7 w-16 text-right" />
           <span className="w-24 text-right tabular-nums">{formatMoney(row.gesamtpreis, cur)}</span>
-          <label className="flex items-center">
-            <input type="checkbox" name="reRelevant" defaultChecked={row.reRelevant} />
-          </label>
+          <label className="flex items-center"><input type="checkbox" name="reRelevant" defaultChecked={row.reRelevant} /></label>
           <SubmitButton size="sm" variant="outline" pendingText="…">OK</SubmitButton>
         </form>
         {state && !state.ok ? <p className="text-right text-xs text-red-600">{state.message}</p> : null}
       </TD>
       <TD className="text-right">
         <form action={delAction}>
-          <input type="hidden" name="id" value={angebotId} />
+          <input type="hidden" name="id" value={belegId} />
           <input type="hidden" name="posId" value={row.id} />
           <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
         </form>
@@ -165,19 +202,18 @@ function PosRow({ angebotId, row, cur }: { angebotId: string; row: PositionRow; 
 }
 
 function NewPosition({
-  angebotId,
-  waehrung,
-  vertriebsweg,
+  belegId, waehrung, vertriebsweg, addAct,
 }: {
-  angebotId: string;
+  belegId: string;
   waehrung: string | null;
   vertriebsweg: string | null;
+  addAct: Act;
 }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<ArtikelHit[]>([]);
   const [picked, setPicked] = useState<ArtikelHit | null>(null);
   const [pending, startTransition] = useTransition();
-  const [addState, addAction] = useActionState(addPositionAction, IDLE);
+  const [addState, addAction] = useActionState(addAct, IDLE);
 
   useEffect(() => {
     if (!q.trim() || picked) return;
@@ -193,7 +229,7 @@ function NewPosition({
     <div className="rounded-md border border-neutral-200 p-3">
       <div className="mb-2 text-xs font-medium text-neutral-600">Neue Position</div>
       <form action={addAction} className="flex flex-wrap items-end gap-2">
-        <input type="hidden" name="id" value={angebotId} />
+        <input type="hidden" name="id" value={belegId} />
         <input type="hidden" name="artikelId" value={picked?.id ?? ""} />
         <input type="hidden" name="waehrung" value={waehrung ?? ""} />
         <input type="hidden" name="vertriebsweg" value={vertriebsweg ?? ""} />
@@ -237,9 +273,7 @@ function NewPosition({
           <Input name="einzelpreis" placeholder="autom." inputMode="decimal" className="h-8 w-24 text-right" />
         </div>
         <SubmitButton size="sm">Hinzufügen</SubmitButton>
-        {picked ? (
-          <Button size="sm" variant="ghost" onClick={() => { setPicked(null); setQ(""); }}>×</Button>
-        ) : null}
+        {picked ? <Button size="sm" variant="ghost" onClick={() => { setPicked(null); setQ(""); }}>×</Button> : null}
       </form>
       {addState && !addState.ok ? <FormMessage state={addState} className="mt-2" /> : null}
     </div>

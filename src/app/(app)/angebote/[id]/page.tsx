@@ -15,8 +15,12 @@ import { listPositionen } from "@/lib/domain/belege";
 import { isDomainError } from "@/lib/domain/errors";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate } from "@/lib/utils";
+import { PositionenPanel } from "../../_components/positionen-panel";
+import {
+  addPositionAction, deleteAllePositionenAction, deletePositionAction,
+  generatePositionenAction, updatePositionAction,
+} from "../actions";
 import { KopfForm } from "../kopf-form";
-import { PositionenPanel } from "../positionen-panel";
 import { SetKundeButton } from "../set-kunde-form";
 import { ToAuftragButton } from "../to-auftrag-button";
 import { VorlagePicker } from "../vorlage-picker";
@@ -126,7 +130,7 @@ export default async function AngebotDetailPage({
 
       {active === "positionen" ? (
         <PositionenPanel
-          angebotId={id}
+          belegId={id}
           rows={(await listPositionen("angebot", id)).map((p) => ({
             id: p.id,
             posNr: p.posNr,
@@ -147,7 +151,14 @@ export default async function AngebotDetailPage({
           }}
           waehrung={a.kdWaehrung}
           vertriebsweg={a.kdVertriebsweg}
-          hasVorlage={!!a.modellArtikelId}
+          canGenerate={!!a.modellArtikelId}
+          actions={{
+            generate: generatePositionenAction,
+            deleteAll: deleteAllePositionenAction,
+            add: addPositionAction,
+            update: updatePositionAction,
+            remove: deletePositionAction,
+          }}
         />
       ) : null}
     </div>
