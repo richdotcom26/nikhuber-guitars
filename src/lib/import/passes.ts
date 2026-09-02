@@ -1093,3 +1093,60 @@ export async function importTodo(ctx: Ctx) {
   await insertChunked(s.todo, rows, 500);
   ctx.log(`todo ${rows.length} offen (${skippedDone} erledigte übersprungen)`);
 }
+
+// ============================================================ mailversand (AD)
+const MAIL_ART: Record<string, string> = {
+  "1": "ANGEBOT", "2": "AUFTRAGSBESTAETIGUNG", "3": "RECHNUNG", "4": "GUTSCHRIFT",
+  "5": "SONSTIGES", "6": "MAIL_EINGANG", "7": "MAIL_AUSGANG", "8": "TELEFONAT",
+  "9": "ZAHLUNGSERINNERUNG", "10": "LEAD",
+};
+const MAIL_STATUS: Record<string, string> = {
+  "1": "ENTWURF", "2": "VERSENDET", "3": "FEHLER", "4": "ERFOLG", "5": "VERSENDET",
+};
+
+/** Inline-Bilder (data:-URIs) rauswerfen, Body kappen — Ninox-Bodies sind bis 3 MB groß. */
+function sanitizeMailBody(html: string | null): string | null {
+  if (!html) return null;
+  let s = html
+    .replace(/<img\b[^>]*>/gi, "[Bild]")
+    .replace(/\s(?:src|background|href)\s*=\s*["']data:[^"']*["']/gi, "")
+    .replace(/url\(\s*data:[^)]*\)/gi, "url()");
+  if (s.length > 16000) s = s.slice(0, 16000) + " …[gekürzt]";
+  return s;
+}
+
+export async function importMailversand(ctx: Ctx) {
+  const ad = ctx.dump.typeIdByCaption("Mailversand");
+  if (!ad) return ctx.log("Typ 'Mailversand' nicht gefunden");
+  const yc = ctx.dump.typeIdByCaption("Angebote");
+  const a = ctx.dump.typeIdByCaption("Aufträge");
+  const bc = ctx.dump.typeIdByCaption("Rechnungen");
+  const mc = ctx.dump.typeIdByCaption("Adressen");
+
+  const rows = ctx.dump.rows(ad).map(({ id, f: rec }) => {
+    const angRaw = f(ctx, ad, rec, "ANGEBOT");
+    const aufRaw = f(ctx, ad, rec, "AUFTRAG");
+    const reRaw = f(ctx, ad, rec, "RECHNUNGEN");
+    const kdRaw = f(ctx, ad, rec, "ADRESSEN");
+    return {
+      id: ctx.ids.get(ad, id),
+      art: MAIL_ART[String(f(ctx, ad, rec, "Art"))] ?? "SONSTIGES",
+      status: MAIL_STATUS[String(f(ctx, ad, rec, "Status Mail"))] ?? "VERSENDET",
+      angebotId: yc && angRaw != null ? ctx.ids.lookup(yc, angRaw as number) ?? null : null,
+      auftragId: a && aufRaw != null ? ctx.ids.lookup(a, aufRaw as number) ?? null : null,
+      rechnungId: bc && reRaw != null ? ctx.ids.lookup(bc, reRaw as number) ?? null : null,
+      kundeId: mc && kdRaw != null ? ctx.ids.lookup(mc, kdRaw as number) ?? null : null,
+      an: ninoxStr(f(ctx, ad, rec, "To")),
+      cc: ninoxStr(f(ctx, ad, rec, "CC")),
+      bcc: ninoxStr(f(ctx, ad, rec, "BCC")),
+      betreff: ninoxStr(f(ctx, ad, rec, "Betreff")),
+      bodyHtml: sanitizeMailBody(ninoxStr(f(ctx, ad, rec, "Inhalt"))),
+      wiedervorlage: ninoxDateOnly(f(ctx, ad, rec, "Wiedervorlage")),
+      createdAt: ninoxDate(rec._cd) ?? new Date(),
+      updatedAt: ninoxDate(rec._md) ?? new Date(),
+    };
+  });
+  await db.delete(s.mailversand);
+  await insertChunked(s.mailversand, rows, 400);
+  ctx.log(`mailversand ${rows.length}`);
+}

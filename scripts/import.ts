@@ -18,7 +18,7 @@ import {
   importZahlungsbedingung, importStaat, importHolzart, importHolzVokabeln, importLagerort,
   importKunde, importArtikel, importArtikelModell, importModellSpecs,
   importAngebote, importAuftraege, importRechnungen, importHolzInventar, importSeriennummer,
-  importBetriebsmittel, importMitarbeiter, importTodo,
+  importBetriebsmittel, importMitarbeiter, importTodo, importMailversand,
 } from "../src/lib/import/passes";
 
 const DATA_DB = resolve(process.env.NINOX_DATA_DB ?? "ninox-dump/data.db");
@@ -59,6 +59,7 @@ async function main() {
     ["Betriebsmittel", importBetriebsmittel],
     ["Mitarbeiter", importMitarbeiter],
     ["ToDo", importTodo],
+    ["Mailversand", importMailversand],
   ];
 
   for (const [name, fn] of passes) {
