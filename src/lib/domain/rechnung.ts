@@ -1,6 +1,7 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import {
   artikel, auftrag, belegPosition, rechnung, seriennummer,
@@ -11,6 +12,7 @@ import {
 import { allocateNummer, kdSnapshot, recomputeSummen } from "./belege";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
 
 export {
   RG_BELEGART_LABEL, RG_STATUS, RG_STATUS_LABEL,
@@ -18,8 +20,18 @@ export {
 
 /* ---------------------------------------------------------------------- liste */
 
+export const RECHNUNG_SORT: Record<string, unknown> = {
+  nummer: rechnung.nummer,
+  art: rechnung.belegart,
+  datum: rechnung.rechnungsdatum,
+  kunde: sql`coalesce(${rechnung.kdFirma}, ${rechnung.kdNachname})`,
+  status: rechnung.status,
+  zahlung: rechnung.zahlungsdatum,
+  brutto: rechnung.summeBrutto,
+};
+
 export async function listRechnungen(
-  params: { q?: string; status?: string; belegart?: string; page?: number } = {},
+  params: { q?: string; status?: string; belegart?: string; page?: number; sort?: SortSpec } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
@@ -53,7 +65,7 @@ export async function listRechnungen(
     })
     .from(rechnung)
     .where(where)
-    .orderBy(desc(rechnung.createdAt))
+    .orderBy(...orderByFor(RECHNUNG_SORT, params.sort, rechnung.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

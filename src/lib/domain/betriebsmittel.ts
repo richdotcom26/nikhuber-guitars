@@ -1,11 +1,24 @@
 import "server-only";
-import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { betriebsmittel } from "@/lib/db/schema";
 import { BM_KATEGORIE_VALUES, EINHEIT_VALUES } from "@/lib/betriebsmittel-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
+
+const BM_NAME_SQL = sql`lower(${betriebsmittel.bezeichnung})`;
+
+export const BM_SORT: Record<string, unknown> = {
+  bezeichnung: BM_NAME_SQL,
+  kategorie: betriebsmittel.produktkategorie,
+  hersteller: betriebsmittel.hersteller,
+  menge: betriebsmittel.menge,
+  ek: betriebsmittel.einkaufspreis,
+  wert: betriebsmittel.wert,
+};
 
 export {
   BM_KATEGORIE, BM_KATEGORIE_LABEL, EINHEIT, EINHEIT_LABEL,
@@ -30,7 +43,7 @@ const decimalOrNull = z.preprocess(
 /* --------------------------------------------------------------------- liste */
 
 export async function listBetriebsmittel(
-  params: { q?: string; kategorie?: string; page?: number } = {},
+  params: { q?: string; kategorie?: string; page?: number; sort?: SortSpec } = {},
 ) {
   await requireUser();
   const pageSize = 60;
@@ -55,7 +68,7 @@ export async function listBetriebsmittel(
     .select()
     .from(betriebsmittel)
     .where(where)
-    .orderBy(asc(sql`lower(${betriebsmittel.bezeichnung})`))
+    .orderBy(...orderByFor(BM_SORT, params.sort, BM_NAME_SQL, "asc"))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

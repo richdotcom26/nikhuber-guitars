@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import {
   auftrag, holzart, holzInventar, holzStruktur, holzUnterart, kunde, lagerort,
@@ -8,6 +9,19 @@ import {
 import { HOLZ_STATUS_VALUES, neueInventarId } from "@/lib/holz-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
+
+export const HOLZ_SORT: Record<string, unknown> = {
+  inventarId: holzInventar.inventarId,
+  holzart: holzart.holz,
+  unterart: holzInventar.unterart,
+  struktur: holzInventar.struktur,
+  qual: holzInventar.qualitaet,
+  piece: holzInventar.piece,
+  fuer: holzInventar.fuer,
+  status: holzInventar.status,
+  auftrag: auftrag.nummer,
+};
 
 export { HOLZ_STATUS, HOLZ_STATUS_LABEL } from "@/lib/holz-shared";
 
@@ -35,7 +49,9 @@ const dateOrNull = z.preprocess((v) => (v === "" || v == null ? null : v), z.str
 
 /* -------------------------------------------------------------------- liste */
 
-export async function listHolz(params: { q?: string; status?: string; holzartId?: string; page?: number } = {}) {
+export async function listHolz(
+  params: { q?: string; status?: string; holzartId?: string; page?: number; sort?: SortSpec } = {},
+) {
   const pageSize = 60;
   const page = Math.max(params.page ?? 1, 1);
   const filters = [];
@@ -75,7 +91,7 @@ export async function listHolz(params: { q?: string; status?: string; holzartId?
     .leftJoin(holzart, eq(holzInventar.holzartId, holzart.id))
     .leftJoin(auftrag, eq(holzInventar.reserviertFuerAuftragId, auftrag.id))
     .where(where)
-    .orderBy(asc(holzInventar.inventarId))
+    .orderBy(...orderByFor(HOLZ_SORT, params.sort, holzInventar.inventarId, "asc"))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

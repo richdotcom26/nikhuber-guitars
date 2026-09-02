@@ -1,12 +1,26 @@
 import "server-only";
 import { and, asc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { artikel, kunde } from "@/lib/db/schema";
 import { ARTIKELGRUPPE_VALUES } from "@/lib/artikel-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
 import { getFirmaSetting } from "./stammdaten";
+
+const ARTIKEL_NAME_SQL = sql`lower(coalesce(${artikel.nameBelege}, ${artikel.nameLang}, ${artikel.nameKurz}, ''))`;
+
+export const ARTIKEL_SORT: Record<string, unknown> = {
+  gruppe: artikel.artikelgruppe,
+  name: ARTIKEL_NAME_SQL,
+  nr: artikel.artikelNr,
+  typ: artikel.artikeltyp,
+  vkEur: artikel.vkEur,
+  vkUs: artikel.vkUs,
+  cites: artikel.geschuetztesHolzCites,
+};
 
 const ARTIKELTYP_VALUES = ["HOLZ", "HANDELSWARE"] as const;
 
@@ -135,6 +149,7 @@ export interface ListArtikelParams {
   modelle?: "nur" | "ohne";
   page?: number;
   pageSize?: number;
+  sort?: SortSpec;
 }
 
 export async function listArtikel(params: ListArtikelParams = {}) {
@@ -181,7 +196,7 @@ export async function listArtikel(params: ListArtikelParams = {}) {
     })
     .from(artikel)
     .where(where)
-    .orderBy(asc(sql`lower(coalesce(${artikel.nameBelege}, ${artikel.nameLang}, ${artikel.nameKurz}, ''))`))
+    .orderBy(...orderByFor(ARTIKEL_SORT, params.sort, ARTIKEL_NAME_SQL, "asc"))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

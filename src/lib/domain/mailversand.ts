@@ -1,12 +1,14 @@
 import "server-only";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { angebot, auftrag, kunde, mailversand, rechnung } from "@/lib/db/schema";
 import { MAIL_ART_VALUES, MAIL_STATUS_VALUES } from "@/lib/mailversand-shared";
 import { getTransport, mailKonfig, pruefeSmtp } from "@/lib/mail/transport";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
 
 export {
   MAIL_ART, MAIL_ART_LABEL, MAIL_STATUS, MAIL_STATUS_LABEL, MAIL_STATUS_TONE,
@@ -24,8 +26,16 @@ const kdName = sql<string>`coalesce(${kunde.firma}, nullif(trim(concat_ws(' ', $
 
 /* --------------------------------------------------------------------- liste */
 
+export const MAIL_SORT: Record<string, unknown> = {
+  datum: mailversand.createdAt,
+  empfaenger: sql`lower(coalesce(${kdName}, ${mailversand.an}, ''))`,
+  art: mailversand.art,
+  betreff: mailversand.betreff,
+  status: mailversand.status,
+};
+
 export async function listMailversand(
-  params: { q?: string; art?: string; status?: string; page?: number } = {},
+  params: { q?: string; art?: string; status?: string; page?: number; sort?: SortSpec } = {},
 ) {
   await requireUser();
   const pageSize = 50;
@@ -68,7 +78,7 @@ export async function listMailversand(
     .leftJoin(auftrag, eq(auftrag.id, mailversand.auftragId))
     .leftJoin(rechnung, eq(rechnung.id, mailversand.rechnungId))
     .where(where)
-    .orderBy(desc(mailversand.createdAt))
+    .orderBy(...orderByFor(MAIL_SORT, params.sort, mailversand.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

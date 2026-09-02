@@ -1,7 +1,9 @@
 import "server-only";
-import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
+import { orderByFor } from "./_sort";
 import {
   arbeitsschritt, artikel, auftrag, belegPosition, kunde, rechnung, specBelegung,
 } from "@/lib/db/schema";
@@ -23,8 +25,19 @@ export {
 
 /* ---------------------------------------------------------------------- liste */
 
+export const AUFTRAG_SORT: Record<string, unknown> = {
+  nummer: auftrag.nummer,
+  art: auftrag.auftragsart,
+  datum: auftrag.auftragsdatum,
+  bauplan: auftrag.bauplandatum,
+  kunde: sql`coalesce(${auftrag.kdFirma}, ${auftrag.kdNachname})`,
+  status: auftrag.status,
+  work: auftrag.fortschrittProzent,
+  umsatz: auftrag.umsatzerwartung,
+};
+
 export async function listAuftraege(
-  params: { q?: string; status?: string; art?: string; page?: number } = {},
+  params: { q?: string; status?: string; art?: string; page?: number; sort?: SortSpec } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
@@ -61,7 +74,7 @@ export async function listAuftraege(
     .from(auftrag)
     .leftJoin(modell, eq(auftrag.modellArtikelId, modell.id))
     .where(where)
-    .orderBy(desc(auftrag.createdAt))
+    .orderBy(...orderByFor(AUFTRAG_SORT, params.sort, auftrag.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

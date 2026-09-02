@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { ansprechpartner, kunde, lieferadresse, rechnung, staat } from "@/lib/db/schema";
 import { taxDefault } from "@/lib/pricing";
@@ -9,6 +10,32 @@ import {
 } from "@/lib/adressen-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
+
+const KUNDE_NAME_SQL = sql`lower(coalesce(${kunde.firma}, ${kunde.nachname}, ${kunde.kurzname}, ''))`;
+const KUNDE_RG_SQL = sql<number>`(
+  select count(*)::int from ${rechnung} r
+  where r.kunde_id = ${kunde.id} and r.belegart = 'RECHNUNG'
+)`;
+const KUNDE_UMS12_SQL = sql<string>`coalesce((
+  select sum(r.zahlbetrag) from ${rechnung} r
+  where r.kunde_id = ${kunde.id}
+    and r.belegart = 'RECHNUNG'
+    and r.rechnungsdatum >= (now() - interval '12 months')
+), 0)`;
+
+export const KUNDE_SORT: Record<string, unknown> = {
+  art: kunde.kontaktart,
+  name: KUNDE_NAME_SQL,
+  kurzname: kunde.kurzname,
+  ort: kunde.ort,
+  staat: staat.name,
+  region: kunde.region,
+  rg: KUNDE_RG_SQL,
+  ums12: KUNDE_UMS12_SQL,
+  waehrung: kunde.waehrung,
+  vertriebsweg: kunde.vertriebsweg,
+};
 
 export { anzeigename, KONTAKTARTEN, KONTAKTART_VALUES } from "@/lib/adressen-shared";
 export type { KontaktartValue } from "@/lib/adressen-shared";
@@ -86,7 +113,7 @@ export interface ListKundenParams {
   pageSize?: number;
 }
 
-export async function listKunden(params: ListKundenParams = {}) {
+export async function listKunden(params: ListKundenParams & { sort?: SortSpec } = {}) {
   const pageSize = Math.min(Math.max(params.pageSize ?? 50, 1), 200);
   const page = Math.max(params.page ?? 1, 1);
   const offset = (page - 1) * pageSize;
@@ -124,21 +151,13 @@ export async function listKunden(params: ListKundenParams = {}) {
       region: kunde.region,
       waehrung: kunde.waehrung,
       vertriebsweg: kunde.vertriebsweg,
-      anzahlRg: sql<number>`(
-        select count(*)::int from ${rechnung} r
-        where r.kunde_id = ${kunde.id} and r.belegart = 'RECHNUNG'
-      )`,
-      ums12: sql<string>`coalesce((
-        select sum(r.zahlbetrag) from ${rechnung} r
-        where r.kunde_id = ${kunde.id}
-          and r.belegart = 'RECHNUNG'
-          and r.rechnungsdatum >= (now() - interval '12 months')
-      ), 0)`,
+      anzahlRg: KUNDE_RG_SQL,
+      ums12: KUNDE_UMS12_SQL,
     })
     .from(kunde)
     .leftJoin(staat, eq(kunde.staatId, staat.id))
     .where(where)
-    .orderBy(asc(sql`lower(coalesce(${kunde.firma}, ${kunde.nachname}, ${kunde.kurzname}, ''))`))
+    .orderBy(...orderByFor(KUNDE_SORT, params.sort, kunde.createdAt))
     .limit(pageSize)
     .offset(offset);
 

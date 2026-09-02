@@ -1,26 +1,30 @@
 @import "tailwindcss";
 
 /**
- * Farbwelt angelehnt an lehmann-it-loesungen.de:
- *  - Primär: Petrol/Teal  (#12808c) mit hellerer Variante (#1f9d86)
- *  - Dunkel: Navy          (#1a2c3a)
- *  - Sekundär/Info: Blau   (#2ea3f2)
- * Eingabefelder: immer weißer Hintergrund.
+ * Farbwelt = dWERK VorsorgeCockpit (Werte aus dessen Farbauswahl):
+ *  Text dunkel #0C2036 · mittel #15304F · gedämpft #5C6B7E
+ *  Seite #ECF1F7 · Karte #FFFFFF · Linien #DBE4EF
+ *  Schaltfläche #1E97D6 (Hover #1584C4) · Akzent #5BC5F2 · Akzent hell #E4F4FD
+ *  Schein rgba(91,197,242,.28)
+ * Dateneingabefelder: immer weißer Hintergrund.
  */
 @theme {
-  --color-brand: #12808c;
-  --color-brand-hover: #0e6a74;
-  --color-brand-bright: #1f9d86;
-  --color-brand-soft: #e6f2f2;
-  --color-navy: #1a2c3a;
-  --color-navy-light: #26415a;
-  --color-info: #2ea3f2;
+  --color-brand: #1e97d6;
+  --color-brand-hover: #1584c4;
+  --color-brand-bright: #5bc5f2;
+  --color-brand-soft: #e4f4fd;
+  --color-navy: #0c2036;
+  --color-navy-light: #15304f;
+  --color-info: #1e97d6;
+  --color-success: #16a34a;
 
-  --color-page: #f3f6f7;
+  --color-page: #ecf1f7;
   --color-surface: #ffffff;
-  --color-line: #e2e8ea;
-  --color-ink: #1f2d38;
-  --color-muted: #5f6f7a;
+  --color-line: #dbe4ef;
+  --color-ink: #15304f;
+  --color-muted: #5c6b7e;
+
+  --color-glow: rgb(91 197 242 / 0.28);
 }
 
 :root {
@@ -39,16 +43,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Dezenter, markenfarbener Fokus-Ring für alle Bedienelemente */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+/* Buttons/Links: schlichter Fokus-Ring */
+:where(a, button, [tabindex]):focus-visible {
   outline: 2px solid var(--color-brand);
-  outline-offset: 1px;
-  border-radius: 4px;
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
-/* Eingabefelder klar weiß absetzen, auch wenn die Seite getönt ist */
+/* Eingabefelder: weißer Hintergrund + dezenter blauer Schein bei Fokus */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   background-color: #ffffff;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-glow);
 }

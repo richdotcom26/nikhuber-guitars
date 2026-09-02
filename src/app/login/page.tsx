@@ -41,7 +41,7 @@ function LoginForm() {
   }
 
   const inputCls =
-    "w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink shadow-sm " +
+    "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink shadow-sm " +
     "placeholder:text-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-1 " +
     "focus-visible:outline-brand focus-visible:border-brand";
 
@@ -61,7 +61,7 @@ function LoginForm() {
       {hinweis && <p className="text-sm text-brand-bright">{hinweis}</p>}
       <button
         type="submit" disabled={busy}
-        className="w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
+        className="w-full rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
       >
         {busy ? "…" : "Anmelden"}
       </button>
@@ -78,7 +78,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-page px-4">
-      <div className="w-full max-w-sm rounded-xl border border-line bg-white p-6 shadow-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-md bg-brand text-sm font-bold text-white">NH</span>
           <div>

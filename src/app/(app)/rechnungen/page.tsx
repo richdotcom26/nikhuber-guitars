@@ -1,31 +1,29 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
-import {
-  RG_BELEGART_LABEL, RG_STATUS, RG_STATUS_LABEL, RG_STATUS_TONE, type RgBelegart, type RgStatus,
-} from "@/lib/rechnung-shared";
-import { listRechnungen } from "@/lib/domain/rechnung";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { RG_STATUS } from "@/lib/rechnung-shared";
+import { listRechnungen, RECHNUNG_SORT } from "@/lib/domain/rechnung";
+import { parseSort } from "@/lib/table-sort";
+import { RechnungenTable } from "./rechnungen-table";
 
 export default async function RechnungenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; belegart?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; belegart?: string; page?: string; sort?: string; dir?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
   const belegart = sp.belegart ?? "";
   const page = Number(sp.page) || 1;
-  const { rows, total, pageCount } = await listRechnungen({ q, status, belegart, page });
+  const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
+  const { rows, total, pageCount } = await listRechnungen({ q, status, belegart, page, sort });
 
+  const query = { q, status, belegart, sort: sort.key, dir: sort.dir };
   const chip = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    for (const [k, v] of Object.entries({ q, status, belegart, ...patch })) if (v) p.set(k, v);
+    for (const [k, v] of Object.entries({ ...query, ...patch })) if (v) p.set(k, v);
     const s = p.toString();
     return s ? `/rechnungen?${s}` : "/rechnungen";
   };
@@ -51,47 +49,7 @@ export default async function RechnungenPage({
         ))}
       </div>
 
-      <Card>
-        <Table>
-          <THead>
-            <TR>
-              <TH>RG-Nr</TH>
-              <TH>Art</TH>
-              <TH>Datum</TH>
-              <TH>Kunde</TH>
-              <TH>Status</TH>
-              <TH>Zahlung</TH>
-              <TH className="text-right">Brutto</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {rows.map((r) => (
-              <TR key={r.id}>
-                <TD className="font-mono text-xs">
-                  <Link href={`/rechnungen/${r.id}`} className="font-medium hover:underline">{r.nummer}</Link>
-                </TD>
-                <TD className="text-neutral-500">{RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}</TD>
-                <TD className="text-neutral-500">{formatDate(r.rechnungsdatum)}</TD>
-                <TD>{r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || "–"}</TD>
-                <TD>
-                  <Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>
-                    {RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}
-                  </Badge>
-                </TD>
-                <TD className="text-neutral-500">
-                  {r.zahlungsdatum ? formatDate(r.zahlungsdatum) : (r.zahlungsstatus ?? "–")}
-                </TD>
-                <TD className="text-right tabular-nums">
-                  {formatMoney(r.summeBrutto, r.kdWaehrung === "USD" ? "USD" : "EUR")}
-                </TD>
-              </TR>
-            ))}
-            {rows.length === 0 ? (
-              <TR><TD colSpan={7} className="py-6 text-center text-neutral-400">Keine Rechnungen.</TD></TR>
-            ) : null}
-          </TBody>
-        </Table>
-      </Card>
+      <RechnungenTable rows={rows} sort={sort} query={query} />
 
       {pageCount > 1 ? (
         <div className="mt-3 flex items-center justify-between text-sm text-neutral-500">
@@ -111,8 +69,8 @@ function ChipLink({ href, active, children }: { href: string; active: boolean; c
     <Link
       href={href}
       className={
-        "rounded-full border px-2.5 py-1 text-xs " +
-        (active ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:bg-neutral-100")
+        "rounded-full border px-2.5 py-1 text-xs transition-colors " +
+        (active ? "border-brand bg-brand text-white" : "border-line text-muted hover:bg-brand-soft hover:text-brand")
       }
     >
       {children}

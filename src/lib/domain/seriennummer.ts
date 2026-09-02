@@ -1,10 +1,22 @@
 import "server-only";
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { artikel, auftrag, seriennummer } from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
 import { getFirmaSetting } from "./stammdaten";
+
+export const SERIENNUMMER_SORT: Record<string, unknown> = {
+  lfd: seriennummer.lfd,
+  anzeige: seriennummer.anzeige,
+  vergabe: seriennummer.manuell,
+  modell: artikel.nameLang,
+  kunde: sql`lower(coalesce(${auftrag.kdFirma}, ${auftrag.kdNachname}, ''))`,
+  vergebenAm: seriennummer.vergebenAm,
+  auftrag: auftrag.nummer,
+};
 
 /** Jahrpräfix nach der historischen Regel (7w): ≤2025 → letzte Ziffer, ≥2026 → letzte zwei. */
 export function jahrPraefixFuer(jahr: number): string {
@@ -13,7 +25,9 @@ export function jahrPraefixFuer(jahr: number): string {
 
 /* ---------------------------------------------------------------------- liste */
 
-export async function listSeriennummern(params: { q?: string; page?: number } = {}) {
+export async function listSeriennummern(
+  params: { q?: string; page?: number; sort?: SortSpec } = {},
+) {
   await requireUser();
   const pageSize = 60;
   const page = Math.max(params.page ?? 1, 1);
@@ -50,7 +64,7 @@ export async function listSeriennummern(params: { q?: string; page?: number } = 
     .leftJoin(auftrag, eq(auftrag.id, seriennummer.auftragId))
     .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
     .where(where)
-    .orderBy(desc(seriennummer.lfd))
+    .orderBy(...orderByFor(SERIENNUMMER_SORT, params.sort, seriennummer.lfd))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

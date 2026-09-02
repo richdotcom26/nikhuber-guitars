@@ -23,7 +23,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 /** Klassen für Button-Optik — auch für `<Link>` als Button verwendbar. */
 export function buttonClasses(variant: Variant = "default", size: Size = "md", className?: string) {
   return cn(
-    "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
+    "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
     "disabled:cursor-not-allowed",
     VARIANT[variant],

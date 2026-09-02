@@ -1,18 +1,32 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { angebot, artikel, belegPosition, kunde } from "@/lib/db/schema";
 import { ANGEBOT_STATUS_VALUES as STATUS_VALUES, type AngebotStatus } from "@/lib/angebot-shared";
 import { allocateNummer, kdSnapshot } from "./belege";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { orderByFor } from "./_sort";
 
 export { ANGEBOT_STATUS, ANGEBOT_STATUS_LABEL } from "@/lib/angebot-shared";
 
 /* ---------------------------------------------------------------------- liste */
 
-export async function listAngebote(params: { q?: string; status?: string; page?: number } = {}) {
+export const ANGEBOT_SORT: Record<string, unknown> = {
+  nummer: angebot.nummer,
+  datum: angebot.angebotsdatum,
+  kunde: sql`coalesce(${angebot.kdFirma}, ${angebot.kdNachname})`,
+  modell: artikel.nameBelege,
+  status: angebot.status,
+  waehrung: angebot.kdWaehrung,
+  netto: angebot.summeNetto,
+};
+
+export async function listAngebote(
+  params: { q?: string; status?: string; page?: number; sort?: SortSpec } = {},
+) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
 
@@ -45,7 +59,7 @@ export async function listAngebote(params: { q?: string; status?: string; page?:
     .from(angebot)
     .leftJoin(modell, eq(angebot.modellArtikelId, modell.id))
     .where(where)
-    .orderBy(desc(angebot.createdAt))
+    .orderBy(...orderByFor(ANGEBOT_SORT, params.sort, angebot.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 

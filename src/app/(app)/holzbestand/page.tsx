@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { HOLZ_STATUS } from "@/lib/holz-shared";
 import {
-  HOLZ_STATUS, HOLZ_STATUS_LABEL, HOLZ_STATUS_TONE, type HolzStatus,
-} from "@/lib/holz-shared";
-import {
-  listHolz, listHolzarten, listHolzartGrob, listHolzStrukturen, listHolzUnterarten, listLagerorte,
+  HOLZ_SORT, listHolz, listHolzarten, listHolzartGrob, listHolzStrukturen, listHolzUnterarten, listLagerorte,
 } from "@/lib/domain/holz";
+import { parseSort } from "@/lib/table-sort";
+import { HolzTable } from "./holz-table";
 import {
   HolzartenPanel, LagerortePanel, StrukturenPanel, UnterartenPanel,
 } from "./masters";
@@ -27,13 +24,14 @@ const TABS: readonly TabItem[] = [
 export default async function HolzbestandPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; status?: string; page?: string; sort?: string; dir?: string }>;
 }) {
   const sp = await searchParams;
   const active = TABS.some((t) => t.key === sp.tab) ? sp.tab! : "holz";
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
   const page = Number(sp.page) || 1;
+  const sort = parseSort(sp, Object.keys(HOLZ_SORT), { key: "inventarId", dir: "asc" });
 
   return (
     <div>
@@ -48,7 +46,7 @@ export default async function HolzbestandPage({
       />
       <Tabs items={TABS} active={active} basePath="/holzbestand" className="mb-5" />
 
-      {active === "holz" ? <HolzListe q={q} status={status} page={page} /> : null}
+      {active === "holz" ? <HolzListe q={q} status={status} page={page} sort={sort} /> : null}
       {active === "holzarten" ? <HolzartenPanel rows={(await listHolzarten()).map((r) => ({ ...r }))} /> : null}
       {active === "unterarten" ? (
         <UnterartenPanel
@@ -62,11 +60,16 @@ export default async function HolzbestandPage({
   );
 }
 
-async function HolzListe({ q, status, page }: { q: string; status: string; page: number }) {
-  const { rows, total, pageCount } = await listHolz({ q, status, page });
+async function HolzListe({
+  q, status, page, sort,
+}: {
+  q: string; status: string; page: number; sort: ReturnType<typeof parseSort>;
+}) {
+  const { rows, total, pageCount } = await listHolz({ q, status, page, sort });
+  const query = { tab: "holz", q, status, sort: sort.key, dir: sort.dir };
   const chip = (patch: Record<string, string | undefined>) => {
-    const p = new URLSearchParams({ tab: "holz" });
-    for (const [k, v] of Object.entries({ q, status, ...patch })) if (v) p.set(k, v);
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries({ ...query, ...patch })) if (v) p.set(k, v);
     return `/holzbestand?${p.toString()}`;
   };
   return (
@@ -84,46 +87,7 @@ async function HolzListe({ q, status, page }: { q: string; status: string; page:
         ))}
       </div>
 
-      <Card>
-        <Table>
-          <THead>
-            <TR>
-              <TH>Inventar-ID</TH><TH>Holzart</TH><TH>Unterart</TH><TH>Struktur</TH>
-              <TH>Qual.</TH><TH>Piece</TH><TH>Für</TH><TH>Status</TH><TH>Auftrag</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {rows.map((r) => (
-              <TR key={r.id}>
-                <TD className="font-mono">
-                  <Link href={`/holzbestand/${r.id}`} className="font-medium hover:underline">{r.inventarId}</Link>
-                </TD>
-                <TD>{r.holzartName ?? "–"}</TD>
-                <TD className="text-neutral-500">{r.unterart ?? "–"}</TD>
-                <TD className="text-neutral-500">{r.struktur ?? "–"}</TD>
-                <TD className="text-neutral-500">{r.qualitaet === "EXCEPTIONAL" ? "Exc." : r.qualitaet === "STANDARD" ? "Std." : "–"}</TD>
-                <TD className="text-neutral-500">{r.piece === "EIN_PC" ? "1pc" : r.piece === "ZWEI_PC" ? "2pc" : "–"}</TD>
-                <TD className="text-neutral-500">{r.fuer ?? "–"}</TD>
-                <TD>
-                  <Badge tone={HOLZ_STATUS_TONE[r.status as HolzStatus] ?? "neutral"}>
-                    {HOLZ_STATUS_LABEL[r.status as HolzStatus] ?? r.status}
-                  </Badge>
-                </TD>
-                <TD className="font-mono text-xs text-neutral-500">
-                  {r.reserviertFuerAuftragId ? (
-                    <Link href={`/auftraege/${r.reserviertFuerAuftragId}`} className="hover:underline">{r.auftragNummer}</Link>
-                  ) : "–"}
-                </TD>
-              </TR>
-            ))}
-            {rows.length === 0 ? (
-              <TR><TD colSpan={9} className="py-6 text-center text-neutral-400">
-                Kein Holz erfasst — oben rechts anlegen.
-              </TD></TR>
-            ) : null}
-          </TBody>
-        </Table>
-      </Card>
+      <HolzTable rows={rows} sort={sort} query={query} />
 
       {pageCount > 1 ? (
         <div className="mt-3 flex items-center justify-between text-sm text-neutral-500">
@@ -143,8 +107,8 @@ function ChipLink({ href, active, children }: { href: string; active: boolean; c
     <Link
       href={href}
       className={
-        "rounded-full border px-2.5 py-1 text-xs " +
-        (active ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:bg-neutral-100")
+        "rounded-full border px-2.5 py-1 text-xs transition-colors " +
+        (active ? "border-brand bg-brand text-white" : "border-line text-muted hover:bg-brand-soft hover:text-brand")
       }
     >
       {children}
