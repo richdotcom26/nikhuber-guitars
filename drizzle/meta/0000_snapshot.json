@@ -1,5 +1,5 @@
 {
-  "id": "34b96ce0-57ec-4235-b9cb-86c50e55afc3",
+  "id": "943d2876-3d40-4fd4-9190-d455f07f1ce3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1069,6 +1069,30 @@
         "bild_asset_id": {
           "name": "bild_asset_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "freitext_body": {
+          "name": "freitext_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "freitext_colour": {
+          "name": "freitext_colour",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "freitext_neck": {
+          "name": "freitext_neck",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "freitext_assembly": {
+          "name": "freitext_assembly",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

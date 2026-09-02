@@ -28,6 +28,13 @@ export const artikel = pgTable("artikel", {
   beschreibung: text("beschreibung"),
   bildAssetId: uuid("bild_asset_id"),           // -> anhang.id (relations)
 
+  // Nur MODEL: Abschnitts-Freitexte des Specs-Editors (ex WB.U9/HF/TA/HC) — Default-Text
+  // für neue Belege (wie spec_belegung als Modell-Vorlage kopiert wird).
+  freitextBody: text("freitext_body"),
+  freitextColour: text("freitext_colour"),
+  freitextNeck: text("freitext_neck"),
+  freitextAssembly: text("freitext_assembly"),
+
   // Preise Eingabe:
   vkEur: numeric("vk_eur", { precision: 12, scale: 2 }),
   vkUs: numeric("vk_us", { precision: 12, scale: 2 }),
