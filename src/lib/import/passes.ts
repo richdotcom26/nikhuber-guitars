@@ -3,6 +3,7 @@ import * as s from "../db/schema";
 import { sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { IdMap } from "./idmap";
+import { SPEC_SLOTS } from "../specs/slots";
 import {
   NinoxDump, ninoxBool, ninoxDateOnly, ninoxNum, ninoxStr,
 } from "./ninox";
@@ -277,8 +278,67 @@ export async function importArtikelModell(ctx: Ctx) {
   ctx.log("übersprungen — Z7 ist Bitmaske, Zuordnung später im UI (siehe MIGRATION 6.3)");
 }
 
-// ============================================= TODO
-export async function importModellSpecs(_ctx: Ctx) { _ctx.log("TODO"); }
+// ===================================================== modell-specs -> spec_belegung
+/**
+ * Auflösen des `_K`-Feld-Captions je Slot: Ninox nutzt Unterstrich-Form + "_K".
+ * (z. B. "PU Bridge" -> "PU_Bridge_K", "Back Top" -> "Back_Top_K")
+ */
+function kCaption(slotCaption: string): string {
+  return slotCaption.replace(/ /g, "_") + "_K";
+}
+
+export async function importModellSpecs(ctx: Ctx) {
+  const tid = ctx.dump.typeIdByCaption("Artikel");
+  if (!tid) return ctx.log("Typ 'Artikel' nicht gefunden");
+  const gruppeFid = ctx.dump.fieldIdByCaption(tid, "Artikelgruppe");
+
+  // val-/K-Feld-IDs je Slot einmal auflösen
+  const slotFields = SPEC_SLOTS.map((slot) => ({
+    slot,
+    valFid: ctx.dump.fieldIdByCaption(tid, slot.caption, "dchoice"),
+    kFid: slot.aufpreis
+      ? ctx.dump.fieldIdByCaption(tid, kCaption(slot.caption), "boolean")
+      : undefined,
+  }));
+  const noVal = slotFields.filter((x) => !x.valFid).map((x) => x.slot.key);
+
+  const rows: Array<{
+    modellArtikelId: string; slotKey: string; artikelId: string;
+    aufpreis: boolean; reihenfolge: number;
+  }> = [];
+  let modelle = 0;
+  for (const { id, f: rec } of ctx.dump.rows(tid)) {
+    if (String(gruppeFid ? rec[gruppeFid] : undefined) !== "1") continue; // nur Model
+    const modellArtikelId = ctx.ids.lookup(tid, id);
+    if (!modellArtikelId) continue;
+    modelle++;
+    for (const { slot, valFid, kFid } of slotFields) {
+      if (!valFid) continue;
+      const v = rec[valFid];
+      if (v == null || v === "" || v === 0) continue;
+      const artikelId = ctx.ids.lookup(tid, v as number); // dchoice speichert Artikel-_id
+      if (!artikelId) continue;
+      rows.push({
+        modellArtikelId,
+        slotKey: slot.key,
+        artikelId,
+        aufpreis: kFid ? ninoxBool(rec[kFid]) : false,
+        reihenfolge: 0,
+      });
+    }
+  }
+
+  // idempotent: Modell-Specs komplett neu
+  await db.delete(s.specBelegung).where(sql`modell_artikel_id is not null`);
+  const CHUNK = 500;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.insert(s.specBelegung) as any).values(rows.slice(i, i + CHUNK));
+  }
+  ctx.log(`${rows.length} Zeilen für ${modelle} Modelle` +
+    (noVal.length ? `; keine Quelle für Slots: ${noVal.join(", ")}` : ""));
+}
+
 export async function importAngebote(_ctx: Ctx) { _ctx.log("TODO"); }
 export async function importAuftraege(_ctx: Ctx) { _ctx.log("TODO"); }
 export async function importRechnungen(_ctx: Ctx) { _ctx.log("TODO"); }

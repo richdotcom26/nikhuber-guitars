@@ -43,7 +43,7 @@ export interface NinoxDump {
   /** typeId -> (recordId -> fields) */
   records: Map<string, Map<number, NinoxRecord>>;
   typeIdByCaption(caption: string): string | undefined;
-  fieldIdByCaption(typeId: string, caption: string): string | undefined;
+  fieldIdByCaption(typeId: string, caption: string, base?: string): string | undefined;
   choiceMap(typeId: string, fieldCaption: string): Record<string, string>; // ninoxValue -> caption
   rows(typeIdOrCaption: string): Array<{ id: number; f: NinoxRecord }>;
 }
@@ -104,11 +104,11 @@ export async function parseNinoxDump(path: string): Promise<NinoxDump> {
     schema,
     records,
     typeIdByCaption: (c) => captionToTypeId.get(c),
-    fieldIdByCaption(typeId, caption) {
+    fieldIdByCaption(typeId, caption, base) {
       const t = schema!.types[typeId];
       if (!t) return undefined;
       for (const [fid, f] of Object.entries(t.fields)) {
-        if (f.caption === caption) return fid;
+        if (f.caption === caption && (!base || f.base === base)) return fid;
       }
       return undefined;
     },
