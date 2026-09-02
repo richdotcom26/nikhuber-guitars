@@ -963,3 +963,39 @@ export async function importSeriennummer(ctx: Ctx) {
   }
   ctx.log(`seriennummer ${snRows.length}, auftrag-verknüpft ${auftragUpdates.length}`);
 }
+
+// ========================================================= betriebsmittel (OF Inventar)
+const BM_EINHEIT: Record<string, string> = {
+  "1": "STUECK", "2": "KG", "3": "L", "4": "G", "5": "M",
+  "6": "ROLLE", "7": "SATZ", "8": "PAAR", "9": "SATZ", "10": "ML",
+};
+const BM_KAT: Record<string, string> = {
+  "1": "SCHLEIFMITTEL", "2": "INLAYS", "3": "KLEBEBAND", "4": "ARBEITSSCHUTZ",
+  "5": "LACK_BEIZE", "6": "HILFSMITTEL_LACK", "7": "PACKRAUM", "8": "KLEBER",
+  "9": "MERCH", "10": "ELEKTRONIK", "11": "TONABNEHMER", "12": "HARDWARE", "13": "MECHANIK",
+};
+
+export async function importBetriebsmittel(ctx: Ctx) {
+  const of = ctx.dump.typeIdByCaption("Inventar");
+  if (!of) return ctx.log("Typ 'Inventar' nicht gefunden");
+  const herstellerMap = ctx.dump.choiceMap(of, "Hersteller");   // ninoxValue -> caption
+  const lieferantMap = ctx.dump.choiceMap(of, "Lieferant");
+  const rows = ctx.dump.rows(of).map(({ id, f: rec }) => {
+    const hRaw = f(ctx, of, rec, "Hersteller");
+    const lRaw = f(ctx, of, rec, "Lieferant");
+    return {
+      id: ctx.ids.get(of, id),
+      bezeichnung: ninoxStr(f(ctx, of, rec, "Beschreibung")) ?? `#${id}`,
+      artikelnummer: ninoxStr(f(ctx, of, rec, "Artikelnummer")),
+      hersteller: hRaw != null ? herstellerMap[String(hRaw)] ?? null : null,
+      lieferant: lRaw != null ? lieferantMap[String(lRaw)] ?? null : null,
+      produktkategorie: BM_KAT[String(f(ctx, of, rec, "Produktkategorie"))] ?? null,
+      einheit: BM_EINHEIT[String(f(ctx, of, rec, "Einheit"))] ?? null,
+      menge: ninoxNum(f(ctx, of, rec, "Vorhandene Menge")) ?? "0",
+      einkaufspreis: ninoxNum(f(ctx, of, rec, "Einkaufspreis")),
+      anmerkungen: ninoxStr(f(ctx, of, rec, "Anmerkungen")),
+    };
+  });
+  await upsert(s.betriebsmittel, rows, s.betriebsmittel.id);
+  ctx.log(`betriebsmittel ${rows.length}`);
+}
