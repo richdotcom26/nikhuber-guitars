@@ -28,6 +28,13 @@ const supa = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUP
 
 type Art = "BELEG_PDF" | "BILD" | "CITES" | "LACEY" | "ZERTIFIKAT" | "SONSTIGES";
 
+/** Snake-Case-Spalte -> Drizzle-Property (die `.values()` erwartet den Property-Namen!). */
+const COL_PROP: Record<string, string> = {
+  auftrag_id: "auftragId", angebot_id: "angebotId", rechnung_id: "rechnungId",
+  artikel_id: "artikelId", holz_inventar_id: "holzInventarId", todo_id: "todoId",
+  mailversand_id: "mailversandId",
+};
+
 /** Ninox-Typ-Caption -> Feld-Caption -> { traeger-Spalte, art }. */
 const PLAN: Record<string, Record<string, { col: string; art: Art }>> = {
   "Aufträge": {
@@ -165,7 +172,7 @@ async function main() {
       });
       if (up.error) throw up.error;
       await db.insert(s.anhang).values({
-        [j.col]: j.parentId,
+        [COL_PROP[j.col]]: j.parentId,
         art: j.art,
         dateiname: j.dateiname,
         pfad: j.pfad,
