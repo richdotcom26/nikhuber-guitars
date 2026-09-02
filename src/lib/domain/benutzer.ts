@@ -128,7 +128,7 @@ export async function benutzerRecoveryLink(id: string): Promise<string> {
 
 async function recoveryLinkFuer(email: string): Promise<string> {
   const redirectTo = process.env.NEXT_PUBLIC_APP_URL
-    ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/login`
+    ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/auth/reset`
     : undefined;
   const { data, error } = await supabaseAdmin().auth.admin.generateLink({
     type: "recovery",

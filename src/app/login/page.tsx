@@ -10,7 +10,20 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [passwort, setPasswort] = useState("");
   const [fehler, setFehler] = useState<string | null>(null);
+  const [hinweis, setHinweis] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  async function passwortVergessen() {
+    if (!email) { setFehler("Bitte zuerst die E-Mail eintragen."); return; }
+    setBusy(true);
+    setFehler(null);
+    const { error } = await createClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset`,
+    });
+    setBusy(false);
+    if (error) setFehler(error.message);
+    else setHinweis("Falls ein Konto existiert, wurde ein Link zum Zurücksetzen verschickt.");
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,11 +53,18 @@ function LoginForm() {
         className="w-full rounded border px-3 py-2 text-sm"
       />
       {fehler && <p className="text-sm text-red-600">{fehler}</p>}
+      {hinweis && <p className="text-sm text-green-700">{hinweis}</p>}
       <button
         type="submit" disabled={busy}
         className="w-full rounded bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-50"
       >
         {busy ? "…" : "Anmelden"}
+      </button>
+      <button
+        type="button" onClick={passwortVergessen} disabled={busy}
+        className="w-full text-xs text-neutral-500 hover:underline disabled:opacity-50"
+      >
+        Passwort vergessen?
       </button>
     </form>
   );
