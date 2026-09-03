@@ -60,9 +60,9 @@ export default async function SeriennummernPage({
       <p className="mt-4 text-xs text-neutral-400">
         Vergabe hier über die Schaltfläche über der Tabelle oder direkt im Auftrag (Abschnitt Seriennummer).
         Automatisch = höchste bisher <em>automatisch</em> vergebene Nummer + 1 (manuell vergebene Nummern
-        zählen nicht); ist die Nummer schon belegt, wird die nächste freie genommen. Das Jahrpräfix kommt
-        aus dem Bauplan-Monat (bis 2025 einstellig, ab 2026 zweistellig). Gelöschte Nummern werden nicht
-        neu vergeben.
+        zählen nicht); ist die Nummer schon belegt, wird die nächste freie genommen. Eine gelöschte Nummer
+        wird wieder vergeben, wenn sie nicht mehr als 10 unter der nächsten Nummer liegt; ältere Lücken
+        bleiben frei. Das Jahrpräfix kommt aus dem Bauplan-Monat (bis 2025 einstellig, ab 2026 zweistellig).
       </p>
     </div>
   );

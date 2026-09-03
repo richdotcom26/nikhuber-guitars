@@ -80,12 +80,18 @@ export async function listSeriennummern(
   return { rows, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
 }
 
+/** Kürzlich gelöschte Nummern werden nur bis zu diesem Abstand zur Kandidatennummer neu vergeben. */
+const LUECKE_FENSTER = 10;
+
 /**
  * Nächste **automatische** laufende Nummer: die höchste bisher *automatisch* vergebene
  * lfd + 1 (manuell vergebene Nummern zählen dabei nicht), mindestens
- * `firma_setting.serien_start`. Ist die Kandidatennummer schon belegt — z. B. weil sie
- * vorab manuell vergeben wurde — wird so lange hochgezählt, bis eine freie Nummer
- * gefunden ist. Bereits (auch gelöscht) verwendete Nummern werden nie neu vergeben.
+ * `firma_setting.serien_start`. Ist diese Nummer schon von einer *aktiven* Seriennummer
+ * belegt (z. B. vorab manuell vergeben), wird hochgezählt.
+ *
+ * **Lücken-Reuse:** Eine *gelöschte* Nummer wird wieder vergeben, wenn sie nicht kleiner
+ * ist als (Kandidatennummer − 10). Ältere Lücken bleiben dauerhaft frei. Von mehreren
+ * wiederverwendbaren Lücken wird die niedrigste genommen.
  */
 export async function naechsteLfd(): Promise<number> {
   const fs = await getFirmaSetting();
@@ -94,11 +100,23 @@ export async function naechsteLfd(): Promise<number> {
       maxAuto: sql<number>`coalesce(max(${seriennummer.lfd}) filter (where ${seriennummer.manuell} = false), 0)`,
     })
     .from(seriennummer);
-  const belegt = new Set(
-    (await db.select({ lfd: seriennummer.lfd }).from(seriennummer)).map((r) => Number(r.lfd)),
-  );
-  let cand = Math.max(Number(maxAuto) + 1, fs.serienStart);
-  while (belegt.has(cand)) cand++;
+  const alle = await db
+    .select({ lfd: seriennummer.lfd, geloescht: seriennummer.geloescht })
+    .from(seriennummer);
+  const aktiv = new Set(alle.filter((r) => !r.geloescht).map((r) => Number(r.lfd)));
+  const geloescht = new Set(alle.filter((r) => r.geloescht).map((r) => Number(r.lfd)));
+  const alleLfd = new Set(alle.map((r) => Number(r.lfd)));
+
+  const N = Math.max(Number(maxAuto) + 1, fs.serienStart);
+
+  // gelöschte Nummer im Fenster [N-10, N) wiederverwenden (niedrigste zuerst)
+  for (let g = Math.max(N - LUECKE_FENSTER, fs.serienStart); g < N; g++) {
+    if (geloescht.has(g) && !aktiv.has(g)) return g;
+  }
+
+  // sonst N; alles jemals Verwendete oberhalb überspringen
+  let cand = N;
+  while (alleLfd.has(cand)) cand++;
   return cand;
 }
 
@@ -126,12 +144,30 @@ export async function vergebeSeriennummerAuto(auftragId: string) {
   const heute = new Date().toISOString().slice(0, 10);
 
   await db.transaction(async (tx) => {
-    const [sn] = await tx.insert(seriennummer).values({
-      lfd, jahrPraefix: praefix, auftragId, manuell: false, vergebenAm: heute,
-      createdBy: user.id, updatedBy: user.id,
-    }).returning({ id: seriennummer.id });
+    // Wird eine Lücke wiederverwendet, die alte (gelöschte) Zeile reaktivieren statt neu anlegen
+    // (der Unique-Constraint (jahr_praefix, lfd) verträgt keine zweite Zeile mit gleicher lfd).
+    const [tomb] = await tx
+      .select({ id: seriennummer.id })
+      .from(seriennummer)
+      .where(and(eq(seriennummer.lfd, lfd), eq(seriennummer.geloescht, true)))
+      .limit(1);
+
+    let snId: string;
+    if (tomb) {
+      await tx.update(seriennummer).set({
+        jahrPraefix: praefix, auftragId, manuell: false, geloescht: false, vergebenAm: heute,
+        updatedAt: new Date(), updatedBy: user.id,
+      }).where(eq(seriennummer.id, tomb.id));
+      snId = tomb.id;
+    } else {
+      const [sn] = await tx.insert(seriennummer).values({
+        lfd, jahrPraefix: praefix, auftragId, manuell: false, vergebenAm: heute,
+        createdBy: user.id, updatedBy: user.id,
+      }).returning({ id: seriennummer.id });
+      snId = sn.id;
+    }
     await tx.update(auftrag)
-      .set({ seriennummerId: sn.id, sernrVergebenAm: heute, updatedAt: new Date(), updatedBy: user.id })
+      .set({ seriennummerId: snId, sernrVergebenAm: heute, updatedAt: new Date(), updatedBy: user.id })
       .where(eq(auftrag.id, auftragId));
   });
 }
