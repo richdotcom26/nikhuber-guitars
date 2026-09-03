@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   type ActionState, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
+import { setTodoHinweis } from "@/lib/domain/stammdaten";
 import {
   addTodoKommentar, createTodo, deleteTodo, setTodoStatus, todoSchema, todoVerlauf, updateTodo,
 } from "@/lib/domain/todo";
@@ -60,6 +61,14 @@ export async function deleteTodoAction(_p: ActionState, fd: FormData): Promise<A
     await deleteTodo(String(fd.get("id") ?? ""));
     revalidatePath(BASE);
     return ok("Gelöscht.");
+  });
+}
+
+export async function setTodoHinweisAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await setTodoHinweis(String(fd.get("text") ?? ""));
+    revalidatePath(BASE);
+    return ok("Aushang gespeichert.");
   });
 }
 

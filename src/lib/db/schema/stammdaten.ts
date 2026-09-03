@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
-  boolean, date, integer, numeric, pgTable, primaryKey, text, unique, uuid,
+  boolean, date, integer, numeric, pgTable, primaryKey, text, timestamp, unique, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { regionEnum, spracheEnum, waehrungEnum, zaehlerArtEnum } from "./_enums";
@@ -40,6 +40,9 @@ export const firmaSetting = pgTable("firma_setting", {
   laceyUnterzeichner: text("lacey_unterzeichner").default("Elly Müller").notNull(), // (7q)
 
   kostensatzStunde: numeric("kostensatz_stunde", { precision: 12, scale: 2 }), // Kalkulation (§9.2)
+
+  todoHinweis: text("todo_hinweis"),                         // Aushang oben im ToDo-Reiter (an alle)
+  todoHinweisAm: timestamp("todo_hinweis_am", { withTimezone: true }),
   ...auditCols,
 });
 

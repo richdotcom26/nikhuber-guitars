@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
 import { requireUser } from "@/lib/domain/context";
+import { getFirmaSetting } from "@/lib/domain/stammdaten";
 import { listTodos, todoMitarbeiter, type TodoRichtung } from "@/lib/domain/todo";
 import { TodoBoard } from "./todo-board";
+import { TodoHinweisBox } from "./todo-hinweis-box";
 
 const RICHTUNGEN: { value: TodoRichtung; label: string }[] = [
   { value: "an_mich", label: "Mein Eingang" },
@@ -24,10 +26,12 @@ export default async function TodoPage({
   const mitErledigt = sp.erledigt === "1";
   const q = sp.q?.trim() ?? "";
 
-  const [rows, mitarbeiter] = await Promise.all([
+  const [rows, mitarbeiter, firma] = await Promise.all([
     listTodos({ richtung, mitErledigt, q }),
     todoMitarbeiter(),
+    getFirmaSetting(),
   ]);
+  const canEditHinweis = user.rolle === "ADMIN" || user.rolle === "BUERO";
 
   const beiMir = rows.filter((r) => r.aktuellBeiId === user.id && r.status !== "ERLEDIGT").length;
   const offen = rows.filter((r) => r.status !== "ERLEDIGT").length;
@@ -37,6 +41,13 @@ export default async function TodoPage({
       <PageHeader
         title="ToDo"
         description={`${beiMir} in meinem Eingang${offen !== beiMir ? ` · ${offen} insgesamt offen` : ""}`}
+      />
+
+      <TodoHinweisBox
+        key={firma.todoHinweisAm ? new Date(firma.todoHinweisAm).toISOString() : "none"}
+        hinweis={firma.todoHinweis ?? null}
+        stand={firma.todoHinweisAm ? new Date(firma.todoHinweisAm).toISOString() : null}
+        canEdit={canEditHinweis}
       />
 
       <form method="get" className="mb-4 flex flex-wrap items-center gap-2 text-sm">

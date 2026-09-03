@@ -94,6 +94,23 @@ export async function updateFirmaSetting(input: FirmaSettingInput) {
     .where(eq(firmaSetting.id, current.id));
 }
 
+/** Aushang oben im ToDo-Reiter (an alle Mitarbeiter). Leerer Text = ausblenden. */
+export async function setTodoHinweis(text: string | null) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const current = await getFirmaSetting();
+  const wert = text?.trim() || null;
+  await db
+    .update(firmaSetting)
+    .set({
+      todoHinweis: wert,
+      todoHinweisAm: wert ? new Date() : null,
+      updatedAt: new Date(),
+      updatedBy: user.id,
+    })
+    .where(eq(firmaSetting.id, current.id));
+}
+
 /* -------------------------------------------------------- zahlungsbedingung */
 
 export async function listZahlungsbedingungen() {
