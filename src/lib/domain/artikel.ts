@@ -20,6 +20,7 @@ export const ARTIKEL_SORT: Record<string, unknown> = {
   vkEur: artikel.vkEur,
   vkUs: artikel.vkUs,
   cites: artikel.geschuetztesHolzCites,
+  aktuell: artikel.aktuell,
 };
 
 const ARTIKELTYP_VALUES = ["HOLZ", "HANDELSWARE"] as const;
@@ -145,6 +146,8 @@ export interface ListArtikelParams {
   gruppe?: string;
   typ?: string;
   mitInaktiven?: boolean;
+  /** 'ja' = nur geprüfte, 'nein' = nur ungeprüfte, undefined = alle */
+  aktuell?: "ja" | "nein";
   /** 'nur' = nur MODEL, 'ohne' = ohne MODEL, undefined = alle */
   modelle?: "nur" | "ohne";
   page?: number;
@@ -166,6 +169,8 @@ export async function listArtikel(params: ListArtikelParams = {}) {
     filters.push(eq(artikel.artikeltyp, params.typ as (typeof ARTIKELTYP_VALUES)[number]));
   }
   if (!params.mitInaktiven) filters.push(eq(artikel.datensatzInaktiv, false));
+  if (params.aktuell === "ja") filters.push(eq(artikel.aktuell, true));
+  if (params.aktuell === "nein") filters.push(eq(artikel.aktuell, false));
   if (params.q?.trim()) {
     const like = `%${params.q.trim()}%`;
     filters.push(
@@ -193,6 +198,7 @@ export async function listArtikel(params: ListArtikelParams = {}) {
       vkUs: artikel.vkUs,
       geschuetztesHolzCites: artikel.geschuetztesHolzCites,
       datensatzInaktiv: artikel.datensatzInaktiv,
+      aktuell: artikel.aktuell,
     })
     .from(artikel)
     .where(where)
@@ -200,8 +206,17 @@ export async function listArtikel(params: ListArtikelParams = {}) {
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(artikel).where(where);
-  return { rows, total: count, page, pageSize, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
+  const [{ count, aktuellCount }] = await db
+    .select({
+      count: sql<number>`count(*)::int`,
+      aktuellCount: sql<number>`count(*) filter (where ${artikel.aktuell})::int`,
+    })
+    .from(artikel)
+    .where(where);
+  return {
+    rows, total: count, aktuellCount, page, pageSize,
+    pageCount: Math.max(Math.ceil(count / pageSize), 1),
+  };
 }
 
 /* --------------------------------------------------------------------- detail */
@@ -274,6 +289,21 @@ export async function toggleArtikelInaktiv(id: string, inaktiv: boolean) {
   await db
     .update(artikel)
     .set({ datensatzInaktiv: inaktiv, updatedAt: new Date(), updatedBy: user.id })
+    .where(eq(artikel.id, id));
+}
+
+/** „aktuell / geprüft"-Markierung setzen (Daten-Pflege-Überblick). */
+export async function setArtikelAktuell(id: string, aktuell: boolean) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  await db
+    .update(artikel)
+    .set({
+      aktuell,
+      aktuellAm: aktuell ? new Date() : null,
+      updatedAt: new Date(),
+      updatedBy: user.id,
+    })
     .where(eq(artikel.id, id));
 }
 

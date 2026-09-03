@@ -5,6 +5,7 @@ import { type Column, DataTable } from "@/components/ui/data-table";
 import { artikelName, gruppeLabel } from "@/lib/artikel-shared";
 import type { SortSpec } from "@/lib/table-sort";
 import { formatMoney } from "@/lib/utils";
+import { setAktuellAction } from "./actions";
 
 export interface ArtikelRow {
   id: string;
@@ -18,6 +19,7 @@ export interface ArtikelRow {
   vkUs: string | null;
   geschuetztesHolzCites: boolean | null;
   datensatzInaktiv: boolean | null;
+  aktuell: boolean | null;
 }
 
 export function ArtikelTable({
@@ -59,6 +61,27 @@ export function ArtikelTable({
     {
       key: "cites", header: "CITES", sortable: true,
       cell: (r) => (r.geschuetztesHolzCites ? "⚠︎" : ""),
+    },
+    {
+      key: "aktuell", header: "geprüft", sortable: true, align: "center",
+      cell: (r) => (
+        <form
+          action={setAktuellAction}
+          className="flex justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input type="hidden" name="id" value={r.id} />
+          <input type="hidden" name="aktuell" value={String(!r.aktuell)} />
+          <input
+            key={String(r.aktuell)}
+            type="checkbox"
+            defaultChecked={!!r.aktuell}
+            onChange={(e) => e.currentTarget.form?.requestSubmit()}
+            className="h-4 w-4 cursor-pointer accent-brand"
+            title={r.aktuell ? "geprüft — Klick: zurücksetzen" : "als geprüft markieren"}
+          />
+        </form>
+      ),
     },
   ];
 

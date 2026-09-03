@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean, integer, numeric, pgTable, primaryKey, text, uuid,
+  boolean, integer, numeric, pgTable, primaryKey, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols, softDelete } from "./_common";
 import {
@@ -70,6 +70,8 @@ export const artikel = pgTable("artikel", {
 
   datensatzInaktiv: boolean("datensatz_inaktiv").default(false).notNull(), // Archiv (Modell-Liste-Filter, 7x)
   schreibgeschuetzt: boolean("schreibgeschuetzt").default(false).notNull(),
+  aktuell: boolean("aktuell").default(false).notNull(),   // „geprüft / auf aktuellem Stand" (Daten-Pflege-Überblick)
+  aktuellAm: timestamp("aktuell_am", { withTimezone: true }),
   ...auditCols,
   ...softDelete,
 });

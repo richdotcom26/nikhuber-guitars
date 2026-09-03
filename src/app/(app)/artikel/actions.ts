@@ -6,7 +6,8 @@ import {
   type ActionState, fail, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  artikelSchema, createArtikel, duplicateArtikel, toggleArtikelInaktiv, updateArtikel,
+  artikelSchema, createArtikel, duplicateArtikel, setArtikelAktuell, toggleArtikelInaktiv,
+  updateArtikel,
 } from "@/lib/domain/artikel";
 
 export async function createArtikelAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -46,6 +47,14 @@ export async function toggleInaktivAction(_p: ActionState, fd: FormData): Promis
     revalidatePath("/modelle");
     return ok(inaktiv ? "Archiviert." : "Reaktiviert.");
   });
+}
+
+/** Plain-Form-Action (Checkbox in der Liste) — kein ActionState-Feedback nötig. */
+export async function setAktuellAction(fd: FormData): Promise<void> {
+  const id = String(fd.get("id") ?? "");
+  await setArtikelAktuell(id, fd.get("aktuell") === "true");
+  revalidatePath(`/artikel/${id}`);
+  revalidatePath("/artikel");
 }
 
 export async function duplicateArtikelAction(_p: ActionState, fd: FormData): Promise<ActionState> {

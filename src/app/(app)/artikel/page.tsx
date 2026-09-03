@@ -10,22 +10,23 @@ import { ArtikelTable } from "./artikel-table";
 export default async function ArtikelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; gruppe?: string; typ?: string; inaktiv?: string; page?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ q?: string; gruppe?: string; typ?: string; inaktiv?: string; aktuell?: string; page?: string; sort?: string; dir?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const gruppe = sp.gruppe ?? "";
   const typ = sp.typ ?? "";
   const mitInaktiven = sp.inaktiv === "1";
+  const aktuell = sp.aktuell === "ja" || sp.aktuell === "nein" ? sp.aktuell : undefined;
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(ARTIKEL_SORT), { key: "gruppe", dir: "asc" });
 
-  const { rows, total, pageCount } = await listArtikel({
-    q, gruppe, typ, mitInaktiven, modelle: "ohne", page, sort,
+  const { rows, total, aktuellCount, pageCount } = await listArtikel({
+    q, gruppe, typ, mitInaktiven, aktuell, modelle: "ohne", page, sort,
   });
 
   const query = {
-    q, gruppe, typ, inaktiv: mitInaktiven ? "1" : undefined, sort: sort.key, dir: sort.dir,
+    q, gruppe, typ, inaktiv: mitInaktiven ? "1" : undefined, aktuell, sort: sort.key, dir: sort.dir,
   };
   const withParams = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -38,7 +39,7 @@ export default async function ArtikelPage({
     <div>
       <PageHeader
         title="Artikel"
-        description={`${total} Artikel (ohne Modelle)`}
+        description={`${total} Artikel (ohne Modelle) · ${aktuellCount} geprüft`}
         actions={<Link href="/artikel/neu" className={buttonClasses()}>Neuer Artikel</Link>}
       />
 
@@ -46,6 +47,7 @@ export default async function ArtikelPage({
         {gruppe ? <input type="hidden" name="gruppe" value={gruppe} /> : null}
         {typ ? <input type="hidden" name="typ" value={typ} /> : null}
         {mitInaktiven ? <input type="hidden" name="inaktiv" value="1" /> : null}
+        {aktuell ? <input type="hidden" name="aktuell" value={aktuell} /> : null}
         <Input name="q" defaultValue={q} placeholder="Suche Name / Nr / Hersteller" className="h-8 w-64" />
         <Button size="sm" variant="outline" type="submit">Suchen</Button>
       </form>
@@ -65,6 +67,11 @@ export default async function ArtikelPage({
             <option value="HOLZ">Holz / Fertigung</option>
             <option value="HANDELSWARE">Handelsware</option>
           </select>
+          <select name="aktuell" defaultValue={aktuell ?? ""} className="h-8 rounded-lg border border-line bg-white px-2">
+            <option value="">Geprüft: alle</option>
+            <option value="ja">nur geprüfte</option>
+            <option value="nein">nur offene</option>
+          </select>
           <Button size="sm" variant="outline" type="submit">Filter</Button>
         </form>
         <Link
@@ -73,7 +80,7 @@ export default async function ArtikelPage({
         >
           {mitInaktiven ? "Inaktive ausblenden" : "Inaktive einblenden"}
         </Link>
-        {(gruppe || typ || q) ? (
+        {(gruppe || typ || q || aktuell) ? (
           <Link href="/artikel" className={buttonClasses("ghost", "sm")}>× Filter</Link>
         ) : null}
       </div>
