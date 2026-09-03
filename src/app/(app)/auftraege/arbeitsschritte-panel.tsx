@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/form";
 import { Input, Select } from "@/components/ui/input";
@@ -12,6 +13,9 @@ import { formatDate } from "@/lib/utils";
 import {
   alleVorherigenErledigtAction, saveSchrittBemerkungAction, setSchrittStatusAction,
 } from "./actions";
+
+/** „Kiste packen" (Order 29) ist kein linearer Schritt — hält den führenden Erledigt-Block nicht auf. */
+const KISTE_PACKEN_ORDER = 29;
 
 export interface SchrittRow {
   id: string;
@@ -34,21 +38,65 @@ export function ArbeitsschrittePanel({
   auftragId: string;
   rows: SchrittRow[];
 }) {
+  const [zeigeAlle, setZeigeAlle] = useState(false);
+
   const werkstatt = rows.filter((r) => r.typ === "WERKSTATT");
   const office = rows.filter((r) => r.typ !== "WERKSTATT");
 
+  // Führender Erledigt-Block: bis zur ersten noch nicht erledigten Nummer (ohne „Kiste packen").
+  // Nur diese erledigten Schritte werden ausgeblendet; später Erledigtes bleibt sichtbar.
+  const grenze = Math.min(
+    ...werkstatt
+      .filter((r) => r.status !== "ERLEDIGT" && r.reihenfolge !== KISTE_PACKEN_ORDER)
+      .map((r) => r.reihenfolge),
+    Number.POSITIVE_INFINITY,
+  );
+  const istVersteckt = (r: SchrittRow) => r.status === "ERLEDIGT" && r.reihenfolge < grenze;
+  const versteckt = werkstatt.filter(istVersteckt);
+  const werkstattSichtbar = zeigeAlle ? werkstatt : werkstatt.filter((r) => !istVersteckt(r));
+
   return (
     <div className="space-y-5">
-      <Section title="Werkstatt" auftragId={auftragId} rows={werkstatt} />
-      <Section title="Office / Compliance" auftragId={auftragId} rows={office} />
+      <Section
+        title="Werkstatt"
+        auftragId={auftragId}
+        rows={werkstattSichtbar}
+        gesamt={werkstatt.length}
+        toolbar={
+          versteckt.length > 0 ? (
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <span>
+                {zeigeAlle
+                  ? `${versteckt.length} erledigte Schritte werden angezeigt`
+                  : `${versteckt.length} erledigte Schritte ausgeblendet`}
+              </span>
+              <Button size="sm" variant="ghost" onClick={() => setZeigeAlle((v) => !v)}>
+                {zeigeAlle ? "ausgeblendete wieder verstecken" : "alle anzeigen"}
+              </Button>
+            </div>
+          ) : null
+        }
+      />
+      <Section title="Office / Compliance" auftragId={auftragId} rows={office} gesamt={office.length} />
     </div>
   );
 }
 
-function Section({ title, auftragId, rows }: { title: string; auftragId: string; rows: SchrittRow[] }) {
+function Section({
+  title, auftragId, rows, gesamt, toolbar,
+}: {
+  title: string;
+  auftragId: string;
+  rows: SchrittRow[];
+  gesamt: number;
+  toolbar?: React.ReactNode;
+}) {
   return (
     <Card>
-      <CardHeader><CardTitle>{title} ({rows.length})</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>{title} ({gesamt})</CardTitle>
+        {toolbar}
+      </CardHeader>
       <CardContent>
         <Table>
           <THead>
@@ -64,7 +112,9 @@ function Section({ title, auftragId, rows }: { title: string; auftragId: string;
           <TBody>
             {rows.map((r) => <Row key={`${r.id}:${r.status}`} auftragId={auftragId} row={r} />)}
             {rows.length === 0 ? (
-              <TR><TD colSpan={6} className="py-3 text-center text-neutral-400">Keine Schritte.</TD></TR>
+              <TR><TD colSpan={6} className="py-3 text-center text-neutral-400">
+                {gesamt > 0 ? "Alle Schritte erledigt und ausgeblendet." : "Keine Schritte."}
+              </TD></TR>
             ) : null}
           </TBody>
         </Table>
