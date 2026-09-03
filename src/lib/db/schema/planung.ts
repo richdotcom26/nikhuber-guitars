@@ -43,6 +43,7 @@ export const todo = pgTable("todo", {
   aufgabe: text("aufgabe").notNull(),
   empfaengerId: uuid("empfaenger_id"),          // -> app_user (relations)
   absenderId: uuid("absender_id"),              // -> app_user (relations)
+  aktuellBeiId: uuid("aktuell_bei_id"),         // -> app_user: in wessen Eingang die Aufgabe gerade liegt
   prio: todoPrioEnum("prio").default("GELEGENTLICH").notNull(),
   status: todoStatusEnum("status").default("BESTELLUNG").notNull(),
   auftragId: uuid("auftrag_id").references(() => auftrag.id, { onDelete: "set null" }),
@@ -53,7 +54,21 @@ export const todo = pgTable("todo", {
   ...auditCols,
 }, (t) => ({
   empfaengerIdx: index("todo_empfaenger_idx").on(t.empfaengerId),
+  aktuellBeiIdx: index("todo_aktuell_bei_idx").on(t.aktuellBeiId),
   statusIdx: index("todo_status_idx").on(t.status),
+}));
+
+/** Konversation zu einer Aufgabe: Kommentare, Rückfragen und Status-Einträge. */
+export const todoKommentar = pgTable("todo_kommentar", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  todoId: uuid("todo_id").notNull().references(() => todo.id, { onDelete: "cascade" }),
+  autorId: uuid("autor_id"),                    // -> app_user (relations)
+  text: text("text"),                           // null bei reinem Status-Eintrag
+  statusNachher: todoStatusEnum("status_nachher"), // gesetzt, wenn der Eintrag eine Statusänderung begleitet
+  weitergabeAnId: uuid("weitergabe_an_id"),     // gesetzt bei „Antworten" — Ball ging an diese Person
+  ...auditCols,
+}, (t) => ({
+  todoIdx: index("todo_kommentar_todo_idx").on(t.todoId),
 }));
 
 /** §9.1 Monatsreport — Struktur je nach KPI-Katalog (7z); befüllt per Cron. Platzhalter. */

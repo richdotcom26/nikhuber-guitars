@@ -7,9 +7,9 @@ import { listTodos, todoMitarbeiter, type TodoRichtung } from "@/lib/domain/todo
 import { TodoBoard } from "./todo-board";
 
 const RICHTUNGEN: { value: TodoRichtung; label: string }[] = [
-  { value: "alle", label: "Alle meine" },
-  { value: "an_mich", label: "An mich" },
-  { value: "von_mir", label: "Von mir gesendet" },
+  { value: "an_mich", label: "Mein Eingang" },
+  { value: "von_mir", label: "Gesendet / wartet" },
+  { value: "alle", label: "Alle" },
 ];
 
 export default async function TodoPage({
@@ -20,7 +20,7 @@ export default async function TodoPage({
   const sp = await searchParams;
   const user = await requireUser();
   const richtung: TodoRichtung =
-    sp.richtung === "an_mich" || sp.richtung === "von_mir" ? sp.richtung : "alle";
+    sp.richtung === "von_mir" || sp.richtung === "alle" ? sp.richtung : "an_mich";
   const mitErledigt = sp.erledigt === "1";
   const q = sp.q?.trim() ?? "";
 
@@ -29,14 +29,14 @@ export default async function TodoPage({
     todoMitarbeiter(),
   ]);
 
-  const anMich = rows.filter((r) => r.empfaengerId === user.id && r.status !== "ERLEDIGT").length;
+  const beiMir = rows.filter((r) => r.aktuellBeiId === user.id && r.status !== "ERLEDIGT").length;
   const offen = rows.filter((r) => r.status !== "ERLEDIGT").length;
 
   return (
     <div>
       <PageHeader
         title="ToDo"
-        description={`${anMich} für mich offen${offen !== anMich ? ` · ${offen} insgesamt offen` : ""}`}
+        description={`${beiMir} in meinem Eingang${offen !== beiMir ? ` · ${offen} insgesamt offen` : ""}`}
       />
 
       <form method="get" className="mb-4 flex flex-wrap items-center gap-2 text-sm">

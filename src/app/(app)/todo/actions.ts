@@ -5,10 +5,31 @@ import {
   type ActionState, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  createTodo, deleteTodo, setTodoStatus, todoSchema, updateTodo,
+  addTodoKommentar, createTodo, deleteTodo, setTodoStatus, todoSchema, todoVerlauf, updateTodo,
 } from "@/lib/domain/todo";
 
 const BASE = "/todo";
+
+export interface VerlaufEintrag {
+  id: string;
+  text: string | null;
+  statusNachher: string | null;
+  autorName: string | null;
+  weitergabeAnName: string | null;
+  createdAt: string;
+}
+
+export async function todoVerlaufAction(id: string): Promise<VerlaufEintrag[]> {
+  const rows = await todoVerlauf(id);
+  return rows.map((r) => ({
+    id: r.id,
+    text: r.text,
+    statusNachher: r.statusNachher,
+    autorName: r.autorName,
+    weitergabeAnName: r.weitergabeAnName,
+    createdAt: (r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)).toISOString(),
+  }));
+}
 
 export async function createTodoAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async () => {
@@ -39,5 +60,16 @@ export async function deleteTodoAction(_p: ActionState, fd: FormData): Promise<A
     await deleteTodo(String(fd.get("id") ?? ""));
     revalidatePath(BASE);
     return ok("Gelöscht.");
+  });
+}
+
+export async function addTodoKommentarAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await addTodoKommentar(String(fd.get("id") ?? ""), {
+      text: String(fd.get("text") ?? ""),
+      antworten: fd.get("antworten") === "1",
+    });
+    revalidatePath(BASE);
+    return ok("Gespeichert.");
   });
 }

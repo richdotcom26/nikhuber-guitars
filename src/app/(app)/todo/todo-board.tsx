@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
@@ -9,11 +9,13 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { IDLE } from "@/lib/domain/action-state";
 import {
-  TODO_PRIO, TODO_PRIO_LABEL, TODO_STATUS, type TodoPrio, type TodoStatus,
+  TODO_PRIO, TODO_PRIO_LABEL, TODO_STATUS, TODO_STATUS_LABEL,
+  type TodoPrio, type TodoStatus,
 } from "@/lib/todo-shared";
 import { formatDate } from "@/lib/utils";
 import {
-  createTodoAction, deleteTodoAction, setTodoStatusAction, updateTodoAction,
+  addTodoKommentarAction, createTodoAction, deleteTodoAction, setTodoStatusAction,
+  todoVerlaufAction, updateTodoAction, type VerlaufEintrag,
 } from "./actions";
 
 interface Mitarbeiter { id: string; name: string }
@@ -30,10 +32,13 @@ export interface TodoRow {
   updatedAt: string;
   empfaengerId: string | null;
   absenderId: string | null;
+  aktuellBeiId: string | null;
   empfaengerName: string | null;
   absenderName: string | null;
+  aktuellBeiName: string | null;
   auftragId: string | null;
   auftragNummer: string | null;
+  kommentarAnzahl: number;
 }
 
 export function TodoBoard({
@@ -46,6 +51,14 @@ export function TodoBoard({
   currentUserId: string;
 }) {
   const [adding, setAdding] = useState(false);
+  // offene Detail-Panels hier halten -> überleben das Remount einer Zeile nach dem Kommentieren
+  const [offen, setOffen] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setOffen((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
 
   return (
     <div>
@@ -65,21 +78,29 @@ export function TodoBoard({
       <Table>
         <THead>
           <TR>
-            <TH className="w-28">Empfänger</TH>
-            <TH className="w-24">Absender</TH>
-            <TH className="w-28">Fällig</TH>
+            <TH className="w-24">Empfänger</TH>
+            <TH className="w-20">Absender</TH>
+            <TH className="w-24">liegt bei</TH>
+            <TH className="w-24">Fällig</TH>
             <TH className="w-32">Status</TH>
-            <TH className="w-24">Prio</TH>
+            <TH className="w-20">Prio</TH>
             <TH>Aufgabe</TH>
-            <TH className="w-24 text-right">Aktion</TH>
+            <TH className="w-32 text-right">Aktion</TH>
           </TR>
         </THead>
         <TBody>
           {rows.map((r) => (
-            <TodoLine key={`${r.id}:${r.updatedAt}`} row={r} mitarbeiter={mitarbeiter} currentUserId={currentUserId} />
+            <TodoLine
+              key={`${r.id}:${r.updatedAt}`}
+              row={r}
+              mitarbeiter={mitarbeiter}
+              currentUserId={currentUserId}
+              detailOffen={offen.has(r.id)}
+              onToggleDetail={() => toggle(r.id)}
+            />
           ))}
           {rows.length === 0 ? (
-            <TR><TD colSpan={7} className="py-6 text-center text-neutral-400">Keine Aufgaben.</TD></TR>
+            <TR><TD colSpan={8} className="py-6 text-center text-neutral-400">Keine Aufgaben.</TD></TR>
           ) : null}
         </TBody>
       </Table>
@@ -88,14 +109,16 @@ export function TodoBoard({
 }
 
 function TodoLine({
-  row, mitarbeiter, currentUserId,
+  row, mitarbeiter, currentUserId, detailOffen, onToggleDetail,
 }: {
   row: TodoRow;
   mitarbeiter: Mitarbeiter[];
   currentUserId: string;
+  detailOffen: boolean;
+  onToggleDetail: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const anMich = row.empfaengerId === currentUserId;
+  const anMich = row.aktuellBeiId === currentUserId;
   const [stState, stAction] = useActionState(setTodoStatusAction, IDLE);
   const [delState, delAction] = useActionState(deleteTodoAction, IDLE);
   const stForm = useRef<HTMLFormElement>(null);
@@ -103,7 +126,7 @@ function TodoLine({
   if (editing) {
     return (
       <TR className="bg-neutral-50">
-        <TD colSpan={7} className="py-2">
+        <TD colSpan={8} className="py-2">
           <TodoForm
             row={row}
             mitarbeiter={mitarbeiter}
@@ -117,57 +140,132 @@ function TodoLine({
 
   const faellig = row.faelligBis;
   const ueberfaellig = faellig && row.status !== "ERLEDIGT" && faellig < new Date().toISOString().slice(0, 10);
+  const beiMir = row.aktuellBeiId === currentUserId;
 
   return (
-    <TR className={anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
-      <TD className="text-neutral-700">
-        {row.empfaengerName ?? "–"}
-        {anMich ? <span className="ml-1 text-xs text-brand">(ich)</span> : null}
-      </TD>
-      <TD className="text-neutral-500">
-        {row.absenderId === currentUserId ? "ich" : row.absenderName ?? "–"}
-      </TD>
-      <TD className={ueberfaellig ? "font-medium text-red-600" : "text-neutral-500"}>
-        {faellig ? formatDate(faellig) : "–"}
-      </TD>
-      <TD>
-        <form ref={stForm} action={stAction}>
-          <input type="hidden" name="id" value={row.id} />
-          <Select
-            name="status"
-            defaultValue={row.status}
-            className="h-7 w-32 text-xs"
-            onChange={() => stForm.current?.requestSubmit()}
-          >
-            {TODO_STATUS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </Select>
-        </form>
-        {stState && !stState.ok ? <p className="text-xs text-red-600">{stState.message}</p> : null}
-      </TD>
-      <TD>
-        <Badge tone={row.prio === "DRINGEND" ? "red" : "neutral"}>{TODO_PRIO_LABEL[row.prio]}</Badge>
-      </TD>
-      <TD>
-        <div className="max-w-xl whitespace-pre-wrap text-sm text-neutral-700">{row.aufgabe}</div>
-        {row.auftragNummer ? (
-          <Link href={`/auftraege/${row.auftragId}`} className="text-xs text-blue-700 hover:underline">
-            → {row.auftragNummer}
-          </Link>
-        ) : null}
-      </TD>
-      <TD className="text-right">
-        <div className="flex justify-end gap-1">
-          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearb.</Button>
-          {row.absenderId === currentUserId ? (
-            <form action={delAction} className="inline" onSubmit={(e) => { if (!confirm("Aufgabe löschen?")) e.preventDefault(); }}>
-              <input type="hidden" name="id" value={row.id} />
-              <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
-            </form>
+    <>
+      <TR className={anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
+        <TD className="text-neutral-700">
+          {row.empfaengerId === currentUserId ? "ich" : row.empfaengerName ?? "–"}
+        </TD>
+        <TD className="text-neutral-500">
+          {row.absenderId === currentUserId ? "ich" : row.absenderName ?? "–"}
+        </TD>
+        <TD className={beiMir ? "text-xs font-medium text-brand" : "text-xs text-neutral-500"}>
+          {beiMir ? "bei mir" : row.aktuellBeiName ?? "–"}
+        </TD>
+        <TD className={ueberfaellig ? "font-medium text-red-600" : "text-neutral-500"}>
+          {faellig ? formatDate(faellig) : "–"}
+        </TD>
+        <TD>
+          <form ref={stForm} action={stAction}>
+            <input type="hidden" name="id" value={row.id} />
+            <Select
+              name="status"
+              defaultValue={row.status}
+              className="h-7 w-32 text-xs"
+              onChange={() => stForm.current?.requestSubmit()}
+            >
+              {TODO_STATUS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </Select>
+          </form>
+          {stState && !stState.ok ? <p className="text-xs text-red-600">{stState.message}</p> : null}
+        </TD>
+        <TD>
+          <Badge tone={row.prio === "DRINGEND" ? "red" : "neutral"}>{TODO_PRIO_LABEL[row.prio]}</Badge>
+        </TD>
+        <TD>
+          <div className="max-w-xl whitespace-pre-wrap text-sm text-neutral-700">{row.aufgabe}</div>
+          {row.auftragNummer ? (
+            <Link href={`/auftraege/${row.auftragId}`} className="text-xs text-blue-700 hover:underline">
+              → {row.auftragNummer}
+            </Link>
           ) : null}
+        </TD>
+        <TD className="text-right">
+          <div className="flex justify-end gap-1">
+            <Button size="sm" variant="ghost" onClick={onToggleDetail}>
+              {detailOffen ? "▾" : "💬"}{row.kommentarAnzahl > 0 ? ` ${row.kommentarAnzahl}` : ""}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearb.</Button>
+            {row.absenderId === currentUserId ? (
+              <form action={delAction} className="inline" onSubmit={(e) => { if (!confirm("Aufgabe löschen?")) e.preventDefault(); }}>
+                <input type="hidden" name="id" value={row.id} />
+                <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
+              </form>
+            ) : null}
+          </div>
+          {delState && !delState.ok ? <p className="text-right text-xs text-red-600">{delState.message}</p> : null}
+        </TD>
+      </TR>
+      {detailOffen ? (
+        <TR>
+          <TD colSpan={8} className="bg-neutral-50 p-0">
+            <TodoDetail row={row} currentUserId={currentUserId} />
+          </TD>
+        </TR>
+      ) : null}
+    </>
+  );
+}
+
+function TodoDetail({ row, currentUserId }: { row: TodoRow; currentUserId: string }) {
+  const [verlauf, setVerlauf] = useState<VerlaufEintrag[] | null>(null);
+  const [pending, start] = useTransition();
+  const [state, action] = useActionState(addTodoKommentarAction, IDLE);
+  const beiMir = row.aktuellBeiId === currentUserId;
+
+  // Beim (Re-)Mount laden. Nach einem Kommentar sorgt revalidatePath für ein neues
+  // row.updatedAt -> die Zeile (Key) remountet -> dieses Panel lädt frisch, Textfeld leer.
+  useEffect(() => {
+    start(async () => setVerlauf(await todoVerlaufAction(row.id)));
+  }, [row.id]);
+
+  return (
+    <div className="space-y-3 px-3 py-3 text-sm">
+      <div className="space-y-2">
+        {verlauf === null && pending ? <p className="text-xs text-neutral-400">lädt …</p> : null}
+        {verlauf && verlauf.length === 0 ? (
+          <p className="text-xs text-neutral-400">Noch keine Einträge.</p>
+        ) : null}
+        {verlauf?.map((e) => (
+          <div key={e.id} className="rounded-md border border-line bg-white px-2.5 py-1.5">
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <span className="font-medium text-ink">{e.autorName ?? "?"}</span>
+              <span>{new Date(e.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</span>
+              {e.statusNachher ? (
+                <Badge tone="blue">Status → {TODO_STATUS_LABEL[e.statusNachher as TodoStatus] ?? e.statusNachher}</Badge>
+              ) : null}
+              {e.weitergabeAnName ? <Badge tone="amber">→ {e.weitergabeAnName}</Badge> : null}
+            </div>
+            {e.text ? <p className="mt-1 whitespace-pre-wrap text-ink">{e.text}</p> : null}
+          </div>
+        ))}
+      </div>
+
+      <form action={action} className="flex flex-col gap-2">
+        <input type="hidden" name="id" value={row.id} />
+        <Textarea
+          name="text"
+          defaultValue=""
+          placeholder={beiMir ? "Kommentar oder Rückfrage …" : "Kommentar …"}
+          rows={2}
+          className="w-full"
+        />
+        <div className="flex flex-wrap gap-2">
+          <SubmitButton size="sm" variant="outline" pendingText="…">Kommentar</SubmitButton>
+          <button
+            type="submit"
+            name="antworten"
+            value="1"
+            className="inline-flex h-8 items-center rounded-lg bg-brand px-3 text-sm font-medium text-white hover:bg-brand-hover"
+          >
+            Antworten &amp; zurück an {row.absenderId === currentUserId ? (row.empfaengerName ?? "Empfänger") : (row.absenderName ?? "Absender")}
+          </button>
         </div>
-        {delState && !delState.ok ? <p className="text-right text-xs text-red-600">{delState.message}</p> : null}
-      </TD>
-    </TR>
+        {state && !state.ok ? <FormMessage state={state} /> : null}
+      </form>
+    </div>
   );
 }
 
