@@ -7,8 +7,8 @@ import {
   type ActionState, fail, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  addSchritt as _addSchritt, alleVorherigenErledigt, setSchrittBemerkung, setSchrittStatus,
-  VORRAT_NR,
+  addSchritt as _addSchritt, alleVorherigenErledigt, recomputeAuftragCompliance,
+  setSchrittBemerkung, setSchrittStatus, VORRAT_NR,
 } from "@/lib/domain/arbeitsschritt";
 import {
   auftragKopfSchema, changeAuftragStatus, convertAuftragsart, createAuftrag,
@@ -89,6 +89,7 @@ export async function applyVorlageAction(_p: ActionState, fd: FormData): Promise
     const overwrite = fd.get("overwrite") === "true";
     if (!modellId) return fail("Kein Modell gewählt.");
     await applyModellvorlage("auftrag", id, modellId, overwrite);
+    await recomputeAuftragCompliance(id);
     rev(id);
     return ok("Modellvorlage übernommen.");
   });

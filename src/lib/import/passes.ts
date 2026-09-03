@@ -798,6 +798,66 @@ export async function importAuftraege(ctx: Ctx) {
     `arbeitsschritte ${schritte.length}, specs ${specs.length}`);
 }
 
+// ===================================================== arbeitsschritte (D)
+/**
+ * Nur-Arbeitsschritte-Pass (ex Ninox D „Arbeitsschritte-Auftrag"). Läuft eigenständig,
+ * ohne `auftrag` anzufassen. Übernimmt jeden verknüpften Schritt für alle bereits
+ * importierten PRODUKTION-Aufträge (jeder Schritt wird in der Werkstatt einzeln abgehakt).
+ */
+export async function importArbeitsschritte(ctx: Ctx) {
+  const dd = ctx.dump.typeIdByCaption("Arbeitsschritte-Auftrag");
+  const a = ctx.dump.typeIdByCaption("Aufträge");
+  if (!dd || !a) return ctx.log("Typ 'Arbeitsschritte-Auftrag' bzw. 'Aufträge' nicht gefunden");
+
+  const vorratByNr = new Map<number, string>();
+  for (const r of await db
+    .select({ id: s.arbeitsschrittVorrat.id, nr: s.arbeitsschrittVorrat.nr })
+    .from(s.arbeitsschrittVorrat)) {
+    vorratByNr.set(r.nr, r.id);
+  }
+
+  // Nur PRODUKTION-Aufträge bekommen Arbeitsschritte (7f).
+  const prodIds = new Set(
+    (await db
+      .select({ id: s.auftrag.id })
+      .from(s.auftrag)
+      .where(sql`auftragsart = 'PRODUKTION'`)
+    ).map((r) => r.id),
+  );
+
+  const schritte: Record<string, unknown>[] = [];
+  let ohneAuftrag = 0;
+  let ohneVorrat = 0;
+  let nichtProd = 0;
+  for (const { f: rec } of ctx.dump.rows(dd)) {
+    const auftragId = ctx.ids.lookup(a, f(ctx, dd, rec, "AUFTRAG") as number);
+    if (!auftragId) { ohneAuftrag++; continue; }
+    if (!prodIds.has(auftragId)) { nichtProd++; continue; }
+    const vorratNr = Number(f(ctx, dd, rec, "ARBEITSSCHRITTEVORRAT"));
+    const vorratId = vorratByNr.get(vorratNr);
+    if (!vorratId) { ohneVorrat++; continue; }
+    const dauerMs = Number(f(ctx, dd, rec, "Dauer"));
+    const ma = ninoxStr(f(ctx, dd, rec, "MA"));
+    schritte.push({
+      auftragId,
+      vorratId,
+      status: SCHRITT_STATUS[String(f(ctx, dd, rec, "Status"))] ?? "OFFEN",
+      erledigtAm: ninoxDate(f(ctx, dd, rec, "Date + Time")),
+      maImport: ma === "undefined" || ma === "null" ? null : ma,
+      bemerkungBearbeiter: ninoxStr(f(ctx, dd, rec, "Bemerkung des Bearbeiters")),
+      wartenAuf: WARTEN_AUF[String(f(ctx, dd, rec, "Warten auf"))] ?? null,
+      dauerMinuten: Number.isFinite(dauerMs) && dauerMs > 0 ? Math.round(dauerMs / 60000) : null,
+    });
+  }
+
+  await db.delete(s.arbeitsschritt);
+  await insertChunked(s.arbeitsschritt, schritte, 500);
+  ctx.log(
+    `arbeitsschritte ${schritte.length} für ${prodIds.size} PRODUKTION-Aufträge ` +
+    `(übersprungen: ${ohneAuftrag} ohne Auftrag, ${nichtProd} nicht Produktion, ${ohneVorrat} ohne Vorrat-Nr)`,
+  );
+}
+
 // ===================================================== rechnungen (BC + CC)
 const RECHNUNG_BELEGART: Record<string, string> = {
   "1": "RECHNUNG", "2": "STORNORECHNUNG", "5": "GUTSCHRIFT",

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { type ActionState, ok, runAction } from "@/lib/domain/action-state";
+import { recomputeAuftragCompliance } from "@/lib/domain/arbeitsschritt";
 import {
   nextReihenfolge, setFreitext, setSlot, type SpecTraeger,
 } from "@/lib/domain/specs";
@@ -12,6 +13,11 @@ const PATH: Record<SpecTraeger, (id: string) => string> = {
   angebot: (id) => `/angebote/${id}`,
   auftrag: (id) => `/auftraege/${id}`,
 };
+
+/** Nach Spec-Änderung an einem Auftrag den Cites-Arbeitsschritt neu ableiten (7d). */
+async function afterAuftragSpec(traeger: SpecTraeger, traegerId: string) {
+  if (traeger === "auftrag") await recomputeAuftragCompliance(traegerId);
+}
 
 export async function setSlotAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(async () => {
@@ -24,6 +30,7 @@ export async function setSlotAction(_prev: ActionState, formData: FormData): Pro
     const aufpreis = formData.get("aufpreis") === "on" || formData.get("aufpreis") === "true";
 
     await setSlot(traeger, traegerId, slotKey, reihenfolge, artikelId, aufpreis);
+    await afterAuftragSpec(traeger, traegerId);
     revalidatePath(PATH[traeger](traegerId));
     return ok(artikelId ? "Spec gespeichert." : "Spec entfernt.");
   });
@@ -38,6 +45,7 @@ export async function addMultiSlotAction(_prev: ActionState, formData: FormData)
     if (!artikelId) return ok("Kein Artikel gewählt.");
     const rf = await nextReihenfolge(traeger, traegerId, slotKey);
     await setSlot(traeger, traegerId, slotKey, rf, artikelId, false);
+    await afterAuftragSpec(traeger, traegerId);
     revalidatePath(PATH[traeger](traegerId));
     return ok("Spec hinzugefügt.");
   });

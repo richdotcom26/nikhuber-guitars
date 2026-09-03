@@ -1,7 +1,9 @@
 import "server-only";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { arbeitsschritt, arbeitsschrittVorrat, auftrag } from "@/lib/db/schema";
+import {
+  arbeitsschritt, arbeitsschrittVorrat, artikel, auftrag, specBelegung,
+} from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 
@@ -252,6 +254,30 @@ export async function recomputeComplianceSteps(
     region != null && region !== "D" && region !== "EU",
     user.id,
   );
+}
+
+/** Ob irgendein Holz-Spec-Artikel des Auftrags als geschütztes Holz (CITES) markiert ist (7d). */
+export async function hatCitesHolzImAuftrag(auftragId: string): Promise<boolean> {
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(specBelegung)
+    .innerJoin(artikel, eq(artikel.id, specBelegung.artikelId))
+    .where(and(eq(specBelegung.auftragId, auftragId), eq(artikel.geschuetztesHolzCites, true)));
+  return n > 0;
+}
+
+/**
+ * Compliance-Schritte eines Auftrags gegen den aktuellen Stand neu ableiten
+ * (Kunde-Region → Fish&Wildlife / Ausfuhrantrag, geschütztes Holz in den Specs → Cites).
+ * Nur PRODUKTION; entfernt nur noch offene Schritte, bereits bearbeitete bleiben.
+ */
+export async function recomputeAuftragCompliance(auftragId: string) {
+  const [a] = await db
+    .select({ region: auftrag.kdRegion, art: auftrag.auftragsart })
+    .from(auftrag)
+    .where(eq(auftrag.id, auftragId));
+  if (!a || a.art !== "PRODUKTION") return;
+  await recomputeComplianceSteps(auftragId, a.region ?? null, await hatCitesHolzImAuftrag(auftragId));
 }
 
 /** Alle Arbeitsschritte eines Auftrags entfernen (None-Guitar / Service). */

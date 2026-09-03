@@ -17,8 +17,9 @@ import type { Ctx } from "../src/lib/import/passes";
 import {
   importZahlungsbedingung, importStaat, importHolzart, importHolzVokabeln, importLagerort,
   importKunde, importArtikel, importArtikelModell, importModellSpecs,
-  importAngebote, importAuftraege, importRechnungen, importHolzInventar, importSeriennummer,
-  importBetriebsmittel, importMitarbeiter, importTodo, importMailversand, importModellgruppe,
+  importAngebote, importAuftraege, importArbeitsschritte, importRechnungen, importHolzInventar,
+  importSeriennummer, importBetriebsmittel, importMitarbeiter, importTodo, importMailversand,
+  importModellgruppe,
 } from "../src/lib/import/passes";
 
 const DATA_DB = resolve(process.env.NINOX_DATA_DB ?? "ninox-dump/data.db");
@@ -53,6 +54,7 @@ async function main() {
     ["Modell-Specs", importModellSpecs],
     ["Angebote", importAngebote],
     ["Aufträge", importAuftraege],
+    ["Arbeitsschritte", importArbeitsschritte],
     ["Seriennummern", importSeriennummer],
     ["Rechnungen", importRechnungen],
     ["Holzbestand", importHolzInventar],
