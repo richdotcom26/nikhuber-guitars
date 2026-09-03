@@ -130,11 +130,13 @@ function Row({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
   const [bemState, bemAction] = useActionState(saveSchrittBemerkungAction, IDLE);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // „Kiste vollständig" ist ein Sonderstatus nur für „Kiste packen" (Order 29).
+  // „Kiste packen" (Order 29): nur offen / Kiste vollständig. Alle anderen Schritte:
+  // offen / erledigt / Warten auf. Der aktuell gesetzte Status bleibt immer wählbar (Altbestand).
+  const erlaubt = row.reihenfolge === KISTE_PACKEN_ORDER
+    ? (["OFFEN", "KISTE_VOLLSTAENDIG"] as const)
+    : (["OFFEN", "ERLEDIGT", "WARTEN_AUF"] as const);
   const statusOptionen = SCHRITT_STATUS_VALUES.filter(
-    (s) => s !== "KISTE_VOLLSTAENDIG"
-      || row.reihenfolge === KISTE_PACKEN_ORDER
-      || row.status === "KISTE_VOLLSTAENDIG",
+    (s) => (erlaubt as readonly string[]).includes(s) || s === row.status,
   );
 
   return (
