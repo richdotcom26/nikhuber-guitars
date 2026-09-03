@@ -18,24 +18,22 @@ function auftragLabel(h: AuftragHit) {
 export function NeueSnPanel({ naechste }: { naechste: number }) {
   const [open, setOpen] = useState(false);
 
-  if (!open) {
-    return (
-      <Button size="sm" onClick={() => setOpen(true)}>
-        Neue Seriennummer vergeben
-      </Button>
-    );
-  }
-
   return (
-    <Card className="mb-4 max-w-xl">
-      <CardHeader>
-        <CardTitle>Neue Seriennummer vergeben</CardTitle>
-        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Schließen</Button>
-      </CardHeader>
-      <CardContent>
-        <Picker naechste={naechste} onDone={() => setOpen(false)} />
-      </CardContent>
-    </Card>
+    <div>
+      <Button size="sm" onClick={() => setOpen((o) => !o)}>
+        {open ? "Abbrechen" : "Neue Seriennummer vergeben"}
+      </Button>
+      {open ? (
+        <Card className="mt-3 w-[22rem] max-w-full">
+          <CardHeader>
+            <CardTitle>Neue Seriennummer vergeben</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Picker naechste={naechste} onDone={() => setOpen(false)} />
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
   );
 }
 

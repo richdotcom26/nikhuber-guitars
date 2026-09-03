@@ -33,17 +33,20 @@ export default async function SeriennummernPage({
     <div>
       <PageHeader
         title="Seriennummern"
-        description={`${total} vergeben · nächste automatische Nr: ${next}`}
+        actions={
+          <span className="text-sm text-muted">
+            {total} vergeben · nächste automatische Nr: {next}
+          </span>
+        }
       />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-start gap-2">
+        <form method="get" className="flex items-center gap-2">
+          <Input name="q" defaultValue={q} placeholder="Suche Seriennr / Auftrag / Kunde" className="h-8 w-72" />
+          <Button size="sm" variant="outline" type="submit">Suchen</Button>
+        </form>
         <NeueSnPanel naechste={next} />
       </div>
-
-      <form method="get" className="mb-4 flex items-center gap-2">
-        <Input name="q" defaultValue={q} placeholder="Suche Seriennr / Auftrag / Kunde" className="h-8 w-72" />
-        <Button size="sm" variant="outline" type="submit">Suchen</Button>
-      </form>
 
       <SeriennummernTable rows={rows} sort={sort} query={query} />
 
@@ -58,7 +61,7 @@ export default async function SeriennummernPage({
       ) : null}
 
       <p className="mt-4 text-xs text-neutral-400">
-        Vergabe hier über die Schaltfläche über der Tabelle oder direkt im Auftrag (Abschnitt Seriennummer).
+        Vergabe hier über die Schaltfläche neben der Suche oder direkt im Auftrag (Abschnitt Seriennummer).
         Automatisch = höchste bisher <em>automatisch</em> vergebene Nummer + 1 (manuell vergebene Nummern
         zählen nicht); ist die Nummer schon belegt, wird die nächste freie genommen. Eine gelöschte Nummer
         wird wieder vergeben, wenn sie nicht mehr als 10 unter der nächsten Nummer liegt; ältere Lücken
