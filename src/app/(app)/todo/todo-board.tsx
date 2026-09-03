@@ -205,6 +205,18 @@ function TodoLine({
           >
             {row.aufgabe}
           </button>
+          {row.kommentarAnzahl > 0 ? (
+            <div>
+              <button
+                type="button"
+                onClick={onToggleDetail}
+                title={`${row.kommentarAnzahl} Kommentar${row.kommentarAnzahl === 1 ? "" : "e"} / Rückfragen — Verlauf öffnen`}
+                className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand hover:bg-brand/20"
+              >
+                💬 Konversation ({row.kommentarAnzahl})
+              </button>
+            </div>
+          ) : null}
           {row.auftragNummer ? (
             <div>
               <Link href={`/auftraege/${row.auftragId}`} className="text-xs text-blue-700 hover:underline">

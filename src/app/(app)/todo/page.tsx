@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
@@ -57,10 +56,12 @@ export default async function TodoPage({
 
   return (
     <div>
-      <PageHeader
-        title="ToDo"
-        description={`${beiMir} in meinem Eingang${offen !== beiMir ? ` · ${offen} insgesamt offen` : ""}`}
-      />
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h1 className="text-xl font-semibold tracking-tight text-navy">ToDo</h1>
+        <span className="text-sm text-muted">
+          {beiMir} in meinem Eingang{offen !== beiMir ? ` · ${offen} insgesamt offen` : ""}
+        </span>
+      </div>
 
       <TodoHinweisBox
         key={firma.todoHinweisAm ? new Date(firma.todoHinweisAm).toISOString() : "none"}

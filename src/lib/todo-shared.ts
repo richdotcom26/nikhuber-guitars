@@ -4,7 +4,7 @@ export const TODO_STATUS_VALUES = ["BESTELLUNG", "IN_ARBEIT", "KLAEREN", "ERLEDI
 export type TodoStatus = (typeof TODO_STATUS_VALUES)[number];
 
 export const TODO_STATUS_LABEL: Record<TodoStatus, string> = {
-  BESTELLUNG: "Bestellung",
+  BESTELLUNG: "Neu",
   IN_ARBEIT: "In Arbeit",
   KLAEREN: "Klären",
   ERLEDIGT: "Erledigt",
