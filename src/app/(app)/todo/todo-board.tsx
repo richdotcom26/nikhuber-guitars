@@ -205,8 +205,8 @@ function TodoLine({
           <button
             type="button"
             onClick={onToggleDetail}
-            title="Verlauf / Kommentare öffnen"
-            className="max-w-xl cursor-pointer whitespace-pre-wrap text-left text-sm text-neutral-700 hover:text-brand hover:underline"
+            title={row.aufgabe}
+            className="line-clamp-2 max-w-xl cursor-pointer whitespace-pre-wrap text-left text-sm text-neutral-700 hover:text-brand hover:underline"
           >
             {row.aufgabe}
           </button>
