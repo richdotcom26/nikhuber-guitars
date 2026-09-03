@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { appUser, auftrag, todo } from "@/lib/db/schema";
 import { TODO_PRIO_VALUES, TODO_STATUS_VALUES } from "@/lib/todo-shared";
-import { assertRolle, requireUser } from "./context";
+import { requireUser } from "./context";
 import { DomainError } from "./errors";
 
 export {
@@ -24,11 +24,11 @@ const dateOrNull = z.preprocess(
 
 /* --------------------------------------------------------------------- liste */
 
+export type TodoRichtung = "alle" | "an_mich" | "von_mir";
+
 export interface TodoListeParams {
-  /** Board von … (app_user.id). Leer = alle. */
-  fuer?: string;
-  /** Statt Empfänger nach Absender = aktueller Benutzer filtern. */
-  vonMir?: boolean;
+  /** „an_mich" = ich bin Empfänger · „von_mir" = ich bin Absender · „alle" = beides. */
+  richtung?: TodoRichtung;
   /** Erledigte einblenden. */
   mitErledigt?: boolean;
   q?: string;
@@ -37,12 +37,14 @@ export interface TodoListeParams {
 export async function listTodos(params: TodoListeParams = {}) {
   const user = await requireUser();
 
-  const filters = [];
-  if (params.vonMir) {
-    filters.push(eq(todo.absenderId, user.id));
-  } else if (params.fuer) {
-    filters.push(eq(todo.empfaengerId, params.fuer));
-  }
+  // Jeder sieht ausschließlich seine eigenen Aufgaben (Empfänger) und die, die er
+  // an andere geschickt hat (Absender).
+  const meins = or(eq(todo.empfaengerId, user.id), eq(todo.absenderId, user.id))!;
+  const filters = [
+    params.richtung === "an_mich" ? eq(todo.empfaengerId, user.id)
+      : params.richtung === "von_mir" ? eq(todo.absenderId, user.id)
+      : meins,
+  ];
   if (!params.mitErledigt) filters.push(ne(todo.status, "ERLEDIGT"));
   if (params.q?.trim()) {
     filters.push(ilike(todo.aufgabe, `%${params.q.trim()}%`));
@@ -105,6 +107,17 @@ export async function getTodo(id: string) {
   return row;
 }
 
+/** Aufgabe laden und sicherstellen, dass der Benutzer beteiligt ist (Absender oder Empfänger). */
+async function ladeBeteiligt(id: string, userId: string, nurAbsender = false) {
+  const row = await db.query.todo.findFirst({ where: eq(todo.id, id) });
+  if (!row) throw new DomainError("NOT_FOUND", "Aufgabe nicht gefunden.");
+  const beteiligt = nurAbsender
+    ? row.absenderId === userId
+    : row.absenderId === userId || row.empfaengerId === userId;
+  if (!beteiligt) throw new DomainError("FORBIDDEN", "Keine Berechtigung für diese Aufgabe.");
+  return row;
+}
+
 /* ------------------------------------------------------------------- schema */
 
 export const todoSchema = z.object({
@@ -139,6 +152,7 @@ export async function createTodo(input: TodoInput): Promise<string> {
 
 export async function updateTodo(id: string, input: TodoInput) {
   const user = await requireUser();
+  await ladeBeteiligt(id, user.id);
   const res = await db
     .update(todo)
     .set({
@@ -157,6 +171,7 @@ export async function updateTodo(id: string, input: TodoInput) {
 
 export async function setTodoStatus(id: string, status: string) {
   const user = await requireUser();
+  await ladeBeteiligt(id, user.id);
   if (!(TODO_STATUS_VALUES as readonly string[]).includes(status)) {
     throw new DomainError("VALIDATION", "Ungültiger Status.");
   }
@@ -177,7 +192,8 @@ export async function setTodoStatus(id: string, status: string) {
 
 export async function deleteTodo(id: string) {
   const user = await requireUser();
-  assertRolle(user, "ADMIN", "BUERO");
+  // Löschen darf der Absender (oder ein Admin).
+  if (user.rolle !== "ADMIN") await ladeBeteiligt(id, user.id, true);
   await db.delete(todo).where(eq(todo.id, id));
 }
 

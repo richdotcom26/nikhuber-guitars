@@ -58,7 +58,7 @@ export function TodoBoard({
 
       {adding ? (
         <div className="border-b border-neutral-100 bg-neutral-50 p-3">
-          <TodoForm mitarbeiter={mitarbeiter} defaultEmpfaenger={currentUserId} onDone={() => setAdding(false)} />
+          <TodoForm mitarbeiter={mitarbeiter} defaultEmpfaenger="" onDone={() => setAdding(false)} />
         </div>
       ) : null}
 
@@ -76,7 +76,7 @@ export function TodoBoard({
         </THead>
         <TBody>
           {rows.map((r) => (
-            <TodoLine key={`${r.id}:${r.updatedAt}`} row={r} mitarbeiter={mitarbeiter} />
+            <TodoLine key={`${r.id}:${r.updatedAt}`} row={r} mitarbeiter={mitarbeiter} currentUserId={currentUserId} />
           ))}
           {rows.length === 0 ? (
             <TR><TD colSpan={7} className="py-6 text-center text-neutral-400">Keine Aufgaben.</TD></TR>
@@ -87,8 +87,15 @@ export function TodoBoard({
   );
 }
 
-function TodoLine({ row, mitarbeiter }: { row: TodoRow; mitarbeiter: Mitarbeiter[] }) {
+function TodoLine({
+  row, mitarbeiter, currentUserId,
+}: {
+  row: TodoRow;
+  mitarbeiter: Mitarbeiter[];
+  currentUserId: string;
+}) {
   const [editing, setEditing] = useState(false);
+  const anMich = row.empfaengerId === currentUserId;
   const [stState, stAction] = useActionState(setTodoStatusAction, IDLE);
   const [delState, delAction] = useActionState(deleteTodoAction, IDLE);
   const stForm = useRef<HTMLFormElement>(null);
@@ -112,9 +119,14 @@ function TodoLine({ row, mitarbeiter }: { row: TodoRow; mitarbeiter: Mitarbeiter
   const ueberfaellig = faellig && row.status !== "ERLEDIGT" && faellig < new Date().toISOString().slice(0, 10);
 
   return (
-    <TR>
-      <TD className="text-neutral-700">{row.empfaengerName ?? "–"}</TD>
-      <TD className="text-neutral-500">{row.absenderName ?? "–"}</TD>
+    <TR className={anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
+      <TD className="text-neutral-700">
+        {row.empfaengerName ?? "–"}
+        {anMich ? <span className="ml-1 text-xs text-brand">(ich)</span> : null}
+      </TD>
+      <TD className="text-neutral-500">
+        {row.absenderId === currentUserId ? "ich" : row.absenderName ?? "–"}
+      </TD>
       <TD className={ueberfaellig ? "font-medium text-red-600" : "text-neutral-500"}>
         {faellig ? formatDate(faellig) : "–"}
       </TD>
@@ -146,10 +158,12 @@ function TodoLine({ row, mitarbeiter }: { row: TodoRow; mitarbeiter: Mitarbeiter
       <TD className="text-right">
         <div className="flex justify-end gap-1">
           <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearb.</Button>
-          <form action={delAction} className="inline" onSubmit={(e) => { if (!confirm("Aufgabe löschen?")) e.preventDefault(); }}>
-            <input type="hidden" name="id" value={row.id} />
-            <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
-          </form>
+          {row.absenderId === currentUserId ? (
+            <form action={delAction} className="inline" onSubmit={(e) => { if (!confirm("Aufgabe löschen?")) e.preventDefault(); }}>
+              <input type="hidden" name="id" value={row.id} />
+              <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
+            </form>
+          ) : null}
         </div>
         {delState && !delState.ok ? <p className="text-right text-xs text-red-600">{delState.message}</p> : null}
       </TD>
