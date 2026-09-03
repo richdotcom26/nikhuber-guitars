@@ -6,8 +6,8 @@ import {
 } from "@/lib/domain/action-state";
 import { setTodoHinweis } from "@/lib/domain/stammdaten";
 import {
-  abwesenheitSchema, addTodoKommentar, createTodo, deleteTodo, setMeineAbwesenheit,
-  setTodoStatus, todoSchema, todoVerlauf, uebernehmenTodo, updateTodo,
+  abwesenheitSchema, addTodoKommentar, createTodo, deleteTodo, markErledigtGesehen,
+  setMeineAbwesenheit, setTodoStatus, todoSchema, todoVerlauf, uebernehmenTodo, updateTodo,
 } from "@/lib/domain/todo";
 
 const BASE = "/todo";
@@ -63,6 +63,12 @@ export async function deleteTodoAction(_p: ActionState, fd: FormData): Promise<A
     revalidatePath(BASE);
     return ok("Gelöscht.");
   });
+}
+
+/** Plain-Form-Action: Absender nimmt die Erledigung zur Kenntnis. */
+export async function markErledigtGesehenAction(fd: FormData): Promise<void> {
+  await markErledigtGesehen(String(fd.get("id") ?? ""));
+  revalidatePath(BASE);
 }
 
 export async function setTodoHinweisAction(_p: ActionState, fd: FormData): Promise<ActionState> {

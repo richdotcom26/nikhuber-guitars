@@ -14,8 +14,9 @@ import {
 } from "@/lib/todo-shared";
 import { formatDate } from "@/lib/utils";
 import {
-  addTodoKommentarAction, createTodoAction, deleteTodoAction, setTodoStatusAction,
-  todoVerlaufAction, uebernehmenTodoAction, updateTodoAction, type VerlaufEintrag,
+  addTodoKommentarAction, createTodoAction, deleteTodoAction, markErledigtGesehenAction,
+  setTodoStatusAction, todoVerlaufAction, uebernehmenTodoAction, updateTodoAction,
+  type VerlaufEintrag,
 } from "./actions";
 
 interface Mitarbeiter { id: string; name: string }
@@ -29,6 +30,7 @@ export interface TodoRow {
   faelligBis: string | null;
   inArbeitSeit: string | null;
   erledigtAm: string | null;
+  erledigtGesehen: boolean;
   erinnerung: boolean;
   updatedAt: string;
   empfaengerId: string | null;
@@ -138,6 +140,9 @@ function TodoLine({
   const heute = new Date().toISOString().slice(0, 10);
   const beiAbwesend = !!row.aktuellBeiAbwesendBis && row.aktuellBeiAbwesendBis >= heute
     && row.aktuellBeiId !== currentUserId;
+  // von der anderen Seite erledigt, ich (Absender) habe es noch nicht quittiert
+  const erledigtNeu = row.status === "ERLEDIGT" && !row.erledigtGesehen
+    && row.absenderId === currentUserId;
 
   if (editing) {
     return (
@@ -160,7 +165,7 @@ function TodoLine({
 
   return (
     <>
-      <TR className={anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
+      <TR className={erledigtNeu ? "bg-green-50" : anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
         <TD className="text-neutral-700">
           {row.empfaengerId === currentUserId ? "ich" : row.empfaengerName ?? "–"}
         </TD>
@@ -205,6 +210,12 @@ function TodoLine({
           >
             {row.aufgabe}
           </button>
+          {erledigtNeu ? (
+            <div className="mt-1 text-xs font-medium text-green-700">
+              ✓ erledigt{row.empfaengerName ? ` von ${row.empfaengerName}` : ""}
+              {row.erledigtAm ? ` am ${formatDate(row.erledigtAm)}` : ""}
+            </div>
+          ) : null}
           {row.kommentarAnzahl > 0 ? (
             <div>
               <button
@@ -227,6 +238,18 @@ function TodoLine({
         </TD>
         <TD className="text-right">
           <div className="flex flex-wrap justify-end gap-1">
+            {erledigtNeu ? (
+              <form action={markErledigtGesehenAction} className="inline">
+                <input type="hidden" name="id" value={row.id} />
+                <button
+                  type="submit"
+                  className="inline-flex h-8 items-center rounded-lg bg-green-600 px-3 text-sm font-medium text-white hover:bg-green-700"
+                  title="Erledigung zur Kenntnis nehmen – blendet die Meldung aus"
+                >
+                  ✓ gesehen
+                </button>
+              </form>
+            ) : null}
             <Button
               size="sm"
               variant="outline"

@@ -65,6 +65,7 @@ function baseTodoQuery() {
       faelligBis: todo.faelligBis,
       inArbeitSeit: todo.inArbeitSeit,
       erledigtAm: todo.erledigtAm,
+      erledigtGesehen: todo.erledigtGesehen,
       erinnerung: todo.erinnerung,
       updatedAt: todo.updatedAt,
       empfaengerId: todo.empfaengerId,
@@ -103,7 +104,18 @@ export async function listTodos(params: TodoListeParams = {}) {
         ? and(beteiligt, sql`${todo.aktuellBeiId} is distinct from ${user.id}`)!
         : beteiligt,
   ];
-  if (!params.mitErledigt) filters.push(ne(todo.status, "ERLEDIGT"));
+  if (!params.mitErledigt) {
+    // Erledigte ausblenden – außer sie kommen gerade als „vom Empfänger erledigt,
+    // vom Absender noch nicht gesehen" in meinen Eingang zurück.
+    filters.push(or(
+      ne(todo.status, "ERLEDIGT"),
+      and(
+        eq(todo.status, "ERLEDIGT"),
+        eq(todo.erledigtGesehen, false),
+        eq(todo.aktuellBeiId, user.id),
+      ),
+    )!);
+  }
   if (params.q?.trim()) {
     filters.push(ilike(todo.aufgabe, `%${params.q.trim()}%`));
   }
@@ -370,7 +382,7 @@ export async function updateTodo(id: string, input: TodoInput) {
 
 export async function setTodoStatus(id: string, status: string) {
   const user = await requireUser();
-  await ladeBeteiligt(id, user.id);
+  const row = await ladeBeteiligt(id, user.id);
   if (!(TODO_STATUS_VALUES as readonly string[]).includes(status)) {
     throw new DomainError("VALIDATION", "Ungültiger Status.");
   }
@@ -380,8 +392,20 @@ export async function setTodoStatus(id: string, status: string) {
     updatedAt: new Date(),
     updatedBy: user.id,
   };
-  if (status === "ERLEDIGT") patch.erledigtAm = heute;
-  else patch.erledigtAm = null;
+  if (status === "ERLEDIGT") {
+    patch.erledigtAm = heute;
+    // Von jemand anderem erledigt -> zurück in den Eingang des Absenders,
+    // dort grün markiert bis er „gesehen" klickt.
+    if (row.absenderId && row.absenderId !== user.id) {
+      patch.aktuellBeiId = row.absenderId;
+      patch.erledigtGesehen = false;
+    } else {
+      patch.erledigtGesehen = true;
+    }
+  } else {
+    patch.erledigtAm = null;
+    patch.erledigtGesehen = true;
+  }
   if (status === "IN_ARBEIT") {
     patch.inArbeitSeit = sql`coalesce(${todo.inArbeitSeit}, ${heute})`;
   }
@@ -396,6 +420,17 @@ export async function setTodoStatus(id: string, status: string) {
       updatedBy: user.id,
     });
   });
+}
+
+/** „Erledigt" zur Kenntnis genommen – der Absender blendet die grüne Meldung aus. */
+export async function markErledigtGesehen(id: string) {
+  const user = await requireUser();
+  const row = await ladeBeteiligt(id, user.id);
+  if (row.absenderId !== user.id) return; // nur der Absender bestätigt
+  await db
+    .update(todo)
+    .set({ erledigtGesehen: true, updatedAt: new Date(), updatedBy: user.id })
+    .where(eq(todo.id, id));
 }
 
 export async function deleteTodo(id: string) {

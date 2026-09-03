@@ -50,6 +50,8 @@ export const todo = pgTable("todo", {
   faelligBis: date("faellig_bis"),
   inArbeitSeit: date("in_arbeit_seit"),
   erledigtAm: date("erledigt_am"),
+  // false = vom Empfänger auf „Erledigt" gesetzt, vom Absender noch nicht zur Kenntnis genommen
+  erledigtGesehen: boolean("erledigt_gesehen").default(true).notNull(),
   erinnerung: boolean("erinnerung").default(false).notNull(),
   ...auditCols,
 }, (t) => ({

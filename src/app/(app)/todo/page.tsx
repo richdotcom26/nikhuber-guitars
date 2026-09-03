@@ -53,6 +53,9 @@ export default async function TodoPage({
 
   const beiMir = rows.filter((r) => r.aktuellBeiId === user.id && r.status !== "ERLEDIGT").length;
   const offen = rows.filter((r) => r.status !== "ERLEDIGT").length;
+  const erledigtNeu = rows.filter(
+    (r) => r.status === "ERLEDIGT" && !r.erledigtGesehen && r.absenderId === user.id,
+  ).length;
 
   return (
     <div>
@@ -61,6 +64,11 @@ export default async function TodoPage({
         <span className="text-sm text-muted">
           {beiMir} in meinem Eingang{offen !== beiMir ? ` · ${offen} insgesamt offen` : ""}
         </span>
+        {erledigtNeu > 0 ? (
+          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+            ✓ {erledigtNeu} neu erledigt
+          </span>
+        ) : null}
       </div>
 
       <TodoHinweisBox
