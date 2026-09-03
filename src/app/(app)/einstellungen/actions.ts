@@ -97,6 +97,29 @@ export async function deleteModellgruppeAction(_p: ActionState, fd: FormData): P
   });
 }
 
+/* ---- Arbeitsschritte (Vorrat) ---- */
+
+export async function saveVorratAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { createVorrat, updateVorrat, vorratSchema } = await import("@/lib/domain/arbeitsschritt");
+    const id = fd.get("id");
+    const input = parseForm(vorratSchema, fd);
+    if (typeof id === "string" && id) await updateVorrat(id, input);
+    else await createVorrat(input);
+    revalidatePath(BASE);
+    return ok("Arbeitsschritt gespeichert.");
+  });
+}
+
+export async function deleteVorratAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { deleteVorrat } = await import("@/lib/domain/arbeitsschritt");
+    await deleteVorrat(String(fd.get("id") ?? ""));
+    revalidatePath(BASE);
+    return ok("Arbeitsschritt gelöscht.");
+  });
+}
+
 /* ---- Benutzerverwaltung (ADMIN) ---- */
 
 export async function createBenutzerAction(_p: ActionState, fd: FormData): Promise<ActionState> {

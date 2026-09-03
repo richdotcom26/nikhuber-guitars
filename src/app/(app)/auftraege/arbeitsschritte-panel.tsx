@@ -28,6 +28,7 @@ export interface SchrittRow {
   workstep: string;
   reihenfolge: number;
   typ: string | null;
+  farbe: string | null;
   isNext: boolean;
 }
 
@@ -129,9 +130,25 @@ function Row({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
   const [bemState, bemAction] = useActionState(saveSchrittBemerkungAction, IDLE);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // „Kiste vollständig" ist ein Sonderstatus nur für „Kiste packen" (Order 29).
+  const statusOptionen = SCHRITT_STATUS_VALUES.filter(
+    (s) => s !== "KISTE_VOLLSTAENDIG"
+      || row.reihenfolge === KISTE_PACKEN_ORDER
+      || row.status === "KISTE_VOLLSTAENDIG",
+  );
+
   return (
     <TR className={row.isNext ? "bg-amber-50" : row.status === "ERLEDIGT" ? "opacity-60" : ""}>
-      <TD className="tabular-nums text-neutral-400">{row.reihenfolge}</TD>
+      <TD className="tabular-nums text-neutral-400">
+        <span className="flex items-center gap-1.5">
+          <span
+            className="inline-block h-3 w-1.5 shrink-0 rounded-sm"
+            style={{ background: row.farbe ?? "transparent" }}
+            aria-hidden
+          />
+          {row.reihenfolge}
+        </span>
+      </TD>
       <TD className="font-medium">
         {row.workstep}
         {row.isNext ? <Badge tone="amber" className="ml-2">als Nächstes</Badge> : null}
@@ -146,7 +163,7 @@ function Row({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
             onChange={() => formRef.current?.requestSubmit()}
             className="h-7"
           >
-            {SCHRITT_STATUS_VALUES.map((s) => (
+            {statusOptionen.map((s) => (
               <option key={s} value={s}>{SCHRITT_STATUS_LABEL[s]}</option>
             ))}
           </Select>

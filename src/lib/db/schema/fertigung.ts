@@ -22,8 +22,9 @@ export const arbeitsschrittVorrat = pgTable("arbeitsschritt_vorrat", {
   workstepEn: text("workstep_en"),
   reihenfolge: integer("reihenfolge").notNull(), // "Order" (29 = Kiste packen — Sonderfall 7h/7s/7t)
   typ: vorratTypEnum("typ"),                 // WERKSTATT | OFFICE
+  farbe: text("farbe"),                      // Hex-Chip in Auftrag/Kanban (in Einstellungen pflegbar)
   part: text("part"),                        // Zeilen-Label
-  partFarbe: text("part_farbe"),             // Farb-Banding (7u)
+  partFarbe: text("part_farbe"),             // Farb-Banding (7u) — Altfeld
   gruppe: vorratGruppeEnum("gruppe"),        // grobe Phase
 });
 

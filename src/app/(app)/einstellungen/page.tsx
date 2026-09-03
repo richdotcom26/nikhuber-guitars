@@ -1,11 +1,13 @@
 import { PageHeader } from "@/components/page-header";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { listArbeitsschrittVorrat } from "@/lib/domain/arbeitsschritt";
 import { listModellgruppen } from "@/lib/domain/bauplanung";
 import { requireUser } from "@/lib/domain/context";
 import { listBenutzer } from "@/lib/domain/benutzer";
 import {
   getFirmaSetting, listStaaten, listZaehler, listZahlungsbedingungen,
 } from "@/lib/domain/stammdaten";
+import { ArbeitsschrittePanel } from "./arbeitsschritte-panel";
 import { BenutzerPanel } from "./benutzer-panel";
 import { FirmaForm } from "./firma-form";
 import { ModellgruppenPanel } from "./modellgruppen-panel";
@@ -18,6 +20,7 @@ const BASE_TABS: readonly TabItem[] = [
   { key: "zahlungen", label: "Zahlungsbedingungen" },
   { key: "staaten", label: "Staaten" },
   { key: "modellgruppen", label: "Modellgruppen" },
+  { key: "arbeitsschritte", label: "Arbeitsschritte" },
   { key: "zaehler", label: "Belegnummern" },
 ];
 
@@ -37,7 +40,7 @@ export default async function EinstellungenPage({
     <div>
       <PageHeader
         title="Einstellungen"
-        description="Firmenstammdaten, Zahlungsbedingungen, Staaten, Modellgruppen und Belegnummernkreise."
+        description="Firmenstammdaten, Zahlungsbedingungen, Staaten, Modellgruppen, Arbeitsschritte und Belegnummernkreise."
       />
       <Tabs items={TABS} active={active} basePath="/einstellungen" className="mb-5" />
 
@@ -50,6 +53,7 @@ export default async function EinstellungenPage({
         />
       )}
       {active === "modellgruppen" && <ModellgruppenPanel rows={await listModellgruppen()} />}
+      {active === "arbeitsschritte" && <ArbeitsschrittePanel rows={await listArbeitsschrittVorrat()} />}
       {active === "zaehler" && <ZaehlerPanel rows={await listZaehler()} />}
       {active === "benutzer" && user.rolle === "ADMIN" && (
         <BenutzerPanel

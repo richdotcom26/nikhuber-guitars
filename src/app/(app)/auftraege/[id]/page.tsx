@@ -219,6 +219,7 @@ export default async function AuftragDetailPage({
             workstep: s.workstep,
             reihenfolge: s.reihenfolge,
             typ: s.typ,
+            farbe: s.farbe,
             isNext: s.isNext,
           }))}
         />

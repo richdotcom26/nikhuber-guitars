@@ -1,5 +1,6 @@
 import "server-only";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import {
   arbeitsschritt, arbeitsschrittVorrat, artikel, auftrag, specBelegung,
@@ -32,6 +33,7 @@ export interface SchrittRow {
   workstep: string;
   reihenfolge: number;
   typ: string | null;
+  farbe: string | null;
   isNext: boolean;
 }
 
@@ -49,6 +51,7 @@ export async function listArbeitsschritte(auftragId: string): Promise<SchrittRow
       workstep: arbeitsschrittVorrat.workstep,
       reihenfolge: arbeitsschrittVorrat.reihenfolge,
       typ: arbeitsschrittVorrat.typ,
+      farbe: arbeitsschrittVorrat.farbe,
     })
     .from(arbeitsschritt)
     .innerJoin(arbeitsschrittVorrat, eq(arbeitsschrittVorrat.id, arbeitsschritt.vorratId))
@@ -90,6 +93,9 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
     .innerJoin(arbeitsschrittVorrat, eq(arbeitsschrittVorrat.id, arbeitsschritt.vorratId))
     .where(eq(arbeitsschritt.id, schrittId));
   if (!row) throw new DomainError("NOT_FOUND", "Arbeitsschritt nicht gefunden.");
+  if (status === "KISTE_VOLLSTAENDIG" && row.vorratNr !== VORRAT_NR.KISTE_PACKEN) {
+    throw new DomainError("VALIDATION", "Status „Kiste vollständig“ ist nur beim Schritt „Kiste packen“ zulässig.");
+  }
 
   const done = status === "ERLEDIGT" || status === "WARTEN_AUF" || status === "KISTE_VOLLSTAENDIG";
   await db
@@ -336,4 +342,82 @@ export async function computeFortschritt(auftragId: string): Promise<number> {
   const letzter = Math.max(...erledigteOrders);
   const menge = rows.filter((r) => r.reihenfolge <= letzter).length;
   return Math.round((menge / alle) * 100);
+}
+
+/* --------------------------------------------- Arbeitsschritt-Vorrat (Einstellungen) */
+
+export async function listArbeitsschrittVorrat() {
+  await requireUser();
+  return db
+    .select({
+      id: arbeitsschrittVorrat.id,
+      nr: arbeitsschrittVorrat.nr,
+      workstep: arbeitsschrittVorrat.workstep,
+      workstepEn: arbeitsschrittVorrat.workstepEn,
+      reihenfolge: arbeitsschrittVorrat.reihenfolge,
+      typ: arbeitsschrittVorrat.typ,
+      farbe: arbeitsschrittVorrat.farbe,
+      anzahlVerwendet: sql<number>`count(${arbeitsschritt.id})::int`,
+    })
+    .from(arbeitsschrittVorrat)
+    .leftJoin(arbeitsschritt, eq(arbeitsschritt.vorratId, arbeitsschrittVorrat.id))
+    .groupBy(arbeitsschrittVorrat.id)
+    .orderBy(asc(arbeitsschrittVorrat.reihenfolge), asc(arbeitsschrittVorrat.nr));
+}
+
+const HEX6 = /^#[0-9a-fA-F]{6}$/;
+const leerZuNull = <T extends z.ZodTypeAny>(inner: T) =>
+  z.preprocess((v) => (v === "" || v == null ? null : v), inner.nullable());
+
+/** Fest im Code verdrahtete Nummern (Compliance/Progression) — Bezeichnung/Order/Farbe frei, nr fix. */
+const GESCHUETZTE_NR = new Set<number>([
+  VORRAT_NR.MONTAGE, VORRAT_NR.VERSENDET, VORRAT_NR.RECHNUNG, VORRAT_NR.CITES,
+  VORRAT_NR.FISH_WILDLIFE, VORRAT_NR.AUSFUHR, VORRAT_NR.REPARATUR, VORRAT_NR.KISTE_PACKEN,
+]);
+
+export const vorratSchema = z.object({
+  workstep: z.string().trim().min(1, "Pflichtfeld"),
+  workstepEn: leerZuNull(z.string().trim()),
+  reihenfolge: z.coerce.number().int().min(0),
+  typ: leerZuNull(z.enum(["WERKSTATT", "OFFICE"])),
+  farbe: leerZuNull(z.string().trim().regex(HEX6, "Farbe als #RRGGBB angeben")),
+});
+export type VorratInput = z.infer<typeof vorratSchema>;
+
+export async function createVorrat(input: VorratInput) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const [{ max }] = await db
+    .select({ max: sql<number>`coalesce(max(${arbeitsschrittVorrat.nr}), 0)` })
+    .from(arbeitsschrittVorrat);
+  await db.insert(arbeitsschrittVorrat).values({ ...input, nr: Number(max) + 1 });
+}
+
+export async function updateVorrat(id: string, input: VorratInput) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const res = await db
+    .update(arbeitsschrittVorrat)
+    .set(input)
+    .where(eq(arbeitsschrittVorrat.id, id))
+    .returning({ id: arbeitsschrittVorrat.id });
+  if (res.length === 0) throw new DomainError("NOT_FOUND", "Arbeitsschritt nicht gefunden.");
+}
+
+export async function deleteVorrat(id: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN");
+  const [v] = await db.select().from(arbeitsschrittVorrat).where(eq(arbeitsschrittVorrat.id, id));
+  if (!v) throw new DomainError("NOT_FOUND", "Arbeitsschritt nicht gefunden.");
+  if (GESCHUETZTE_NR.has(v.nr)) {
+    throw new DomainError("CONFLICT", "Dieser Schritt ist fest mit der Fertigungslogik verknüpft und kann nicht gelöscht werden.");
+  }
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(arbeitsschritt)
+    .where(eq(arbeitsschritt.vorratId, id));
+  if (n > 0) {
+    throw new DomainError("CONFLICT", `Schritt ist noch ${n}× einem Auftrag zugeordnet — dort zuerst entfernen.`);
+  }
+  await db.delete(arbeitsschrittVorrat).where(eq(arbeitsschrittVorrat.id, id));
 }
