@@ -1,5 +1,5 @@
 import {
-  boolean, date, index, integer, numeric, pgTable, text, uuid,
+  boolean, date, index, integer, numeric, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { todoPrioEnum, todoStatusEnum } from "./_enums";
@@ -48,6 +48,9 @@ export const todo = pgTable("todo", {
   status: todoStatusEnum("status").default("BESTELLUNG").notNull(),
   auftragId: uuid("auftrag_id").references(() => auftrag.id, { onDelete: "set null" }),
   faelligBis: date("faellig_bis"),
+  // „Eingangsdatum": wann die Aufgabe zuletzt in einem Eingang gelandet ist
+  // (Anlage, „Antworten", Empfängerwechsel, Vertretungs-Übernahme). Tabellensortierung.
+  eingangAm: timestamp("eingang_am", { withTimezone: true }).defaultNow().notNull(),
   inArbeitSeit: date("in_arbeit_seit"),
   erledigtAm: date("erledigt_am"),
   // false = vom Empfänger auf „Erledigt" gesetzt, vom Absender noch nicht zur Kenntnis genommen

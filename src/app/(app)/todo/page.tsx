@@ -16,9 +16,12 @@ const RICHTUNGEN: { value: TodoRichtung; label: string }[] = [
   { value: "alle", label: "Alle" },
 ];
 
+const iso = (v: string | Date) => (typeof v === "string" ? v : v.toISOString());
+
 function normRows<T extends {
   faelligBis: string | null; inArbeitSeit: string | null; erledigtAm: string | null;
-  aktuellBeiAbwesendBis: string | null; updatedAt: string | Date;
+  aktuellBeiAbwesendBis: string | null;
+  eingangAm: string | Date; createdAt: string | Date; updatedAt: string | Date;
 }>(rows: T[]) {
   return rows.map((r) => ({
     ...r,
@@ -26,7 +29,9 @@ function normRows<T extends {
     inArbeitSeit: r.inArbeitSeit ?? null,
     erledigtAm: r.erledigtAm ?? null,
     aktuellBeiAbwesendBis: r.aktuellBeiAbwesendBis ?? null,
-    updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : r.updatedAt.toISOString(),
+    eingangAm: iso(r.eingangAm),
+    createdAt: iso(r.createdAt),
+    updatedAt: iso(r.updatedAt),
   }));
 }
 

@@ -63,10 +63,12 @@ function baseTodoQuery() {
       prio: todo.prio,
       status: todo.status,
       faelligBis: todo.faelligBis,
+      eingangAm: todo.eingangAm,
       inArbeitSeit: todo.inArbeitSeit,
       erledigtAm: todo.erledigtAm,
       erledigtGesehen: todo.erledigtGesehen,
       erinnerung: todo.erinnerung,
+      createdAt: todo.createdAt,
       updatedAt: todo.updatedAt,
       empfaengerId: todo.empfaengerId,
       absenderId: todo.absenderId,
@@ -89,8 +91,6 @@ function baseTodoQuery() {
     .leftJoin(beiVertr, eq(beiVertr.id, bei.vertretungId))
     .leftJoin(auftrag, eq(auftrag.id, todo.auftragId));
 }
-
-const DRINGEND_ZUERST = sql`case when ${todo.prio} = 'DRINGEND' then 0 else 1 end`;
 
 export async function listTodos(params: TodoListeParams = {}) {
   const user = await requireUser();
@@ -122,7 +122,7 @@ export async function listTodos(params: TodoListeParams = {}) {
 
   return baseTodoQuery()
     .where(and(...filters))
-    .orderBy(DRINGEND_ZUERST, desc(todo.updatedAt));
+    .orderBy(desc(todo.eingangAm));
 }
 
 /** Offene Aufgaben, die gerade bei einem Kollegen liegen, den ich vertrete. */
@@ -135,7 +135,7 @@ export async function listVertretungTodos() {
       inArray(todo.aktuellBeiId, vertretene),
       ne(todo.status, "ERLEDIGT"),
     ))
-    .orderBy(DRINGEND_ZUERST, desc(todo.updatedAt));
+    .orderBy(desc(todo.eingangAm));
 }
 
 /* -------------------------------------------------------------------- verlauf */
@@ -272,7 +272,8 @@ export async function addTodoKommentar(
       updatedBy: user.id,
     });
     await tx.update(todo).set({
-      ...(anId ? { aktuellBeiId: anId } : {}),
+      // „Antworten" → Ball wechselt die Seite: für die andere Person ist das ein neuer Eingang
+      ...(anId ? { aktuellBeiId: anId, eingangAm: new Date() } : {}),
       updatedAt: new Date(),
       updatedBy: user.id,
     }).where(eq(todo.id, id));
@@ -297,7 +298,7 @@ export async function uebernehmenTodo(id: string) {
       updatedBy: user.id,
     });
     await tx.update(todo)
-      .set({ aktuellBeiId: user.id, updatedAt: new Date(), updatedBy: user.id })
+      .set({ aktuellBeiId: user.id, eingangAm: new Date(), updatedAt: new Date(), updatedBy: user.id })
       .where(eq(todo.id, id));
   });
 }
@@ -359,9 +360,9 @@ export { abwesenheitSchema };
 export async function updateTodo(id: string, input: TodoInput) {
   const user = await requireUser();
   const row = await ladeBeteiligt(id, user.id);
-  // Empfänger gewechselt -> Ball wandert mit
+  // Empfänger gewechselt -> Ball wandert mit, neuer Eingang für die neue Person
   const aktuellBei = input.empfaengerId && input.empfaengerId !== row.empfaengerId
-    ? { aktuellBeiId: input.empfaengerId }
+    ? { aktuellBeiId: input.empfaengerId, eingangAm: new Date() }
     : {};
   const res = await db
     .update(todo)

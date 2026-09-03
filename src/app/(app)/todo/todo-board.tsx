@@ -28,10 +28,12 @@ export interface TodoRow {
   prio: TodoPrio;
   status: TodoStatus;
   faelligBis: string | null;
+  eingangAm: string;
   inArbeitSeit: string | null;
   erledigtAm: string | null;
   erledigtGesehen: boolean;
   erinnerung: boolean;
+  createdAt: string;
   updatedAt: string;
   empfaengerId: string | null;
   absenderId: string | null;
@@ -89,6 +91,7 @@ export function TodoBoard({
       <Table>
         <THead>
           <TR>
+            <TH className="w-28">Eingang</TH>
             <TH className="w-24">Empfänger</TH>
             <TH className="w-20">Absender</TH>
             <TH className="w-24">liegt bei</TH>
@@ -112,7 +115,7 @@ export function TodoBoard({
             />
           ))}
           {rows.length === 0 ? (
-            <TR><TD colSpan={8} className="py-6 text-center text-neutral-400">Keine Aufgaben.</TD></TR>
+            <TR><TD colSpan={9} className="py-6 text-center text-neutral-400">Keine Aufgaben.</TD></TR>
           ) : null}
         </TBody>
       </Table>
@@ -147,7 +150,7 @@ function TodoLine({
   if (editing) {
     return (
       <TR className="bg-neutral-50">
-        <TD colSpan={8} className="py-2">
+        <TD colSpan={9} className="py-2">
           <TodoForm
             row={row}
             mitarbeiter={mitarbeiter}
@@ -166,6 +169,15 @@ function TodoLine({
   return (
     <>
       <TR className={erledigtNeu ? "bg-green-50" : anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
+        <TD
+          className="whitespace-nowrap text-xs text-neutral-500"
+          title={`Eingang: ${new Date(row.eingangAm).toLocaleString("de-DE")}`}
+        >
+          {formatDate(row.eingangAm)}
+          <div className="text-[11px] text-neutral-400">
+            {new Date(row.eingangAm).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+          </div>
+        </TD>
         <TD className="text-neutral-700">
           {row.empfaengerId === currentUserId ? "ich" : row.empfaengerName ?? "–"}
         </TD>
@@ -283,7 +295,7 @@ function TodoLine({
       </TR>
       {detailOffen ? (
         <TR>
-          <TD colSpan={8} className="bg-neutral-50 p-0">
+          <TD colSpan={9} className="bg-neutral-50 p-0">
             <TodoDetail row={row} currentUserId={currentUserId} />
           </TD>
         </TR>
@@ -307,9 +319,24 @@ function TodoDetail({ row, currentUserId }: { row: TodoRow; currentUserId: strin
   return (
     <div className="space-y-3 px-3 py-3 text-sm">
       <div className="space-y-2">
+        <div className="rounded-md border border-line bg-white px-2.5 py-1.5">
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <span>📌</span>
+            <span className="font-medium text-ink">Aufgabe erstellt</span>
+            <span>
+              {new Date(row.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+              {row.absenderName ? ` · von ${row.absenderName}` : ""}
+            </span>
+            {row.eingangAm.slice(0, 10) !== row.createdAt.slice(0, 10) ? (
+              <Badge tone="neutral">
+                letzter Eingang {new Date(row.eingangAm).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
         {verlauf === null && pending ? <p className="text-xs text-neutral-400">lädt …</p> : null}
         {verlauf && verlauf.length === 0 ? (
-          <p className="text-xs text-neutral-400">Noch keine Einträge.</p>
+          <p className="text-xs text-neutral-400">Noch keine Kommentare.</p>
         ) : null}
         {verlauf?.map((e) => (
           <div key={e.id} className="rounded-md border border-line bg-white px-2.5 py-1.5">
