@@ -44,3 +44,5 @@ next-env.d.ts
 # Ninox-Rohdaten (nur lokal, groß)
 /ninox-dump/
 scripts/_tmpuser.mjs
+scripts/_*.mjs
+scripts/_*.ts

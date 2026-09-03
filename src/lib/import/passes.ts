@@ -1151,6 +1151,25 @@ export async function importMailversand(ctx: Ctx) {
   ctx.log(`mailversand ${rows.length}`);
 }
 
+// Label-Farben aus dem Ninox-Screenshot "Modellgruppen" (Hintergrund der Chips).
+const MODELLGRUPPE_FARBE: Record<string, string> = {
+  "Krautster": "#D9C852",
+  "Krautster Custom": "#F1C40F",
+  "Dolphin": "#8BC34A",
+  "Dolphin 59": "#3EA652",
+  "Twangmeister": "#A5E8E0",
+  "Redwood": "#6E4B34",
+  "Orca": "#A81F1F",
+  "Orca 59": "#E23B2E",
+  "Piet": "#B7BEEA",
+  "Piet Offset": "#C9BEEA",
+  "Surfmeister": "#2E90D9",
+  "Rietbergen": "#BCA9E0",
+  "Rietbergen Doppeltop": "#9269C9",
+  "Rietbergen Bass": "#1A1A1A",
+  "Signature": "#33C6DD",
+};
+
 // ============================================================ modellgruppe (OD)
 export async function importModellgruppe(ctx: Ctx) {
   const od = ctx.dump.typeIdByCaption("Modellgruppen");
@@ -1172,6 +1191,7 @@ export async function importModellgruppe(ctx: Ctx) {
       rows.push({
         id: uuid,
         name,
+        farbe: MODELLGRUPPE_FARBE[name] ?? null,
         minMengeMonat: ninoxNum(f(ctx, od, rec, "Mindesmenge je Monat")) as unknown as number | null,
         maxMengeMonat: ninoxNum(f(ctx, od, rec, "Maximalmenge je Monat")) as unknown as number | null,
       });

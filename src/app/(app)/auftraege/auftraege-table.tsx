@@ -7,7 +7,7 @@ import {
   type Auftragsart, type AuftragStatus, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
 import type { SortSpec } from "@/lib/table-sort";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { formatDate, formatMoney, kontrastText } from "@/lib/utils";
 
 export interface AuftragRow {
   id: string;
@@ -22,6 +22,8 @@ export interface AuftragRow {
   kdWaehrung: string | null;
   fortschrittProzent: number | null;
   modellName: string | null;
+  modellgruppeName: string | null;
+  modellgruppeFarbe: string | null;
   umsatzerwartung: string | null;
 }
 
@@ -58,6 +60,20 @@ export function AuftraegeTable({
     {
       key: "modell", header: "Modell", sortable: false,
       cell: (r) => <span className="text-muted">{r.modellName ?? "–"}</span>,
+    },
+    {
+      key: "modellgruppe", header: "Modellgruppe", sortable: true,
+      cell: (r) => (r.modellgruppeName ? (
+        <span
+          className="inline-block rounded px-1.5 py-0.5 text-xs font-medium"
+          style={{
+            background: r.modellgruppeFarbe ?? "#e5e7eb",
+            color: kontrastText(r.modellgruppeFarbe),
+          }}
+        >
+          {r.modellgruppeName}
+        </span>
+      ) : <span className="text-neutral-300">–</span>),
     },
     {
       key: "status", header: "Status", sortable: true,

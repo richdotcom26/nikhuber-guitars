@@ -16,6 +16,7 @@ import { auftrag } from "./belege";
 export const modellgruppe = pgTable("modellgruppe", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),               // "Krautster", "Dolphin", "Orca 59", …
+  farbe: text("farbe"),                                // Hex-Hintergrund für Badges (aus Ninox-Label)
   minMengeMonat: integer("min_menge_monat"),
   maxMengeMonat: integer("max_menge_monat"),
   durchschnittspreisEur: numeric("durchschnittspreis_eur", { precision: 12, scale: 2 }),

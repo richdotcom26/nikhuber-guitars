@@ -17,6 +17,19 @@ export function formatMoney(
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: waehrung }).format(n);
 }
 
+/** Lesbare Textfarbe (schwarz/weiß) für einen Hex-Hintergrund. */
+export function kontrastText(hex: string | null | undefined): string {
+  if (!hex) return "#111111";
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  if ([r, g, b].some(Number.isNaN)) return "#111111";
+  // relative Helligkeit (YIQ)
+  return (r * 299 + g * 587 + b * 114) / 1000 >= 150 ? "#111111" : "#ffffff";
+}
+
 /** Datum (Date | ISO | 'YYYY-MM-DD') als de-DE `TT.MM.JJJJ`. */
 export function formatDate(value: Date | string | null | undefined): string {
   if (!value) return "–";

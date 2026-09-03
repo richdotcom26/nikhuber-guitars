@@ -5,7 +5,7 @@ import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { orderByFor } from "./_sort";
 import {
-  arbeitsschritt, artikel, auftrag, belegPosition, kunde, rechnung, specBelegung,
+  arbeitsschritt, artikel, auftrag, belegPosition, kunde, modellgruppe, rechnung, specBelegung,
 } from "@/lib/db/schema";
 import {
   AUFTRAG_STATUS_VALUES as STATUS_VALUES, AUFTRAGSART_VALUES as ART_VALUES,
@@ -31,16 +31,29 @@ export const AUFTRAG_SORT: Record<string, unknown> = {
   datum: auftrag.auftragsdatum,
   bauplan: auftrag.bauplandatum,
   kunde: sql`coalesce(${auftrag.kdFirma}, ${auftrag.kdNachname})`,
+  modellgruppe: modellgruppe.name,
   status: auftrag.status,
   work: auftrag.fortschrittProzent,
   umsatz: auftrag.umsatzerwartung,
 };
 
+/** Modellgruppen für das Filter-Dropdown über der Auftragsliste. */
+export async function auftragModellgruppen() {
+  return db
+    .select({ id: modellgruppe.id, name: modellgruppe.name, farbe: modellgruppe.farbe })
+    .from(modellgruppe)
+    .orderBy(modellgruppe.name);
+}
+
 export async function listAuftraege(
-  params: { q?: string; status?: string; art?: string; page?: number; sort?: SortSpec } = {},
+  params: {
+    q?: string; status?: string; art?: string; modellgruppe?: string;
+    page?: number; sort?: SortSpec;
+  } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
+  const modell = artikel;
   const filters = [];
   if (params.status && (STATUS_VALUES as readonly string[]).includes(params.status)) {
     filters.push(eq(auftrag.status, params.status as AuftragStatus));
@@ -48,13 +61,15 @@ export async function listAuftraege(
   if (params.art && (ART_VALUES as readonly string[]).includes(params.art)) {
     filters.push(eq(auftrag.auftragsart, params.art as Auftragsart));
   }
+  if (params.modellgruppe) {
+    filters.push(eq(modell.modellgruppeId, params.modellgruppe));
+  }
   if (params.q?.trim()) {
     const like = `%${params.q.trim()}%`;
     filters.push(or(ilike(auftrag.nummer, like), ilike(auftrag.kdFirma, like), ilike(auftrag.kdNachname, like))!);
   }
   const where = filters.length ? and(...filters) : undefined;
 
-  const modell = artikel;
   const rows = await db
     .select({
       id: auftrag.id,
@@ -70,15 +85,22 @@ export async function listAuftraege(
       fortschrittProzent: auftrag.fortschrittProzent,
       umsatzerwartung: auftrag.umsatzerwartung,
       modellName: modell.nameBelege,
+      modellgruppeName: modellgruppe.name,
+      modellgruppeFarbe: modellgruppe.farbe,
     })
     .from(auftrag)
     .leftJoin(modell, eq(auftrag.modellArtikelId, modell.id))
+    .leftJoin(modellgruppe, eq(modellgruppe.id, modell.modellgruppeId))
     .where(where)
     .orderBy(...orderByFor(AUFTRAG_SORT, params.sort, auftrag.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(auftrag).where(where);
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(auftrag)
+    .leftJoin(modell, eq(auftrag.modellArtikelId, modell.id))
+    .where(where);
   return { rows, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
 }
 
