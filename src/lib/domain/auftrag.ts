@@ -242,6 +242,12 @@ export async function changeAuftragStatus(id: string, ziel: AuftragStatus) {
 
   await db.update(auftrag).set(patch).where(eq(auftrag.id, id));
 
+  // In Werkstatt / Bei Nicl: alle Standard-Arbeitsschritte sicherstellen (idempotent) +
+  // Compliance-Schritte (Cites/F&W/Ausfuhr) bedarfsgerecht ableiten.
+  if ((ziel === "WERKSTATT" || ziel === "BEI_NICL") && a.auftragsart === "PRODUKTION") {
+    await seedStandardSchritte(id, user.id);
+    await recomputeComplianceSteps(id, a.kdRegion ?? null, await hatCitesHolz(id));
+  }
   if (ziel === "SERVICE") await addSchritt(id, VORRAT_NR.REPARATUR, user.id);
   if (ziel === "PROD_FERTIG") {
     await db.execute(sql`

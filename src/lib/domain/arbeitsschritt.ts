@@ -188,7 +188,12 @@ export async function setSchrittBemerkung(schrittId: string, text: string | null
 
 /* ------------------------------------------------ Seeding & Compliance-Schritte */
 
-/** Standard-Schritte für einen neuen Produktionsauftrag (Vorrat WERKSTATT + OFFICE ohne Compliance). */
+/**
+ * Standard-Schritte eines Produktionsauftrags sicherstellen (Vorrat WERKSTATT + OFFICE
+ * ohne Compliance). **Idempotent**: legt nur fehlende Schritte an, vorhandene (auch bereits
+ * bearbeitete) bleiben unangetastet. Wird beim Anlegen und beim Wechsel in „In Werkstatt" /
+ * „Bei Nicl" aufgerufen.
+ */
 export async function seedStandardSchritte(auftragId: string, userId: string) {
   const vorrat = await db
     .select()
@@ -201,8 +206,17 @@ export async function seedStandardSchritte(auftragId: string, userId: string) {
       ),
     );
   if (vorrat.length === 0) return;
+  const vorhanden = new Set(
+    (await db
+      .select({ v: arbeitsschritt.vorratId })
+      .from(arbeitsschritt)
+      .where(eq(arbeitsschritt.auftragId, auftragId))
+    ).map((r) => r.v),
+  );
+  const fehlend = vorrat.filter((v) => !vorhanden.has(v.id));
+  if (fehlend.length === 0) return;
   await db.insert(arbeitsschritt).values(
-    vorrat.map((v) => ({
+    fehlend.map((v) => ({
       auftragId,
       vorratId: v.id,
       status: "OFFEN" as const,
