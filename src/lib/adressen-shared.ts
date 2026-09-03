@@ -35,6 +35,41 @@ export function anzeigename(k: {
 }
 
 /**
+ * Berechneter Briefkopf (ex Ninox-Formel „Briefkopf" / „Briefkopfperson"):
+ *   [Firma]
+ *   Vorname Nachname   (bzw. nur Nachname)
+ *   Strasse
+ *   [Adresszusatz]
+ *   PLZ Ort
+ *   [Staat — nur wenn nicht Inland]
+ * `briefkopfManuell` überschreibt alles. Leere Zeilen werden ausgelassen.
+ */
+export function berechneBriefkopf(k: {
+  firma?: string | null;
+  vorname?: string | null;
+  nachname?: string | null;
+  strasse?: string | null;
+  adresszusatz?: string | null;
+  plz?: string | null;
+  ort?: string | null;
+  staatName?: string | null;
+  istInland?: boolean | null;
+  briefkopfManuell?: string | null;
+}): string {
+  if (k.briefkopfManuell?.trim()) return k.briefkopfManuell.trim();
+  const person = [k.vorname, k.nachname].map((s) => s?.trim()).filter(Boolean).join(" ");
+  const plzOrt = [k.plz?.trim(), k.ort?.trim()].filter(Boolean).join(" ");
+  return [
+    k.firma?.trim() || null,
+    person || null,
+    k.strasse?.trim() || null,
+    k.adresszusatz?.trim() || null,
+    plzOrt || null,
+    !k.istInland ? (k.staatName?.trim() || null) : null,
+  ].filter(Boolean).join("\n");
+}
+
+/**
  * Kundenanzeige in Fremd-Tabellen (Aufträge, Rechnungen, Angebote …): **Kurzname**,
  * sonst Firmenname, sonst „Vorname Nachname". `kurzname`/`firma` kommen live aus dem
  * Kunden-Datensatz, die `kd*`-Felder aus dem Beleg-Snapshot (falls kein Kunde verknüpft).

@@ -37,7 +37,9 @@ export const KUNDE_SORT: Record<string, unknown> = {
   vertriebsweg: kunde.vertriebsweg,
 };
 
-export { anzeigename, KONTAKTARTEN, KONTAKTART_VALUES } from "@/lib/adressen-shared";
+export {
+  anzeigename, berechneBriefkopf, KONTAKTARTEN, KONTAKTART_VALUES, kundeKurz,
+} from "@/lib/adressen-shared";
 export type { KontaktartValue } from "@/lib/adressen-shared";
 
 const REGIONEN = REGION_VALUES;

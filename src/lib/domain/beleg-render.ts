@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   angebot, auftrag, belegPosition, rechnung, staat,
 } from "@/lib/db/schema";
+import { berechneBriefkopf } from "@/lib/adressen-shared";
 import { requireUser } from "./context";
 import { DomainError } from "./errors";
 import { getFirmaSetting } from "./stammdaten";
@@ -153,6 +154,20 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
     || [h.kdVorname, h.kdNachname].filter(Boolean).join(" ").trim()
     || "—";
 
+  // Frozen Snapshot bevorzugen; sonst nach Ninox-Formel aus den kd_*-Feldern ableiten
+  // (Altbestand aus dem Import hat kein kd_briefkopf).
+  const briefkopf = berechneBriefkopf({
+    firma: h.kdFirma,
+    vorname: h.kdVorname,
+    nachname: h.kdNachname,
+    strasse: h.kdStrasse,
+    plz: h.kdPlz,
+    ort: h.kdOrt,
+    staatName,
+    istInland: h.kdRegion === "D",
+    briefkopfManuell: h.kdBriefkopf,
+  });
+
   const rr = art === "rechnung" ? (h as typeof rechnung.$inferSelect) : null;
 
   return {
@@ -186,7 +201,7 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
       : null,
     kopftext: art === "angebot" ? (h as typeof angebot.$inferSelect).kopftext : null,
     kunde: {
-      briefkopf: h.kdBriefkopf,
+      briefkopf: briefkopf || null,
       name: kdName,
       strasse: h.kdStrasse,
       plz: h.kdPlz,

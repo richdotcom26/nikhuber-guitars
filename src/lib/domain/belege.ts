@@ -5,6 +5,7 @@ import {
   angebot, artikel, auftrag, belegPosition, kunde, rechnung, specBelegung, staat, zaehler,
 } from "@/lib/db/schema";
 import { SPEC_SLOT_BY_KEY } from "@/lib/specs/slots";
+import { berechneBriefkopf } from "@/lib/adressen-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { getFirmaSetting } from "./stammdaten";
@@ -73,9 +74,18 @@ export async function kdSnapshot(kundeId: string) {
     const [s] = await db.select({ name: staat.name }).from(staat).where(eq(staat.id, k.staatId));
     staatName = s?.name ?? null;
   }
-  const name = k.firma?.trim() || [k.vorname, k.nachname].filter(Boolean).join(" ").trim();
-  const briefkopf = k.briefkopfManuell?.trim()
-    || [name, k.strasse, [k.plz, k.ort].filter(Boolean).join(" "), staatName].filter(Boolean).join("\n");
+  const briefkopf = berechneBriefkopf({
+    firma: k.firma,
+    vorname: k.vorname,
+    nachname: k.nachname,
+    strasse: k.strasse,
+    adresszusatz: k.adresszusatz,
+    plz: k.plz,
+    ort: k.ort,
+    staatName,
+    istInland: k.region === "D",
+    briefkopfManuell: k.briefkopfManuell,
+  });
   return {
     kundeId: k.id,
     kdFirma: k.firma,
