@@ -5,7 +5,7 @@ export const NAV = [
   { href: "/angebote", label: "Angebote" },
   { href: "/auftraege", label: "Aufträge" },
   { href: "/rechnungen", label: "Rechnungen" },
-  { href: "/seriennummern", label: "Seriennummern #" },
+  { href: "/seriennummern", label: "SerNo #" },
   { href: "/artikel", label: "Artikel" },
   { href: "/modelle", label: "Modelle" },
   { href: "/holzbestand", label: "Holzbestand" },
