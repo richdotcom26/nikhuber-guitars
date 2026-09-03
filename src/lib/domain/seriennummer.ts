@@ -77,13 +77,26 @@ export async function listSeriennummern(
   return { rows, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
 }
 
-/** `max(lfd)+1`, mindestens `firma_setting.serien_start` (E6: monoton, kein Lücken-Reuse). */
+/**
+ * Nächste **automatische** laufende Nummer: die höchste bisher *automatisch* vergebene
+ * lfd + 1 (manuell vergebene Nummern zählen dabei nicht), mindestens
+ * `firma_setting.serien_start`. Ist die Kandidatennummer schon belegt — z. B. weil sie
+ * vorab manuell vergeben wurde — wird so lange hochgezählt, bis eine freie Nummer
+ * gefunden ist. Bereits (auch gelöscht) verwendete Nummern werden nie neu vergeben.
+ */
 export async function naechsteLfd(): Promise<number> {
   const fs = await getFirmaSetting();
-  const [{ max }] = await db
-    .select({ max: sql<number>`coalesce(max(${seriennummer.lfd}), 0)` })
+  const [{ maxAuto }] = await db
+    .select({
+      maxAuto: sql<number>`coalesce(max(${seriennummer.lfd}) filter (where ${seriennummer.manuell} = false), 0)`,
+    })
     .from(seriennummer);
-  return Math.max(Number(max) + 1, fs.serienStart);
+  const belegt = new Set(
+    (await db.select({ lfd: seriennummer.lfd }).from(seriennummer)).map((r) => Number(r.lfd)),
+  );
+  let cand = Math.max(Number(maxAuto) + 1, fs.serienStart);
+  while (belegt.has(cand)) cand++;
+  return cand;
 }
 
 /* ------------------------------------------------------------------ vergeben */

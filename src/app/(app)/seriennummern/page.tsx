@@ -4,6 +4,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { listSeriennummern, naechsteLfd, SERIENNUMMER_SORT } from "@/lib/domain/seriennummer";
 import { parseSort } from "@/lib/table-sort";
+import { NeueSnPanel } from "./neue-sn-panel";
 import { SeriennummernTable } from "./seriennummern-table";
 
 export default async function SeriennummernPage({
@@ -32,8 +33,12 @@ export default async function SeriennummernPage({
     <div>
       <PageHeader
         title="Seriennummern"
-        description={`${total} vergeben · nächste laufende Nr: ${next}`}
+        description={`${total} vergeben · nächste automatische Nr: ${next}`}
       />
+
+      <div className="mb-4">
+        <NeueSnPanel naechste={next} />
+      </div>
 
       <form method="get" className="mb-4 flex items-center gap-2">
         <Input name="q" defaultValue={q} placeholder="Suche Seriennr / Auftrag / Kunde" className="h-8 w-72" />
@@ -53,9 +58,11 @@ export default async function SeriennummernPage({
       ) : null}
 
       <p className="mt-4 text-xs text-neutral-400">
-        Die Vergabe (automatisch oder manuell) erfolgt im jeweiligen Auftrag im Abschnitt Seriennummer.
-        Automatisch = nächsthöhere laufende Nummer; das Jahrpräfix kommt aus dem Bauplan-Monat
-        (bis 2025 einstellig, ab 2026 zweistellig). Gelöschte Nummern werden nicht neu vergeben.
+        Vergabe hier über die Schaltfläche über der Tabelle oder direkt im Auftrag (Abschnitt Seriennummer).
+        Automatisch = höchste bisher <em>automatisch</em> vergebene Nummer + 1 (manuell vergebene Nummern
+        zählen nicht); ist die Nummer schon belegt, wird die nächste freie genommen. Das Jahrpräfix kommt
+        aus dem Bauplan-Monat (bis 2025 einstellig, ab 2026 zweistellig). Gelöschte Nummern werden nicht
+        neu vergeben.
       </p>
     </div>
   );
