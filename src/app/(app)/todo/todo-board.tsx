@@ -94,7 +94,7 @@ export function TodoBoard({
             <TH className="w-32">Status</TH>
             <TH className="w-20">Prio</TH>
             <TH>Aufgabe</TH>
-            <TH className="w-32 text-right">Aktion</TH>
+            <TH className="w-48 text-right">Aktion</TH>
           </TR>
         </THead>
         <TBody>
@@ -197,17 +197,31 @@ function TodoLine({
           <Badge tone={row.prio === "DRINGEND" ? "red" : "neutral"}>{TODO_PRIO_LABEL[row.prio]}</Badge>
         </TD>
         <TD>
-          <div className="max-w-xl whitespace-pre-wrap text-sm text-neutral-700">{row.aufgabe}</div>
+          <button
+            type="button"
+            onClick={onToggleDetail}
+            title="Verlauf / Kommentare öffnen"
+            className="max-w-xl cursor-pointer whitespace-pre-wrap text-left text-sm text-neutral-700 hover:text-brand hover:underline"
+          >
+            {row.aufgabe}
+          </button>
           {row.auftragNummer ? (
-            <Link href={`/auftraege/${row.auftragId}`} className="text-xs text-blue-700 hover:underline">
-              → {row.auftragNummer}
-            </Link>
+            <div>
+              <Link href={`/auftraege/${row.auftragId}`} className="text-xs text-blue-700 hover:underline">
+                → {row.auftragNummer}
+              </Link>
+            </div>
           ) : null}
         </TD>
         <TD className="text-right">
-          <div className="flex justify-end gap-1">
-            <Button size="sm" variant="ghost" onClick={onToggleDetail}>
-              {detailOffen ? "▾" : "💬"}{row.kommentarAnzahl > 0 ? ` ${row.kommentarAnzahl}` : ""}
+          <div className="flex flex-wrap justify-end gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onToggleDetail}
+              title="Verlauf, Kommentare und Rückfragen"
+            >
+              {detailOffen ? "▾ schließen" : `💬 Verlauf${row.kommentarAnzahl > 0 ? ` (${row.kommentarAnzahl})` : ""}`}
             </Button>
             {modus === "vertretung" ? (
               !beiMir ? (

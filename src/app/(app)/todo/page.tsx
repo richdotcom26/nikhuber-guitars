@@ -117,7 +117,8 @@ export default async function TodoPage({
       <p className="mt-4 text-xs text-neutral-400">
         Kleiner Aufgaben-Messenger: du siehst nur deine eigenen Aufgaben und die, die du an andere
         gesendet hast. Über „Neue Aufgabe“ einen Empfänger wählen und abschicken. Status direkt in
-        der Zeile ändern. Bei Abwesenheit übernimmt die eingetragene Vertretung deine offenen Aufgaben.
+        der Zeile ändern; ein Klick auf den Aufgabentext (oder „💬 Verlauf“) öffnet Kommentare,
+        Rückfragen und den Status-Verlauf.
       </p>
     </div>
   );

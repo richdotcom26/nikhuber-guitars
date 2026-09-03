@@ -27,6 +27,12 @@ export function TodoAbwesenheit({
 
   const aktiv = abwesendBis && abwesendBis >= new Date().toISOString().slice(0, 10);
 
+  const INFO =
+    "Trägst du dich als abwesend ein, kann die gewählte Vertretung bis zum Enddatum deine "
+    + "offenen Aufgaben sehen, kommentieren, den Status ändern und – bei Bedarf – dauerhaft an "
+    + "sich übernehmen. Alle Beteiligten sehen an der Aufgabe einen Abwesenheits-Hinweis. "
+    + "Enddatum leer lassen beendet die Abwesenheit.";
+
   if (!editing) {
     return (
       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -40,6 +46,14 @@ export function TodoAbwesenheit({
         <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
           {aktiv ? "ändern" : "Abwesenheit eintragen"}
         </Button>
+        <span
+          tabIndex={0}
+          title={INFO}
+          aria-label={INFO}
+          className="cursor-help select-none rounded-full border border-neutral-300 px-1.5 text-xs text-neutral-500"
+        >
+          i
+        </span>
       </div>
     );
   }
@@ -59,7 +73,7 @@ export function TodoAbwesenheit({
       </label>
       <SubmitButton size="sm">Speichern</SubmitButton>
       <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Abbrechen</Button>
-      <span className="text-xs text-neutral-400">Datum leer lassen = Abwesenheit beenden.</span>
+      <p className="w-full max-w-xl text-xs text-neutral-500">{INFO}</p>
       {state && !state.ok ? <FormMessage state={state} className="w-full" /> : null}
     </form>
   );
