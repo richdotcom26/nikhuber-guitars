@@ -17,7 +17,7 @@ export { ANGEBOT_STATUS, ANGEBOT_STATUS_LABEL } from "@/lib/angebot-shared";
 export const ANGEBOT_SORT: Record<string, unknown> = {
   nummer: angebot.nummer,
   datum: angebot.angebotsdatum,
-  kunde: sql`coalesce(${angebot.kdFirma}, ${angebot.kdNachname})`,
+  kunde: sql`lower(coalesce(${kunde.kurzname}, ${kunde.firma}, ${angebot.kdFirma}, ${angebot.kdNachname}, ''))`,
   modell: artikel.nameBelege,
   status: angebot.status,
   waehrung: angebot.kdWaehrung,
@@ -55,9 +55,12 @@ export async function listAngebote(
       kdWaehrung: angebot.kdWaehrung,
       summeNetto: angebot.summeNetto,
       modellName: modell.nameBelege,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
     })
     .from(angebot)
     .leftJoin(modell, eq(angebot.modellArtikelId, modell.id))
+    .leftJoin(kunde, eq(kunde.id, angebot.kundeId))
     .where(where)
     .orderBy(...orderByFor(ANGEBOT_SORT, params.sort, angebot.createdAt))
     .limit(pageSize)

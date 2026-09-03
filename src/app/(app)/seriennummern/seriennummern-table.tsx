@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { type Column, DataTable } from "@/components/ui/data-table";
+import { kundeKurz } from "@/lib/adressen-shared";
 import type { SortSpec } from "@/lib/table-sort";
 import { formatDate } from "@/lib/utils";
 
@@ -19,6 +20,8 @@ export interface SeriennummerRow {
   kdNachname: string | null;
   kdOrt: string | null;
   modellName: string | null;
+  kurzname: string | null;
+  firma: string | null;
 }
 
 export function SeriennummernTable({
@@ -49,8 +52,8 @@ export function SeriennummernTable({
     {
       key: "kunde", header: "Kunde", sortable: true,
       cell: (r) => {
-        const kunde = r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || null;
-        return kunde ? `${kunde}${r.kdOrt ? ` (${r.kdOrt})` : ""}` : "–";
+        const name = kundeKurz(r);
+        return name === "–" ? "–" : `${name}${r.kdOrt ? ` (${r.kdOrt})` : ""}`;
       },
     },
     {

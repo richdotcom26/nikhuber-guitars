@@ -33,3 +33,22 @@ export function anzeigename(k: {
   const n = [k.vorname, k.nachname].filter(Boolean).join(" ").trim();
   return n || k.kurzname?.trim() || "—";
 }
+
+/**
+ * Kundenanzeige in Fremd-Tabellen (Aufträge, Rechnungen, Angebote …): **Kurzname**,
+ * sonst Firmenname, sonst „Vorname Nachname". `kurzname`/`firma` kommen live aus dem
+ * Kunden-Datensatz, die `kd*`-Felder aus dem Beleg-Snapshot (falls kein Kunde verknüpft).
+ */
+export function kundeKurz(r: {
+  kurzname?: string | null;
+  firma?: string | null;
+  kdFirma?: string | null;
+  kdVorname?: string | null;
+  kdNachname?: string | null;
+}): string {
+  return r.kurzname?.trim()
+    || r.firma?.trim()
+    || r.kdFirma?.trim()
+    || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ").trim()
+    || "–";
+}

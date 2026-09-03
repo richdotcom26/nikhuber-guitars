@@ -22,7 +22,7 @@ const nullableText = z.preprocess(
 );
 const uuidOrNull = z.preprocess((v) => (v === "" || v == null ? null : v), z.uuid().nullable());
 
-const kdName = sql<string>`coalesce(${kunde.firma}, nullif(trim(concat_ws(' ', ${kunde.vorname}, ${kunde.nachname})), ''), ${kunde.kurzname})`;
+const kdName = sql<string>`coalesce(${kunde.kurzname}, ${kunde.firma}, nullif(trim(concat_ws(' ', ${kunde.vorname}, ${kunde.nachname})), ''))`;
 
 /* --------------------------------------------------------------------- liste */
 

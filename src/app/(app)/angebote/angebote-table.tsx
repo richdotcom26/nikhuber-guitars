@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { type Column, DataTable } from "@/components/ui/data-table";
+import { kundeKurz } from "@/lib/adressen-shared";
 import {
   ANGEBOT_STATUS_LABEL, ANGEBOT_STATUS_TONE, type AngebotStatus,
 } from "@/lib/angebot-shared";
@@ -19,6 +20,8 @@ export interface AngebotRow {
   kdWaehrung: string | null;
   summeNetto: string | null;
   modellName: string | null;
+  kurzname: string | null;
+  firma: string | null;
 }
 
 export function AngeboteTable({
@@ -39,7 +42,7 @@ export function AngeboteTable({
     },
     {
       key: "kunde", header: "Kunde", sortable: true,
-      cell: (r) => r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || "–",
+      cell: (r) => kundeKurz(r),
     },
     {
       key: "modell", header: "Modell", sortable: true,

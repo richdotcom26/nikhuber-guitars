@@ -30,7 +30,7 @@ export const AUFTRAG_SORT: Record<string, unknown> = {
   art: auftrag.auftragsart,
   datum: auftrag.auftragsdatum,
   bauplan: auftrag.bauplandatum,
-  kunde: sql`coalesce(${auftrag.kdFirma}, ${auftrag.kdNachname})`,
+  kunde: sql`lower(coalesce(${kunde.kurzname}, ${kunde.firma}, ${auftrag.kdFirma}, ${auftrag.kdNachname}, ''))`,
   modellgruppe: modellgruppe.name,
   status: auftrag.status,
   work: auftrag.fortschrittProzent,
@@ -87,10 +87,13 @@ export async function listAuftraege(
       modellName: modell.nameBelege,
       modellgruppeName: modellgruppe.name,
       modellgruppeFarbe: modellgruppe.farbe,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
     })
     .from(auftrag)
     .leftJoin(modell, eq(auftrag.modellArtikelId, modell.id))
     .leftJoin(modellgruppe, eq(modellgruppe.id, modell.modellgruppeId))
+    .leftJoin(kunde, eq(kunde.id, auftrag.kundeId))
     .where(where)
     .orderBy(...orderByFor(AUFTRAG_SORT, params.sort, auftrag.createdAt))
     .limit(pageSize)

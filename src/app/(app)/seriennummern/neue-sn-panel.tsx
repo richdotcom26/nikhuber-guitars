@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { kundeKurz } from "@/lib/adressen-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import {
   type AuftragHit, neueSnAutoAction, neueSnManuellAction, searchAuftragOhneSnAction,
 } from "./actions";
 
 function auftragLabel(h: AuftragHit) {
-  const kunde = h.kdFirma || h.kdNachname || "–";
-  return `${h.nummer} · ${kunde}`;
+  return `${h.nummer} · ${kundeKurz(h)}`;
 }
 
 export function NeueSnPanel({ naechste }: { naechste: number }) {

@@ -2,7 +2,7 @@ import "server-only";
 import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
-import { artikel, auftrag, seriennummer } from "@/lib/db/schema";
+import { artikel, auftrag, kunde, seriennummer } from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
@@ -13,7 +13,7 @@ export const SERIENNUMMER_SORT: Record<string, unknown> = {
   anzeige: seriennummer.anzeige,
   vergabe: seriennummer.manuell,
   modell: artikel.nameLang,
-  kunde: sql`lower(coalesce(${auftrag.kdFirma}, ${auftrag.kdNachname}, ''))`,
+  kunde: sql`lower(coalesce(${kunde.kurzname}, ${kunde.firma}, ${auftrag.kdFirma}, ${auftrag.kdNachname}, ''))`,
   vergebenAm: seriennummer.vergebenAm,
   auftrag: auftrag.nummer,
 };
@@ -59,10 +59,13 @@ export async function listSeriennummern(
       kdVorname: auftrag.kdVorname,
       kdOrt: auftrag.kdOrt,
       modellName: artikel.nameLang,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
     })
     .from(seriennummer)
     .leftJoin(auftrag, eq(auftrag.id, seriennummer.auftragId))
     .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
+    .leftJoin(kunde, eq(kunde.id, auftrag.kundeId))
     .where(where)
     .orderBy(...orderByFor(SERIENNUMMER_SORT, params.sort, seriennummer.lfd))
     .limit(pageSize)
@@ -196,8 +199,17 @@ export async function auftraegeOhneSeriennummer(q: string, limit = 15) {
     filters.push(or(ilike(auftrag.nummer, like), ilike(auftrag.kdFirma, like), ilike(auftrag.kdNachname, like))!);
   }
   return db
-    .select({ id: auftrag.id, nummer: auftrag.nummer, kdFirma: auftrag.kdFirma, kdNachname: auftrag.kdNachname })
+    .select({
+      id: auftrag.id,
+      nummer: auftrag.nummer,
+      kdFirma: auftrag.kdFirma,
+      kdNachname: auftrag.kdNachname,
+      kdVorname: auftrag.kdVorname,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
+    })
     .from(auftrag)
+    .leftJoin(kunde, eq(kunde.id, auftrag.kundeId))
     .where(and(...filters))
     .orderBy(desc(auftrag.createdAt))
     .limit(limit);

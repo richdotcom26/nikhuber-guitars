@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { type Column, DataTable } from "@/components/ui/data-table";
+import { kundeKurz } from "@/lib/adressen-shared";
 import {
   RG_BELEGART_LABEL, RG_STATUS_LABEL, RG_STATUS_TONE, type RgBelegart, type RgStatus,
 } from "@/lib/rechnung-shared";
@@ -21,6 +22,8 @@ export interface RechnungRow {
   kdWaehrung: string | null;
   summeBrutto: string | null;
   zahlungsstatus: string | null;
+  kurzname: string | null;
+  firma: string | null;
 }
 
 export function RechnungenTable({
@@ -45,7 +48,7 @@ export function RechnungenTable({
     },
     {
       key: "kunde", header: "Kunde", sortable: true,
-      cell: (r) => r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || "–",
+      cell: (r) => kundeKurz(r),
     },
     {
       key: "status", header: "Status", sortable: true,

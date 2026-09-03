@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import {
-  artikel, auftrag, belegPosition, rechnung, seriennummer,
+  artikel, auftrag, belegPosition, kunde, rechnung, seriennummer,
 } from "@/lib/db/schema";
 import {
   RG_BELEGART_VALUES, RG_STATUS_VALUES, type RgBelegart, type RgStatus,
@@ -24,7 +24,7 @@ export const RECHNUNG_SORT: Record<string, unknown> = {
   nummer: rechnung.nummer,
   art: rechnung.belegart,
   datum: rechnung.rechnungsdatum,
-  kunde: sql`coalesce(${rechnung.kdFirma}, ${rechnung.kdNachname})`,
+  kunde: sql`lower(coalesce(${kunde.kurzname}, ${kunde.firma}, ${rechnung.kdFirma}, ${rechnung.kdNachname}, ''))`,
   status: rechnung.status,
   zahlung: rechnung.zahlungsdatum,
   brutto: rechnung.summeBrutto,
@@ -62,8 +62,11 @@ export async function listRechnungen(
       kdWaehrung: rechnung.kdWaehrung,
       summeBrutto: rechnung.summeBrutto,
       zahlungsstatus: rechnung.zahlungsstatus,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
     })
     .from(rechnung)
+    .leftJoin(kunde, eq(kunde.id, rechnung.kundeId))
     .where(where)
     .orderBy(...orderByFor(RECHNUNG_SORT, params.sort, rechnung.createdAt))
     .limit(pageSize)

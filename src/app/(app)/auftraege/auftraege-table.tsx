@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { type Column, DataTable } from "@/components/ui/data-table";
+import { kundeKurz } from "@/lib/adressen-shared";
 import {
   AUFTRAGSART_LABEL, AUFTRAG_STATUS_LABEL, AUFTRAG_STATUS_TONE,
   type Auftragsart, type AuftragStatus, fortschrittFarbe,
@@ -20,6 +21,8 @@ export interface AuftragRow {
   kdVorname: string | null;
   kdNachname: string | null;
   kdWaehrung: string | null;
+  kurzname: string | null;
+  firma: string | null;
   fortschrittProzent: number | null;
   modellName: string | null;
   modellgruppeName: string | null;
@@ -55,7 +58,7 @@ export function AuftraegeTable({
     },
     {
       key: "kunde", header: "Kunde", sortable: true,
-      cell: (r) => r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || "–",
+      cell: (r) => kundeKurz(r),
     },
     {
       key: "modell", header: "Modell", sortable: false,

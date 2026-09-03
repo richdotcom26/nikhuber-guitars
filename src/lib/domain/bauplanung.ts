@@ -2,7 +2,8 @@ import "server-only";
 import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { artikel, auftrag, modellgruppe } from "@/lib/db/schema";
+import { kundeKurz } from "@/lib/adressen-shared";
+import { artikel, auftrag, kunde, modellgruppe } from "@/lib/db/schema";
 import { computeTiers } from "./artikel";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -113,6 +114,8 @@ export async function monatsBoard(monat: string) {
       kdFirma: auftrag.kdFirma,
       kdNachname: auftrag.kdNachname,
       kdVorname: auftrag.kdVorname,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
       summeNetto: auftrag.summeNetto,
       vertriebsweg: auftrag.kdVertriebsweg,
       waehrung: auftrag.kdWaehrung,
@@ -129,6 +132,7 @@ export async function monatsBoard(monat: string) {
     .from(auftrag)
     .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
     .leftJoin(modellgruppe, eq(modellgruppe.id, artikel.modellgruppeId))
+    .leftJoin(kunde, eq(kunde.id, auftrag.kundeId))
     .where(and(
       eq(auftrag.auftragsart, "PRODUKTION"),
       sql`to_char(${auftrag.bauplandatum}, 'YYYY-MM') = ${monat}`,
@@ -141,7 +145,7 @@ export async function monatsBoard(monat: string) {
     nummer: r.nummer,
     status: r.status,
     fortschrittProzent: r.fortschrittProzent,
-    kunde: r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || null,
+    kunde: kundeKurz(r) === "–" ? null : kundeKurz(r),
     modellName: r.modellName,
     gruppeKey: r.gruppeId ?? "__ohne__",
     gruppeName: r.gruppeName ?? OHNE,
@@ -198,12 +202,15 @@ export async function ungeplanteAuftraege(q = "", limit = 40) {
       kdFirma: auftrag.kdFirma,
       kdNachname: auftrag.kdNachname,
       kdVorname: auftrag.kdVorname,
+      kurzname: kunde.kurzname,
+      firma: kunde.firma,
       modellName: artikel.nameLang,
       gruppeName: modellgruppe.name,
     })
     .from(auftrag)
     .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
     .leftJoin(modellgruppe, eq(modellgruppe.id, artikel.modellgruppeId))
+    .leftJoin(kunde, eq(kunde.id, auftrag.kundeId))
     .where(and(...filters))
     .orderBy(desc(auftrag.auftragsdatum))
     .limit(limit);

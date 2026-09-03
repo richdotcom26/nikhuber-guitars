@@ -9,6 +9,7 @@ import {
   aktuellerMonat, monatLabel, monatsBoard, monatVerschieben, ungeplanteAuftraege,
   type Ampel,
 } from "@/lib/domain/bauplanung";
+import { kundeKurz } from "@/lib/adressen-shared";
 import { fortschrittFarbe } from "@/lib/auftrag-shared";
 import { formatMoney } from "@/lib/utils";
 import { AssignMonat, BandEditor, MoveMonat } from "./bauplan-controls";
@@ -170,7 +171,7 @@ export default async function BauplanungPage({
                   <TD className="font-mono text-xs">
                     <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline">{a.nummer}</Link>
                   </TD>
-                  <TD>{a.kdFirma || [a.kdVorname, a.kdNachname].filter(Boolean).join(" ") || "–"}</TD>
+                  <TD>{kundeKurz(a)}</TD>
                   <TD className="text-neutral-500">{a.modellName ?? "–"}</TD>
                   <TD className="text-neutral-500">{a.gruppeName ?? "–"}</TD>
                   <TD className="text-right"><AssignMonat id={a.id} monat={monat} /></TD>

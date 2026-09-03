@@ -10,14 +10,19 @@ export interface AuftragHit {
   id: string;
   nummer: string;
   kdFirma: string | null;
+  kdVorname: string | null;
   kdNachname: string | null;
+  kurzname: string | null;
+  firma: string | null;
 }
 
 /** Typeahead: Produktionsaufträge ohne Seriennummer. */
 export async function searchAuftragOhneSnAction(q: string): Promise<AuftragHit[]> {
   const rows = await auftraegeOhneSeriennummer(q, 15);
   return rows.map((r) => ({
-    id: r.id, nummer: r.nummer, kdFirma: r.kdFirma, kdNachname: r.kdNachname,
+    id: r.id, nummer: r.nummer,
+    kdFirma: r.kdFirma, kdVorname: r.kdVorname, kdNachname: r.kdNachname,
+    kurzname: r.kurzname, firma: r.firma,
   }));
 }
 
