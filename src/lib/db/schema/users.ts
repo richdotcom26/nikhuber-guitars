@@ -1,5 +1,5 @@
 import {
-  boolean, pgTable, text, uuid,
+  boolean, date, pgTable, text, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { rolleEnum } from "./_enums";
@@ -18,6 +18,8 @@ export const appUser = pgTable("app_user", {
   kannWerkstatt: boolean("kann_werkstatt").default(true).notNull(),  // ex NB.V (im Schritt-Picker)
   kannTodo: boolean("kann_todo").default(true).notNull(),            // ex NB.U
   initialen: text("initialen"),               // ex 'erfasst von' / 'MA'-Kürzel (Anzeige)
+  abwesendBis: date("abwesend_bis"),          // „abwesend bis …" — bis dahin greift die Vertretung
+  vertretungId: uuid("vertretung_id"),        // -> app_user (relations): wer mich in der Abwesenheit vertritt
   ...auditCols,
 });
 

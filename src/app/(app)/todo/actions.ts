@@ -6,7 +6,8 @@ import {
 } from "@/lib/domain/action-state";
 import { setTodoHinweis } from "@/lib/domain/stammdaten";
 import {
-  addTodoKommentar, createTodo, deleteTodo, setTodoStatus, todoSchema, todoVerlauf, updateTodo,
+  abwesenheitSchema, addTodoKommentar, createTodo, deleteTodo, setMeineAbwesenheit,
+  setTodoStatus, todoSchema, todoVerlauf, uebernehmenTodo, updateTodo,
 } from "@/lib/domain/todo";
 
 const BASE = "/todo";
@@ -80,5 +81,21 @@ export async function addTodoKommentarAction(_p: ActionState, fd: FormData): Pro
     });
     revalidatePath(BASE);
     return ok("Gespeichert.");
+  });
+}
+
+export async function uebernehmenTodoAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await uebernehmenTodo(String(fd.get("id") ?? ""));
+    revalidatePath(BASE);
+    return ok("Übernommen.");
+  });
+}
+
+export async function setAbwesenheitAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await setMeineAbwesenheit(parseForm(abwesenheitSchema, fd));
+    revalidatePath(BASE);
+    return ok("Abwesenheit gespeichert.");
   });
 }

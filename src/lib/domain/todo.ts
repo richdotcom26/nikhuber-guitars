@@ -1,5 +1,5 @@
 import "server-only";
-import { aliasedTable, and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { aliasedTable, and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { appUser, auftrag, todo, todoKommentar } from "@/lib/db/schema";
@@ -14,9 +14,24 @@ export {
 const empf = aliasedTable(appUser, "empf");
 const abs = aliasedTable(appUser, "abs");
 const bei = aliasedTable(appUser, "bei");
+const beiVertr = aliasedTable(appUser, "bei_vertr");
 const autor = aliasedTable(appUser, "autor");
 
+const heuteIso = () => new Date().toISOString().slice(0, 10);
+
 /* -------------------------------------------------------------------- helpers */
+
+/** IDs der Kollegen, die ich gerade vertrete (abwesend, mit mir als Vertretung). */
+async function meineVertretenen(userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ id: appUser.id })
+    .from(appUser)
+    .where(and(
+      eq(appUser.vertretungId, userId),
+      sql`${appUser.abwesendBis} >= ${heuteIso()}`,
+    ));
+  return rows.map((r) => r.id);
+}
 
 const uuidOrNull = z.preprocess((v) => (v === "" || v == null ? null : v), z.uuid().nullable());
 const dateOrNull = z.preprocess(
@@ -40,23 +55,7 @@ export interface TodoListeParams {
   q?: string;
 }
 
-export async function listTodos(params: TodoListeParams = {}) {
-  const user = await requireUser();
-
-  // Beteiligt = Absender oder Empfänger. Jeder sieht nur Aufgaben, an denen er beteiligt ist.
-  const beteiligt = or(eq(todo.empfaengerId, user.id), eq(todo.absenderId, user.id))!;
-  const filters = [
-    params.richtung === "an_mich"
-      ? and(beteiligt, eq(todo.aktuellBeiId, user.id))!
-      : params.richtung === "von_mir"
-        ? and(beteiligt, sql`${todo.aktuellBeiId} is distinct from ${user.id}`)!
-        : beteiligt,
-  ];
-  if (!params.mitErledigt) filters.push(ne(todo.status, "ERLEDIGT"));
-  if (params.q?.trim()) {
-    filters.push(ilike(todo.aufgabe, `%${params.q.trim()}%`));
-  }
-
+function baseTodoQuery() {
   return db
     .select({
       id: todo.id,
@@ -74,6 +73,8 @@ export async function listTodos(params: TodoListeParams = {}) {
       empfaengerName: empf.name,
       absenderName: abs.name,
       aktuellBeiName: bei.name,
+      aktuellBeiAbwesendBis: bei.abwesendBis,
+      aktuellBeiVertretungName: beiVertr.name,
       auftragId: todo.auftragId,
       auftragNummer: auftrag.nummer,
       kommentarAnzahl: sql<number>`(
@@ -84,13 +85,45 @@ export async function listTodos(params: TodoListeParams = {}) {
     .leftJoin(empf, eq(empf.id, todo.empfaengerId))
     .leftJoin(abs, eq(abs.id, todo.absenderId))
     .leftJoin(bei, eq(bei.id, todo.aktuellBeiId))
-    .leftJoin(auftrag, eq(auftrag.id, todo.auftragId))
-    .where(filters.length ? and(...filters) : undefined)
-    .orderBy(
-      // dringend zuerst, dann jüngste Änderung
-      sql`case when ${todo.prio} = 'DRINGEND' then 0 else 1 end`,
-      desc(todo.updatedAt),
-    );
+    .leftJoin(beiVertr, eq(beiVertr.id, bei.vertretungId))
+    .leftJoin(auftrag, eq(auftrag.id, todo.auftragId));
+}
+
+const DRINGEND_ZUERST = sql`case when ${todo.prio} = 'DRINGEND' then 0 else 1 end`;
+
+export async function listTodos(params: TodoListeParams = {}) {
+  const user = await requireUser();
+
+  // Beteiligt = Absender oder Empfänger. Jeder sieht nur Aufgaben, an denen er beteiligt ist.
+  const beteiligt = or(eq(todo.empfaengerId, user.id), eq(todo.absenderId, user.id))!;
+  const filters = [
+    params.richtung === "an_mich"
+      ? and(beteiligt, eq(todo.aktuellBeiId, user.id))!
+      : params.richtung === "von_mir"
+        ? and(beteiligt, sql`${todo.aktuellBeiId} is distinct from ${user.id}`)!
+        : beteiligt,
+  ];
+  if (!params.mitErledigt) filters.push(ne(todo.status, "ERLEDIGT"));
+  if (params.q?.trim()) {
+    filters.push(ilike(todo.aufgabe, `%${params.q.trim()}%`));
+  }
+
+  return baseTodoQuery()
+    .where(and(...filters))
+    .orderBy(DRINGEND_ZUERST, desc(todo.updatedAt));
+}
+
+/** Offene Aufgaben, die gerade bei einem Kollegen liegen, den ich vertrete. */
+export async function listVertretungTodos() {
+  const user = await requireUser();
+  const vertretene = await meineVertretenen(user.id);
+  if (vertretene.length === 0) return [];
+  return baseTodoQuery()
+    .where(and(
+      inArray(todo.aktuellBeiId, vertretene),
+      ne(todo.status, "ERLEDIGT"),
+    ))
+    .orderBy(DRINGEND_ZUERST, desc(todo.updatedAt));
 }
 
 /* -------------------------------------------------------------------- verlauf */
@@ -143,14 +176,20 @@ export async function getTodo(id: string) {
   return row;
 }
 
-/** Aufgabe laden und sicherstellen, dass der Benutzer beteiligt ist (Absender oder Empfänger). */
+/**
+ * Aufgabe laden und Berechtigung prüfen: Absender/Empfänger — oder (außer bei `nurAbsender`)
+ * die Vertretung des Kollegen, bei dem die Aufgabe gerade liegt.
+ */
 async function ladeBeteiligt(id: string, userId: string, nurAbsender = false) {
   const row = await db.query.todo.findFirst({ where: eq(todo.id, id) });
   if (!row) throw new DomainError("NOT_FOUND", "Aufgabe nicht gefunden.");
-  const beteiligt = nurAbsender
+  let ok = nurAbsender
     ? row.absenderId === userId
     : row.absenderId === userId || row.empfaengerId === userId;
-  if (!beteiligt) throw new DomainError("FORBIDDEN", "Keine Berechtigung für diese Aufgabe.");
+  if (!ok && !nurAbsender && row.aktuellBeiId) {
+    ok = (await meineVertretenen(userId)).includes(row.aktuellBeiId);
+  }
+  if (!ok) throw new DomainError("FORBIDDEN", "Keine Berechtigung für diese Aufgabe.");
   return row;
 }
 
@@ -227,6 +266,83 @@ export async function addTodoKommentar(
     }).where(eq(todo.id, id));
   });
 }
+
+/** Als Vertretung eine Aufgabe eines abwesenden Kollegen an mich ziehen. */
+export async function uebernehmenTodo(id: string) {
+  const user = await requireUser();
+  const row = await ladeBeteiligt(id, user.id);
+  if (row.aktuellBeiId === user.id) return;
+  const von = row.aktuellBeiId
+    ? (await db.select({ name: appUser.name }).from(appUser).where(eq(appUser.id, row.aktuellBeiId)))[0]?.name
+    : null;
+  await db.transaction(async (tx) => {
+    await tx.insert(todoKommentar).values({
+      todoId: id,
+      autorId: user.id,
+      text: von ? `Von ${von} übernommen (Abwesenheit).` : "Übernommen (Abwesenheit).",
+      weitergabeAnId: user.id,
+      createdBy: user.id,
+      updatedBy: user.id,
+    });
+    await tx.update(todo)
+      .set({ aktuellBeiId: user.id, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(todo.id, id));
+  });
+}
+
+/* ------------------------------------------------------------------ Abwesenheit */
+
+export async function meineAbwesenheit(): Promise<{
+  abwesendBis: string | null;
+  vertretungId: string | null;
+  vertretungName: string | null;
+}> {
+  const user = await requireUser();
+  const [row] = await db
+    .select({ abwesendBis: appUser.abwesendBis, vertretungId: appUser.vertretungId })
+    .from(appUser)
+    .where(eq(appUser.id, user.id));
+  let vertretungName: string | null = null;
+  if (row?.vertretungId) {
+    const [v] = await db
+      .select({ name: appUser.name })
+      .from(appUser)
+      .where(eq(appUser.id, row.vertretungId));
+    vertretungName = v?.name ?? null;
+  }
+  return {
+    abwesendBis: row?.abwesendBis ?? null,
+    vertretungId: row?.vertretungId ?? null,
+    vertretungName,
+  };
+}
+
+const abwesenheitSchema = z.object({
+  abwesendBis: dateOrNull,
+  vertretungId: uuidOrNull,
+});
+export type AbwesenheitInput = z.infer<typeof abwesenheitSchema>;
+
+/** Eigene Abwesenheit + Vertretung setzen (oder mit leeren Werten beenden). */
+export async function setMeineAbwesenheit(input: AbwesenheitInput) {
+  const user = await requireUser();
+  if (input.abwesendBis && !input.vertretungId) {
+    throw new DomainError("VALIDATION", "Bitte eine Vertretung wählen.");
+  }
+  if (input.vertretungId === user.id) {
+    throw new DomainError("VALIDATION", "Sich selbst kann man nicht vertreten.");
+  }
+  await db
+    .update(appUser)
+    .set({
+      abwesendBis: input.abwesendBis,
+      vertretungId: input.abwesendBis ? input.vertretungId : null,
+      updatedAt: new Date(),
+      updatedBy: user.id,
+    })
+    .where(eq(appUser.id, user.id));
+}
+export { abwesenheitSchema };
 
 export async function updateTodo(id: string, input: TodoInput) {
   const user = await requireUser();

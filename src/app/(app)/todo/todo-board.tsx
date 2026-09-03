@@ -15,10 +15,11 @@ import {
 import { formatDate } from "@/lib/utils";
 import {
   addTodoKommentarAction, createTodoAction, deleteTodoAction, setTodoStatusAction,
-  todoVerlaufAction, updateTodoAction, type VerlaufEintrag,
+  todoVerlaufAction, uebernehmenTodoAction, updateTodoAction, type VerlaufEintrag,
 } from "./actions";
 
 interface Mitarbeiter { id: string; name: string }
+type Modus = "normal" | "vertretung";
 
 export interface TodoRow {
   id: string;
@@ -36,6 +37,8 @@ export interface TodoRow {
   empfaengerName: string | null;
   absenderName: string | null;
   aktuellBeiName: string | null;
+  aktuellBeiAbwesendBis: string | null;
+  aktuellBeiVertretungName: string | null;
   auftragId: string | null;
   auftragNummer: string | null;
   kommentarAnzahl: number;
@@ -45,9 +48,11 @@ export function TodoBoard({
   rows,
   mitarbeiter,
   currentUserId,
+  modus = "normal",
 }: {
   rows: TodoRow[];
   mitarbeiter: Mitarbeiter[];
+  modus?: Modus;
   currentUserId: string;
 }) {
   const [adding, setAdding] = useState(false);
@@ -60,14 +65,18 @@ export function TodoBoard({
       return n;
     });
 
+  const vertretung = modus === "vertretung";
+
   return (
     <div>
-      <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
-        <span className="text-sm font-medium text-neutral-600">{rows.length} Aufgaben</span>
-        <Button size="sm" variant="outline" onClick={() => setAdding((a) => !a)}>
-          {adding ? "Abbrechen" : "Neue Aufgabe"}
-        </Button>
-      </div>
+      {!vertretung ? (
+        <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
+          <span className="text-sm font-medium text-neutral-600">{rows.length} Aufgaben</span>
+          <Button size="sm" variant="outline" onClick={() => setAdding((a) => !a)}>
+            {adding ? "Abbrechen" : "Neue Aufgabe"}
+          </Button>
+        </div>
+      ) : null}
 
       {adding ? (
         <div className="border-b border-neutral-100 bg-neutral-50 p-3">
@@ -95,6 +104,7 @@ export function TodoBoard({
               row={r}
               mitarbeiter={mitarbeiter}
               currentUserId={currentUserId}
+              modus={modus}
               detailOffen={offen.has(r.id)}
               onToggleDetail={() => toggle(r.id)}
             />
@@ -109,11 +119,12 @@ export function TodoBoard({
 }
 
 function TodoLine({
-  row, mitarbeiter, currentUserId, detailOffen, onToggleDetail,
+  row, mitarbeiter, currentUserId, modus, detailOffen, onToggleDetail,
 }: {
   row: TodoRow;
   mitarbeiter: Mitarbeiter[];
   currentUserId: string;
+  modus: Modus;
   detailOffen: boolean;
   onToggleDetail: () => void;
 }) {
@@ -121,7 +132,12 @@ function TodoLine({
   const anMich = row.aktuellBeiId === currentUserId;
   const [stState, stAction] = useActionState(setTodoStatusAction, IDLE);
   const [delState, delAction] = useActionState(deleteTodoAction, IDLE);
+  const [ueState, ueAction] = useActionState(uebernehmenTodoAction, IDLE);
   const stForm = useRef<HTMLFormElement>(null);
+
+  const heute = new Date().toISOString().slice(0, 10);
+  const beiAbwesend = !!row.aktuellBeiAbwesendBis && row.aktuellBeiAbwesendBis >= heute
+    && row.aktuellBeiId !== currentUserId;
 
   if (editing) {
     return (
@@ -153,6 +169,12 @@ function TodoLine({
         </TD>
         <TD className={beiMir ? "text-xs font-medium text-brand" : "text-xs text-neutral-500"}>
           {beiMir ? "bei mir" : row.aktuellBeiName ?? "–"}
+          {beiAbwesend ? (
+            <div className="text-[11px] text-amber-700">
+              🌴 abwesend bis {formatDate(row.aktuellBeiAbwesendBis)}
+              {row.aktuellBeiVertretungName ? ` · Vertr.: ${row.aktuellBeiVertretungName}` : ""}
+            </div>
+          ) : null}
         </TD>
         <TD className={ueberfaellig ? "font-medium text-red-600" : "text-neutral-500"}>
           {faellig ? formatDate(faellig) : "–"}
@@ -187,15 +209,27 @@ function TodoLine({
             <Button size="sm" variant="ghost" onClick={onToggleDetail}>
               {detailOffen ? "▾" : "💬"}{row.kommentarAnzahl > 0 ? ` ${row.kommentarAnzahl}` : ""}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearb.</Button>
-            {row.absenderId === currentUserId ? (
-              <form action={delAction} className="inline" onSubmit={(e) => { if (!confirm("Aufgabe löschen?")) e.preventDefault(); }}>
-                <input type="hidden" name="id" value={row.id} />
-                <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
-              </form>
-            ) : null}
+            {modus === "vertretung" ? (
+              !beiMir ? (
+                <form action={ueAction} className="inline">
+                  <input type="hidden" name="id" value={row.id} />
+                  <SubmitButton size="sm" variant="outline" pendingText="…">übernehmen</SubmitButton>
+                </form>
+              ) : <span className="text-xs text-brand">übernommen</span>
+            ) : (
+              <>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearb.</Button>
+                {row.absenderId === currentUserId ? (
+                  <form action={delAction} className="inline" onSubmit={(e) => { if (!confirm("Aufgabe löschen?")) e.preventDefault(); }}>
+                    <input type="hidden" name="id" value={row.id} />
+                    <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">×</SubmitButton>
+                  </form>
+                ) : null}
+              </>
+            )}
           </div>
           {delState && !delState.ok ? <p className="text-right text-xs text-red-600">{delState.message}</p> : null}
+          {ueState && !ueState.ok ? <p className="text-right text-xs text-red-600">{ueState.message}</p> : null}
         </TD>
       </TR>
       {detailOffen ? (
