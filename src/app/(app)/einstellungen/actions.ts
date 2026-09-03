@@ -69,6 +69,34 @@ export async function saveStaatAction(
   });
 }
 
+/* ---- Modellgruppen ---- */
+
+export async function saveModellgruppeAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { createModellgruppe, updateModellgruppe, modellgruppeSchema } =
+      await import("@/lib/domain/bauplanung");
+    const id = fd.get("id");
+    const input = parseForm(modellgruppeSchema, fd);
+    if (typeof id === "string" && id) await updateModellgruppe(id, input);
+    else await createModellgruppe(input);
+    revalidatePath(BASE);
+    revalidatePath("/auftraege");
+    revalidatePath("/bauplanung");
+    return ok("Modellgruppe gespeichert.");
+  });
+}
+
+export async function deleteModellgruppeAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const { deleteModellgruppe } = await import("@/lib/domain/bauplanung");
+    await deleteModellgruppe(String(fd.get("id") ?? ""));
+    revalidatePath(BASE);
+    revalidatePath("/auftraege");
+    revalidatePath("/bauplanung");
+    return ok("Modellgruppe gelöscht.");
+  });
+}
+
 /* ---- Benutzerverwaltung (ADMIN) ---- */
 
 export async function createBenutzerAction(_p: ActionState, fd: FormData): Promise<ActionState> {

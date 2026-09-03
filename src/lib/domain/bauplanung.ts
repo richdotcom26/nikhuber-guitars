@@ -1,9 +1,10 @@
 import "server-only";
 import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { artikel, auftrag, modellgruppe } from "@/lib/db/schema";
 import { computeTiers } from "./artikel";
-import { requireUser } from "./context";
+import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { getFirmaSetting } from "./stammdaten";
 
@@ -229,7 +230,76 @@ export async function setBauplanMonat(auftragId: string, monat: string | null) {
 
 export async function listModellgruppen() {
   await requireUser();
-  return db.select().from(modellgruppe).orderBy(asc(modellgruppe.name));
+  const rows = await db
+    .select({
+      id: modellgruppe.id,
+      name: modellgruppe.name,
+      farbe: modellgruppe.farbe,
+      minMengeMonat: modellgruppe.minMengeMonat,
+      maxMengeMonat: modellgruppe.maxMengeMonat,
+      updatedAt: modellgruppe.updatedAt,
+      anzahlModelle: sql<number>`count(${artikel.id})::int`,
+    })
+    .from(modellgruppe)
+    .leftJoin(artikel, and(eq(artikel.modellgruppeId, modellgruppe.id), isNull(artikel.deletedAt)))
+    .groupBy(modellgruppe.id)
+    .orderBy(asc(modellgruppe.name));
+  return rows;
+}
+
+const HEX = /^#[0-9a-fA-F]{6}$/;
+const emptyToNull = <T extends z.ZodTypeAny>(inner: T) =>
+  z.preprocess((v) => (v === "" || v == null ? null : v), inner.nullable());
+
+export const modellgruppeSchema = z.object({
+  name: z.string().trim().min(1, "Pflichtfeld"),
+  farbe: emptyToNull(z.string().trim().regex(HEX, "Farbe als #RRGGBB angeben")),
+  minMengeMonat: emptyToNull(z.coerce.number().int().min(0, "Mindestmenge < 0")),
+  maxMengeMonat: emptyToNull(z.coerce.number().int().min(0, "Maximalmenge < 0")),
+});
+export type ModellgruppeInput = z.infer<typeof modellgruppeSchema>;
+
+function assertBand(input: ModellgruppeInput) {
+  if (input.minMengeMonat != null && input.maxMengeMonat != null
+    && input.maxMengeMonat < input.minMengeMonat) {
+    throw new DomainError("VALIDATION", "Maximalmenge kleiner als Mindestmenge.");
+  }
+}
+
+export async function createModellgruppe(input: ModellgruppeInput) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  assertBand(input);
+  await db.insert(modellgruppe).values({ ...input, createdBy: user.id, updatedBy: user.id });
+}
+
+export async function updateModellgruppe(id: string, input: ModellgruppeInput) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  assertBand(input);
+  const res = await db
+    .update(modellgruppe)
+    .set({ ...input, updatedAt: new Date(), updatedBy: user.id })
+    .where(eq(modellgruppe.id, id))
+    .returning({ id: modellgruppe.id });
+  if (res.length === 0) throw new DomainError("NOT_FOUND", "Modellgruppe nicht gefunden.");
+}
+
+export async function deleteModellgruppe(id: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN");
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(artikel)
+    .where(and(eq(artikel.modellgruppeId, id), isNull(artikel.deletedAt)));
+  if (n > 0) {
+    throw new DomainError("CONFLICT", `Modellgruppe ist noch ${n} Modell(en) zugewiesen — dort zuerst entfernen.`);
+  }
+  const res = await db
+    .delete(modellgruppe)
+    .where(eq(modellgruppe.id, id))
+    .returning({ id: modellgruppe.id });
+  if (res.length === 0) throw new DomainError("NOT_FOUND", "Modellgruppe nicht gefunden.");
 }
 
 export async function setModellgruppeBand(id: string, min: number | null, max: number | null) {
