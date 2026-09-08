@@ -71,7 +71,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       <Card>
         <CardHeader><CardTitle>Screenshots & Anhänge</CardTitle></CardHeader>
         <CardContent>
-          <AnhangCard traeger="ticket" id={t.id} revalidate={`/tickets/${t.id}`} />
+          <AnhangCard traeger="ticket" id={t.id} revalidate={`/tickets/${t.id}`} paste />
         </CardContent>
       </Card>
 

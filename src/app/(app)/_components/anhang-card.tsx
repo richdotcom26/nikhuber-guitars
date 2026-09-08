@@ -8,11 +8,14 @@ export async function AnhangCard({
   id,
   revalidate,
   title,
+  paste,
 }: {
   traeger: AnhangTraeger;
   id: string;
   revalidate: string;
   title?: string;
+  /** Screenshot per Strg+V hochladen (z. B. bei Tickets). */
+  paste?: boolean;
 }) {
   const rows = await listAnhaenge(traeger, id);
   return (
@@ -21,6 +24,7 @@ export async function AnhangCard({
       id={id}
       revalidate={revalidate}
       title={title}
+      paste={paste}
       rows={rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }))}
     />
   );

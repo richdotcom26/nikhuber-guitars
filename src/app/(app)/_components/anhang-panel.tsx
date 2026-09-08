@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Select } from "@/components/ui/input";
@@ -29,6 +29,7 @@ export function AnhangPanel({
   rows,
   revalidate,
   title = "Anhänge",
+  paste = false,
 }: {
   traeger: AnhangTraeger;
   id: string;
@@ -36,11 +37,36 @@ export function AnhangPanel({
   /** Pfad für revalidatePath nach Upload/Löschen. */
   revalidate: string;
   title?: string;
+  /** Screenshot direkt aus der Zwischenablage (Strg+V) hochladen. */
+  paste?: boolean;
 }) {
   const [upState, upAction] = useActionState(uploadAnhangAction, IDLE);
   const [delState, delAction] = useActionState(deleteAnhangAction, IDLE);
   const [pending, startTransition] = useTransition();
   const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!paste) return;
+    function onPaste(e: ClipboardEvent) {
+      if (!e.clipboardData) return;
+      const img = Array.from(e.clipboardData.items)
+        .find((it) => it.kind === "file" && it.type.startsWith("image/"));
+      const blob = img?.getAsFile();
+      if (!blob) return;
+      e.preventDefault();
+      const ext = (blob.type.split("/")[1] || "png").replace("jpeg", "jpg");
+      const datei = new File([blob], `screenshot-${Date.now()}.${ext}`, { type: blob.type });
+      const fd = new FormData();
+      fd.set("traeger", traeger);
+      fd.set("id", id);
+      fd.set("_revalidate", revalidate);
+      fd.set("art", "BILD");
+      fd.set("datei", datei);
+      upAction(fd);
+    }
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [paste, traeger, id, revalidate, upAction]);
 
   function oeffnen(anhangId: string) {
     setOpenId(anhangId);
@@ -88,6 +114,14 @@ export function AnhangPanel({
         <p className="text-xs text-neutral-400">Keine Anhänge.</p>
       )}
       {delState && !delState.ok ? <FormMessage state={delState} /> : null}
+
+      {paste ? (
+        <p className="text-xs text-muted">
+          Tipp: Screenshot mit <kbd className="rounded border border-line bg-field px-1">Strg</kbd>
+          {" "}+{" "}
+          <kbd className="rounded border border-line bg-field px-1">V</kbd> direkt hier einfügen.
+        </p>
+      ) : null}
 
       <form action={upAction} className="flex flex-wrap items-center gap-2 border-t border-neutral-100 pt-3">
         <input type="hidden" name="traeger" value={traeger} />
