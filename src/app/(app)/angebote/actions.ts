@@ -10,7 +10,7 @@ import {
 } from "@/lib/domain/angebot";
 import {
   addPosition, angebotToAuftrag, applyModellvorlage, deleteAllePositionen,
-  deletePosition, generatePositionen, getArtikelForPosition, tierPreis, updatePosition,
+  deletePosition, generatePositionen, getArtikelForPosition, positionMargen, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 
 function rev(id: string) {
@@ -101,6 +101,7 @@ export async function addPositionAction(_p: ActionState, fd: FormData): Promise<
             fd.get("vertriebsweg") as string | null,
             fd.get("waehrung") as string | null,
             null,
+            await positionMargen(),
           );
         }
       }

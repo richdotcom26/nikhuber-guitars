@@ -6,6 +6,7 @@ import {
 } from "@/lib/db/schema";
 import { SPEC_SLOT_BY_KEY } from "@/lib/specs/slots";
 import { berechneBriefkopf } from "@/lib/adressen-shared";
+import { computeTiers } from "./artikel";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { getFirmaSetting } from "./stammdaten";
@@ -205,31 +206,58 @@ export async function renumberPositionen(traeger: PosTraeger, traegerId: string)
 
 /* -------------------------------------------------------------- Preis-Tier */
 
+export type PreisMargen = { net1: number; net2: number; us: number };
+
+/** Händlerrabatt-Margen aus den Firmenstammdaten (für `tierPreis`). */
+export async function positionMargen(): Promise<PreisMargen> {
+  const fs = await getFirmaSetting();
+  return {
+    net1: Number(fs.haendlerrabattNet1) || 0,
+    net2: Number(fs.haendlerrabattNet2) || 0,
+    us: Number(fs.usHaendlerrabatt) || 0,
+  };
+}
+
 type ArtikelPreis = {
   vkEur: string | null; vkUs: string | null;
-  vkEurNet: string | null; net1: string | null; net2: string | null; netUs: string | null;
+  bruttoFuerNetto: boolean | null; nichtRabattierfaehig: boolean | null;
 };
 
-/** Einzelpreis nach Vertriebsweg (§6). Sonderrabatt hat Vorrang. */
+/**
+ * Einzelpreis nach Vertriebsweg (§6). Sonderrabatt hat Vorrang.
+ * Die Tier-Preise (NET1/NET2/NET_US/vkEurNet) werden **live** aus `vk_eur`/`vk_us`
+ * + Margen berechnet (`computeTiers`), nicht aus den gespeicherten Spalten gelesen —
+ * die sind für den Import-Bestand leer.
+ */
 export function tierPreis(
   a: ArtikelPreis,
   vertriebsweg: string | null,
   kdWaehrung: string | null,
   sonderrabattProzent: string | null,
+  margen: PreisMargen,
 ): number | null {
   const n = (v: string | null) => (v == null ? null : Number(v));
+  const t = computeTiers(
+    {
+      vkEur: a.vkEur == null ? null : Number(a.vkEur),
+      vkUs: a.vkUs == null ? null : Number(a.vkUs),
+      bruttoFuerNetto: !!a.bruttoFuerNetto,
+      nichtRabattierfaehig: !!a.nichtRabattierfaehig,
+    },
+    margen,
+  );
   const sr = n(sonderrabattProzent);
   if (sr != null && sr !== 0) {
-    const base = kdWaehrung === "USD" ? n(a.vkUs) : n(a.vkEurNet);
+    const base = kdWaehrung === "USD" ? n(a.vkUs) : n(t.vkEurNet);
     return base == null ? null : Math.round(base * (1 - sr / 100) * 100) / 100;
   }
   switch (vertriebsweg) {
-    case "NET1": return n(a.net1);
-    case "NET2": return n(a.net2);
-    case "NET_US": return n(a.netUs);
+    case "NET1": return n(t.net1);
+    case "NET2": return n(t.net2);
+    case "NET_US": return n(t.netUs);
     case "VK_US": return n(a.vkUs);
-    case "VK_EUR": return n(a.vkEurNet);
-    default: return n(a.vkEurNet);
+    case "VK_EUR": return n(t.vkEurNet);
+    default: return n(t.vkEurNet);
   }
 }
 
@@ -321,7 +349,7 @@ export async function generatePositionen(traeger: SpecBelegTraeger, traegerId: s
       nameBelege: artikel.nameBelege,
       beschreibung: artikel.beschreibung,
       vkEur: artikel.vkEur, vkUs: artikel.vkUs,
-      vkEurNet: artikel.vkEurNet, net1: artikel.net1, net2: artikel.net2, netUs: artikel.netUs,
+      bruttoFuerNetto: artikel.bruttoFuerNetto, nichtRabattierfaehig: artikel.nichtRabattierfaehig,
     })
     .from(specBelegung)
     .innerJoin(artikel, eq(artikel.id, specBelegung.artikelId))
@@ -332,6 +360,7 @@ export async function generatePositionen(traeger: SpecBelegTraeger, traegerId: s
   const vw = h.kdVertriebsweg;
   const wg = h.kdWaehrung;
   const sr = h.kdSonderrabattProzent;
+  const margen = await positionMargen();
   const colourSetRow = specs.find((s) => s.slotKey === "colour_set");
   const colourAnzahl = colourSetAnzahl(colourSetRow?.nameBelege);
 
@@ -344,7 +373,7 @@ export async function generatePositionen(traeger: SpecBelegTraeger, traegerId: s
     const rows: (typeof belegPosition.$inferInsert)[] = [];
 
     if (modell) {
-      const preis = tierPreis(modell, vw, wg, sr);
+      const preis = tierPreis(modell, vw, wg, sr, margen);
       rows.push({
         [POS_KEY[traeger]]: traegerId,
         artikelId: modell.id,
@@ -364,7 +393,7 @@ export async function generatePositionen(traeger: SpecBelegTraeger, traegerId: s
       const slot = SPEC_SLOT_BY_KEY[s.slotKey];
       const multi = slot?.multi ?? false;
       const anzahl = s.slotKey === "colour" ? colourAnzahl : 1;
-      const preis = tierPreis(s, vw, wg, sr);
+      const preis = tierPreis(s, vw, wg, sr, margen);
       rows.push({
         [POS_KEY[traeger]]: traegerId,
         artikelId: s.artikelId,
@@ -559,7 +588,7 @@ export async function getArtikelForPosition(id: string) {
       name: sql<string>`coalesce(${artikel.nameBelege}, ${artikel.nameLang}, '')`,
       beschreibung: artikel.beschreibung,
       vkEur: artikel.vkEur, vkUs: artikel.vkUs,
-      vkEurNet: artikel.vkEurNet, net1: artikel.net1, net2: artikel.net2, netUs: artikel.netUs,
+      bruttoFuerNetto: artikel.bruttoFuerNetto, nichtRabattierfaehig: artikel.nichtRabattierfaehig,
     })
     .from(artikel)
     .where(eq(artikel.id, id));

@@ -6,7 +6,7 @@ import {
   type ActionState, fail, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  addPosition, deletePosition, getArtikelForPosition, tierPreis, updatePosition,
+  addPosition, deletePosition, getArtikelForPosition, positionMargen, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import {
   anzahlungSchema, gutschrift, recordZahlung, rechnungKopfSchema, setAnzahlung,
@@ -85,7 +85,13 @@ export async function addPositionAction(_p: ActionState, fd: FormData): Promise<
         name = freitext || a.name;
         beschreibung = a.beschreibung ?? null;
         if (einzelpreis == null) {
-          einzelpreis = tierPreis(a, fd.get("vertriebsweg") as string | null, fd.get("waehrung") as string | null, null);
+          einzelpreis = tierPreis(
+            a,
+            fd.get("vertriebsweg") as string | null,
+            fd.get("waehrung") as string | null,
+            null,
+            await positionMargen(),
+          );
         }
       }
     }
