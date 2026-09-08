@@ -178,7 +178,8 @@ export async function createTicket(input: TicketInput): Promise<string> {
       titel: input.titel,
       beschreibung: input.beschreibung,
       prioritaet: input.prioritaet,
-      zugewiesenAnId: input.zugewiesenAnId,
+      // Bearbeiter: wenn nichts gewählt → der anlegende Benutzer.
+      zugewiesenAnId: input.zugewiesenAnId ?? user.id,
       aufwandMinuten: input.aufwandMinuten,
       erstelltVonId: user.id,
       createdBy: user.id,

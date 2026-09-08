@@ -23,10 +23,13 @@ export function TicketForm({
   mode,
   values,
   benutzer,
+  currentUserId,
 }: {
   mode: "neu" | "edit";
   values: TicketFormValues;
   benutzer: { id: string; name: string }[];
+  /** Voreinstellung „Bearbeiter" bei neuen Tickets = angemeldeter Benutzer. */
+  currentUserId?: string;
 }) {
   const [state, action] = useActionState(
     mode === "neu" ? createTicketAction : updateTicketAction,
@@ -34,6 +37,7 @@ export function TicketForm({
   );
   const err = (state && !state.ok && state.fieldErrors) || {};
   const v = (x: string | number | null | undefined) => (x == null ? "" : String(x));
+  const bearbeiterDefault = values.zugewiesenAnId ?? (mode === "neu" ? currentUserId : null) ?? "";
 
   return (
     <form action={action} className="max-w-2xl space-y-5">
@@ -62,7 +66,7 @@ export function TicketForm({
               placeholder="Was ist passiert / was wird gewünscht? Schritte, erwartetes vs. tatsächliches Verhalten …" />
           </Field>
           <Field label="Bearbeiter" htmlFor="zugewiesenAnId">
-            <Select id="zugewiesenAnId" name="zugewiesenAnId" defaultValue={v(values.zugewiesenAnId)}>
+            <Select id="zugewiesenAnId" name="zugewiesenAnId" defaultValue={bearbeiterDefault}>
               <option value="">– nicht zugewiesen –</option>
               {benutzer.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </Select>

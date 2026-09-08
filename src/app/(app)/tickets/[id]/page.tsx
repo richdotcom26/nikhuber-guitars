@@ -4,8 +4,10 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireUser } from "@/lib/domain/context";
 import { isDomainError } from "@/lib/domain/errors";
 import { aktiveBenutzer, getTicket } from "@/lib/domain/ticket";
+import { AnhangCard } from "../../_components/anhang-card";
 import {
   formatAufwand, TICKET_STATUS_LABEL, TICKET_STATUS_TON, TICKET_TYP_LABEL,
   type TicketStatus, type TicketTyp,
@@ -26,7 +28,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     if (isDomainError(e) && e.code === "NOT_FOUND") notFound();
     throw e;
   }
-  const benutzer = await aktiveBenutzer();
+  const [benutzer, user] = await Promise.all([aktiveBenutzer(), requireUser()]);
   const statusTon = TICKET_STATUS_TON[t.status as TicketStatus] ?? "neutral";
 
   return (
@@ -67,6 +69,13 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       </Card>
 
       <Card>
+        <CardHeader><CardTitle>Screenshots & Anhänge</CardTitle></CardHeader>
+        <CardContent>
+          <AnhangCard traeger="ticket" id={t.id} revalidate={`/tickets/${t.id}`} />
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Verlauf ({t.kommentare.length})</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {t.kommentare.length === 0 ? (
@@ -95,6 +104,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           <TicketForm
             mode="edit"
             benutzer={benutzer}
+            currentUserId={user.id}
             values={{
               id: t.id,
               typ: t.typ,

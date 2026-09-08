@@ -7,6 +7,7 @@ import {
 } from "./_enums";
 import { angebot, auftrag, rechnung } from "./belege";
 import { kunde } from "./adressen";
+import { ticket } from "./ticket";
 
 /**
  * §3.8 Kommunikation / Dokumente.
@@ -60,6 +61,7 @@ export const anhang = pgTable("anhang", {
   artikelId: uuid("artikel_id"),         // -> artikel.id
   holzInventarId: uuid("holz_inventar_id"), // -> holz_inventar.id
   todoId: uuid("todo_id"),               // -> todo.id
+  ticketId: uuid("ticket_id").references(() => ticket.id, { onDelete: "cascade" }),
   art: anhangArtEnum("art"),
   dateiname: text("dateiname"),
   pfad: text("pfad"),                    // Supabase-Storage-Key
@@ -69,4 +71,5 @@ export const anhang = pgTable("anhang", {
 }, (t) => ({
   auftragIdx: index("anhang_auftrag_idx").on(t.auftragId),
   artikelIdx: index("anhang_artikel_idx").on(t.artikelId),
+  ticketIdx: index("anhang_ticket_idx").on(t.ticketId),
 }));

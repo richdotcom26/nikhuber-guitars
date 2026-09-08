@@ -16,7 +16,7 @@ export const ANHANG_ART_LABEL: Record<AnhangArt, string> = {
 export const ANHANG_ART = ANHANG_ART_VALUES.map((value) => ({ value, label: ANHANG_ART_LABEL[value] }));
 
 export const ANHANG_TRAEGER = [
-  "auftrag", "angebot", "rechnung", "artikel", "holzInventar", "todo", "mailversand",
+  "auftrag", "angebot", "rechnung", "artikel", "holzInventar", "todo", "mailversand", "ticket",
 ] as const;
 export type AnhangTraeger = (typeof ANHANG_TRAEGER)[number];
 
@@ -29,6 +29,7 @@ export const ANHANG_SPALTE: Record<AnhangTraeger, string> = {
   holzInventar: "holz_inventar_id",
   todo: "todo_id",
   mailversand: "mailversand_id",
+  ticket: "ticket_id",
 };
 
 export function formatBytes(n: number | null | undefined): string {

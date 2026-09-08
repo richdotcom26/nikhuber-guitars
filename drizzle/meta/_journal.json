@@ -15,6 +15,13 @@
       "when": 1788867668787,
       "tag": "0001_gray_morbius",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788878313542,
+      "tag": "0002_lying_the_anarchist",
+      "breakpoints": true
     }
   ]
 }
