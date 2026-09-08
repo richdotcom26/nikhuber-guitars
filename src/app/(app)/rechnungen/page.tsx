@@ -32,7 +32,7 @@ export default async function RechnungenPage({
     <div>
       <PageHeader
         title="Rechnungen"
-        description={`${total} Belege — Erstellung erfolgt aus dem Auftrag`}
+        count={`${total} Belege — Erstellung erfolgt aus dem Auftrag`}
       />
 
       <form method="get" className="mb-3 flex items-center gap-2">

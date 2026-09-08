@@ -33,11 +33,7 @@ export default async function SeriennummernPage({
     <div>
       <PageHeader
         title="Seriennummern"
-        actions={
-          <span className="text-sm text-muted">
-            {total} vergeben · nächste automatische Nr: {next}
-          </span>
-        }
+        count={`${total} vergeben · nächste automatische Nr: ${next}`}
       />
 
       <div className="mb-4 flex flex-wrap items-start gap-2">

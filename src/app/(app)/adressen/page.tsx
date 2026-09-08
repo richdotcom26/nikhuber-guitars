@@ -31,7 +31,7 @@ export default async function AdressenPage({
     <div>
       <PageHeader
         title="Adressen"
-        description={`${total} Kontakte`}
+        count={`${total} Kontakte`}
         actions={<Link href="/adressen/neu" className={buttonClasses()}>Neuer Kontakt</Link>}
       />
 

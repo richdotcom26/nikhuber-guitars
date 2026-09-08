@@ -33,7 +33,7 @@ export default async function BetriebsmittelPage({
     <div>
       <PageHeader
         title="Betriebsmittel"
-        description={`${total} Positionen · Bestandswert ${formatMoney(wertSumme)}`}
+        count={`${total} Positionen · Bestandswert ${formatMoney(wertSumme)}`}
         actions={<Link href="/betriebsmittel/neu" className={buttonClasses()}>Neu</Link>}
       />
 

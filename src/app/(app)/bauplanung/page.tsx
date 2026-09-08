@@ -44,7 +44,7 @@ export default async function BauplanungPage({
     <div className="space-y-5">
       <PageHeader
         title="Bauplanung"
-        description={`${board.total.anzahl} Aufträge · Planwert ${formatMoney(board.total.summe)}`}
+        count={`${board.total.anzahl} Aufträge · Planwert ${formatMoney(board.total.summe)}`}
         actions={
           <div className="flex items-center gap-2">
             <Link href={navLink(prev)} className={buttonClasses("outline", "sm")}>◀</Link>

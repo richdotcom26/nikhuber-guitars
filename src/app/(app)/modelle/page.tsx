@@ -33,7 +33,7 @@ export default async function ModellePage({
     <div>
       <PageHeader
         title="Modelle"
-        description={`${total} Modelle`}
+        count={`${total} Modelle`}
         actions={<Link href="/modelle/neu" className={buttonClasses()}>Neues Modell</Link>}
       />
 

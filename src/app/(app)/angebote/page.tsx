@@ -30,7 +30,7 @@ export default async function AngebotePage({
 
   return (
     <div>
-      <PageHeader title="Angebote" description={`${total} Angebote`} actions={<CreateAngebotButton />} />
+      <PageHeader title="Angebote" count={`${total} Angebote`} actions={<CreateAngebotButton />} />
 
       <form method="get" className="mb-3 flex items-center gap-2">
         {status ? <input type="hidden" name="status" value={status} /> : null}

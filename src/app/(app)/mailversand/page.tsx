@@ -36,7 +36,7 @@ export default async function MailversandPage({
     <div>
       <PageHeader
         title="Mailversand"
-        description={`${total} Einträge — Korrespondenz & Belegversand`}
+        count={`${total} Einträge — Korrespondenz & Belegversand`}
         actions={<Link href="/mailversand/neu" className={buttonClasses()}>Neuer Eintrag</Link>}
       />
 

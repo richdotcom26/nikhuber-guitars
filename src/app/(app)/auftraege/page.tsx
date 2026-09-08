@@ -40,7 +40,7 @@ export default async function AuftraegePage({
 
   return (
     <div>
-      <PageHeader title="Aufträge" description={`${total} Aufträge`} actions={<CreateAuftragButtons />} />
+      <PageHeader title="Aufträge" count={`${total} Aufträge`} actions={<CreateAuftragButtons />} />
 
       <form method="get" className="mb-3 flex flex-wrap items-center gap-2">
         {status ? <input type="hidden" name="status" value={status} /> : null}
