@@ -21,6 +21,8 @@ export interface AnhangItem {
   groesse: number | null;
   mime: string | null;
   createdAt: string | Date;
+  /** Signierte Inline-URL für Bild-Vorschau (nur bei image/*). */
+  previewUrl?: string | null;
 }
 
 export function AnhangPanel({
@@ -90,6 +92,16 @@ export function AnhangPanel({
         <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200 text-sm">
           {rows.map((a) => (
             <li key={a.id} className="flex items-center gap-2 px-2 py-1.5">
+              {a.previewUrl ? (
+                <a href={a.previewUrl} target="_blank" rel="noopener" className="shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={a.previewUrl}
+                    alt={a.dateiname ?? "Screenshot"}
+                    className="h-12 w-12 rounded border border-line object-cover"
+                  />
+                </a>
+              ) : null}
               <button
                 type="button"
                 onClick={() => oeffnen(a.id)}

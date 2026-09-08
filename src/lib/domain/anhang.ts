@@ -68,15 +68,18 @@ export async function anhangAnzahl(traeger: AnhangTraeger, ids: string[]): Promi
   return out;
 }
 
-/** Kurzlebige signierte Download-URL. */
-export async function anhangUrl(id: string): Promise<string> {
+/**
+ * Kurzlebige signierte URL. `alsDownload=true` (Default) erzwingt den Download,
+ * `false` liefert eine URL zum Inline-Anzeigen (z. B. für <img>-Vorschau).
+ */
+export async function anhangUrl(id: string, alsDownload = true): Promise<string> {
   await requireUser();
   const [row] = await db.select({ pfad: anhang.pfad, dateiname: anhang.dateiname })
     .from(anhang).where(eq(anhang.id, id));
   if (!row?.pfad) throw new DomainError("NOT_FOUND", "Anhang nicht gefunden.");
   const { data, error } = await supabaseAdmin()
     .storage.from(ANHANG_BUCKET)
-    .createSignedUrl(row.pfad, 600, { download: row.dateiname ?? undefined });
+    .createSignedUrl(row.pfad, 600, alsDownload ? { download: row.dateiname ?? undefined } : undefined);
   if (error || !data) throw new DomainError("STATE", `Storage-Fehler: ${error?.message ?? "unbekannt"}`);
   return data.signedUrl;
 }

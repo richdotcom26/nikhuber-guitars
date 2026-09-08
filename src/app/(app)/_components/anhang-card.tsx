@@ -1,4 +1,4 @@
-import { listAnhaenge } from "@/lib/domain/anhang";
+import { anhangUrl, listAnhaenge } from "@/lib/domain/anhang";
 import type { AnhangTraeger } from "@/lib/anhang-shared";
 import { AnhangPanel } from "./anhang-panel";
 
@@ -18,6 +18,15 @@ export async function AnhangCard({
   paste?: boolean;
 }) {
   const rows = await listAnhaenge(traeger, id);
+  const items = await Promise.all(
+    rows.map(async (r) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+      previewUrl: r.mime?.startsWith("image/")
+        ? await anhangUrl(r.id, false).catch(() => null)
+        : null,
+    })),
+  );
   return (
     <AnhangPanel
       traeger={traeger}
@@ -25,7 +34,7 @@ export async function AnhangCard({
       revalidate={revalidate}
       title={title}
       paste={paste}
-      rows={rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }))}
+      rows={items}
     />
   );
 }
