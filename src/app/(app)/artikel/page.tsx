@@ -56,18 +56,18 @@ export default async function ArtikelPage({
         <form method="get" className="flex items-center gap-2">
           {q ? <input type="hidden" name="q" value={q} /> : null}
           {mitInaktiven ? <input type="hidden" name="inaktiv" value="1" /> : null}
-          <select name="gruppe" defaultValue={gruppe} className="h-8 rounded-lg border border-line bg-white px-2">
+          <select name="gruppe" defaultValue={gruppe} className="h-8 rounded-lg border border-field-border bg-field px-2">
             <option value="">Alle Gruppen</option>
             {ARTIKELGRUPPE_VALUES.filter((g) => g !== "MODEL").map((g) => (
               <option key={g} value={g}>{gruppeLabel(g)}</option>
             ))}
           </select>
-          <select name="typ" defaultValue={typ} className="h-8 rounded-lg border border-line bg-white px-2">
+          <select name="typ" defaultValue={typ} className="h-8 rounded-lg border border-field-border bg-field px-2">
             <option value="">Alle Typen</option>
             <option value="HOLZ">Holz / Fertigung</option>
             <option value="HANDELSWARE">Handelsware</option>
           </select>
-          <select name="aktuell" defaultValue={aktuell ?? ""} className="h-8 rounded-lg border border-line bg-white px-2">
+          <select name="aktuell" defaultValue={aktuell ?? ""} className="h-8 rounded-lg border border-field-border bg-field px-2">
             <option value="">Geprüft: alle</option>
             <option value="ja">nur geprüfte</option>
             <option value="nein">nur offene</option>

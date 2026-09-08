@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/form";
 import { Select, Textarea } from "@/components/ui/input";
@@ -61,13 +61,14 @@ export function SpecsEditor({
               }
               return (
                 <SlotLine
-                  key={slot.key}
+                  key={`${slot.key}:${slotRows[0]?.id ?? "leer"}`}
                   {...{ traeger, traegerId, slot, candidates: cands, row: slotRows[0], readOnly }}
                 />
               );
             })}
 
             <FreitextLine
+              key={`ft:${section}:${freitexte[section] ?? ""}`}
               traeger={traeger}
               traegerId={traegerId}
               section={section}
@@ -178,13 +179,26 @@ function FreitextLine({
   readOnly?: boolean;
 }) {
   const [state, action] = useActionState(setFreitextAction, IDLE);
+  // Befüllte Freitexte fallen gelb auf; leere bleiben weiß.
+  const [gefuellt, setGefuellt] = useState(() => value.trim().length > 0);
   return (
     <form action={action} className="mt-2 space-y-1 border-t border-neutral-100 pt-2">
       <input type="hidden" name="traeger" value={traeger} />
       <input type="hidden" name="traegerId" value={traegerId} />
       <input type="hidden" name="section" value={section} />
       <label className="text-xs font-medium text-neutral-600">Freitext {SECTION_LABEL[section]}</label>
-      <Textarea name="text" defaultValue={value} rows={2} disabled={readOnly} />
+      <Textarea
+        name="text"
+        defaultValue={value}
+        rows={2}
+        disabled={readOnly}
+        onInput={(e) => setGefuellt(e.currentTarget.value.trim().length > 0)}
+        className={
+          gefuellt
+            ? "bg-amber-100! border-amber-300! hover:border-amber-400!"
+            : "bg-white!"
+        }
+      />
       {!readOnly ? (
         <div className="flex items-center gap-2">
           <SubmitButton size="sm" variant="outline">Freitext speichern</SubmitButton>

@@ -2,9 +2,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full rounded-lg border border-line bg-white px-2.5 text-sm text-ink shadow-sm transition-colors " +
+  "w-full rounded-lg border border-field-border bg-field px-2.5 text-sm text-ink shadow-sm transition-colors " +
   "placeholder:text-neutral-400 hover:border-brand-bright " +
-  "disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-500 " +
+  "disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 " +
   "aria-[invalid=true]:border-red-500";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(

@@ -6,7 +6,8 @@
  *  Seite #ECF1F7 · Karte #FFFFFF · Linien #DBE4EF
  *  Schaltfläche #1E97D6 (Hover #1584C4) · Akzent #5BC5F2 · Akzent hell #E4F4FD
  *  Schein rgba(91,197,242,.28)
- * Dateneingabefelder: immer weißer Hintergrund.
+ * Dateneingabefelder: leicht getönter Grund + kräftigere Linie, damit sie sich
+ * auch auf weißen Karten klar absetzen (--color-field / --color-field-border).
  */
 @theme {
   --color-brand: #1e97d6;
@@ -23,6 +24,10 @@
   --color-line: #dbe4ef;
   --color-ink: #15304f;
   --color-muted: #5c6b7e;
+
+  /* Eingabefelder */
+  --color-field: #edf2f8;
+  --color-field-border: #b9c8dc;
 
   --color-glow: rgb(91 197 242 / 0.28);
 }
@@ -50,11 +55,11 @@ body {
   border-radius: 8px;
 }
 
-/* Eingabefelder: weißer Hintergrund + dezenter blauer Schein bei Fokus */
+/* Eingabefelder: leicht getönter Grund + dezenter blauer Schein bei Fokus */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
-  background-color: #ffffff;
+  background-color: var(--color-field);
 }
 input:not([type="checkbox"]):not([type="radio"]):focus-visible,
 select:focus-visible,

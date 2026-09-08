@@ -10,11 +10,12 @@ import { Button, type ButtonProps } from "./button";
 export function SubmitButton({
   children,
   pendingText,
+  disabled,
   ...props
 }: ButtonProps & { pendingText?: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending || props.disabled} {...props}>
+    <Button type="submit" disabled={pending || disabled} {...props}>
       {pending ? (pendingText ?? "Speichern …") : children}
     </Button>
   );

@@ -220,7 +220,13 @@ async function DetailsTab({
           <VorlagePicker
             id={id}
             hasVorlage={!!modellArtikelId}
-            modelle={modelle.rows.map((m) => ({ id: m.id, name: m.nameBelege || m.nameLang || m.id }))}
+            hasSpecs={rows.length > 0}
+            currentModellId={modellArtikelId}
+            modelle={modelle.rows.map((m) => ({
+              id: m.id,
+              name: m.nameBelege || m.nameLang || m.id,
+              nameLang: m.nameLang,
+            }))}
             action={applyVorlageAction}
           />
         </CardContent>

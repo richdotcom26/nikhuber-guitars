@@ -128,11 +128,10 @@ export const artikelSchema = z.object({
   datensatzInaktiv: boolFlag,
   schreibgeschuetzt: boolFlag,
 
-  // nur Modell:
-  freitextBody: nullableText,
-  freitextColour: nullableText,
-  freitextNeck: nullableText,
-  freitextAssembly: nullableText,
+  // Hinweis: freitext_body/colour/neck/assembly werden NICHT über dieses Schema
+  // bzw. das Stammdatenformular gepflegt, sondern ausschließlich über den
+  // Specs-Editor (`setFreitext`). Hier aufgenommen würden sie bei jedem
+  // Kopf-Speichern auf NULL gesetzt (nullableText: fehlend → null).
 }).refine((v) => v.nameBelege?.trim() || v.nameLang?.trim() || v.nameKurz?.trim(), {
   message: "Mindestens ein Name (Belege / lang / kurz) angeben.",
   path: ["nameBelege"],
