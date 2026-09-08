@@ -17,5 +17,6 @@ export const NAV_VERWALTUNG = [
   { href: "/report", label: "Report Monat" },
   { href: "/mailversand", label: "Mailversand" },
   { href: "/betriebsmittel", label: "Betriebsmittel" },
+  { href: "/tickets", label: "Tickets" },
   { href: "/einstellungen", label: "Einstellungen" },
 ] as const;

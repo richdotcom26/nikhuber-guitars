@@ -14,6 +14,7 @@ export * from "./lager";
 export * from "./kommunikation";
 export * from "./planung";
 export * from "./users";
+export * from "./ticket";
 export * from "./relations";
 
 /*

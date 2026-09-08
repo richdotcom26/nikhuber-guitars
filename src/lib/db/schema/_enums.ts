@@ -134,3 +134,10 @@ export const todoStatusEnum = pgEnum("todo_status", [
 
 // --- Benutzer -------------------------------------------------------------
 export const rolleEnum = pgEnum("rolle", ["ADMIN", "BUERO", "WERKSTATT"]);
+
+// --- Ticketsystem (Bugs / Wünsche / Fragen zur Web-App) -------------------
+export const ticketTypEnum = pgEnum("ticket_typ", ["BUG", "WUNSCH", "FRAGE", "SONSTIGES"]);
+export const ticketStatusEnum = pgEnum("ticket_status", [
+  "NEU", "IN_ARBEIT", "RUECKFRAGE", "ERLEDIGT", "ABGELEHNT",
+]);
+export const ticketPrioEnum = pgEnum("ticket_prio", ["NIEDRIG", "MITTEL", "HOCH"]);
