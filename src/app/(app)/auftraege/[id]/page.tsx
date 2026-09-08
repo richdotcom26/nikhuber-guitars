@@ -212,8 +212,10 @@ export default async function AuftragDetailPage({
             id: s.id,
             status: s.status,
             erledigtAm: s.erledigtAm,
+            erledigtVonName: s.erledigtVonName,
             maImport: s.maImport,
             bemerkungBearbeiter: s.bemerkungBearbeiter,
+            wartenAuf: s.wartenAuf,
             dauerMinuten: s.dauerMinuten,
             vorratNr: s.vorratNr,
             workstep: s.workstep,
@@ -293,7 +295,13 @@ async function DetailsTab({
           <VorlagePicker
             id={id}
             hasVorlage={!!model.modellArtikelId}
-            modelle={modelle.rows.map((m) => ({ id: m.id, name: m.nameBelege || m.nameLang || m.id }))}
+            hasSpecs={rows.length > 0}
+            currentModellId={model.modellArtikelId}
+            modelle={modelle.rows.map((m) => ({
+              id: m.id,
+              name: m.nameBelege || m.nameLang || m.id,
+              nameLang: m.nameLang,
+            }))}
             action={applyVorlageAction}
           />
           <p className="mt-2 text-xs text-muted">

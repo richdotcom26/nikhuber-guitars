@@ -50,6 +50,18 @@ export const SCHRITT_STATUS_LABEL: Record<SchrittStatus, string> = {
   KISTE_VOLLSTAENDIG: "Kiste vollständig",
 };
 
+/** Auswahlliste „Grund des Wartens" (Status = Warten auf). Bei Bedarf hier erweitern. */
+export const WARTEN_GRUND_VALUES = [
+  "Kunde",
+  "Material / Teile",
+  "Lieferant",
+  "Lackierung / extern",
+  "Freigabe / Rückmeldung",
+  "Rückfrage intern",
+  "Sonstiges",
+] as const;
+export type WartenGrund = (typeof WARTEN_GRUND_VALUES)[number];
+
 /** Fortschritt-% → Hintergrundfarbe (6 Stufen, 7h). */
 export function fortschrittFarbe(p: number | null | undefined): string {
   if (p == null || p <= 0) return "transparent";

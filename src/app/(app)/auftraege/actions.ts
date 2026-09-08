@@ -8,7 +8,7 @@ import {
 } from "@/lib/domain/action-state";
 import {
   addSchritt as _addSchritt, alleVorherigenErledigt, recomputeAuftragCompliance,
-  setSchrittBemerkung, setSchrittStatus, VORRAT_NR,
+  setSchrittBemerkung, setSchrittStatus, setSchrittWartenAuf, VORRAT_NR,
 } from "@/lib/domain/arbeitsschritt";
 import {
   auftragKopfSchema, changeAuftragStatus, convertAuftragsart, createAuftrag,
@@ -16,7 +16,7 @@ import {
 } from "@/lib/domain/auftrag";
 import {
   addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
-  getArtikelForPosition, setGesamtrabatt, tierPreis, updatePosition,
+  getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
 import { createRechnungFromAuftrag } from "@/lib/domain/rechnung";
@@ -129,7 +129,13 @@ export async function addPositionAction(_p: ActionState, fd: FormData): Promise<
         name = freitext || a.name;
         beschreibung = a.beschreibung ?? null;
         if (einzelpreis == null) {
-          einzelpreis = tierPreis(a, fd.get("vertriebsweg") as string | null, fd.get("waehrung") as string | null, null);
+          einzelpreis = tierPreis(
+            a,
+            fd.get("vertriebsweg") as string | null,
+            fd.get("waehrung") as string | null,
+            null,
+            await positionMargen(),
+          );
         }
       }
     }
@@ -186,6 +192,15 @@ export async function setSchrittStatusAction(_p: ActionState, fd: FormData): Pro
     await refreshFortschritt(auftragId);
     rev(auftragId);
     return ok("Schritt aktualisiert.");
+  });
+}
+
+export async function setSchrittWartenAufAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const auftragId = String(fd.get("auftragId") ?? "");
+    await setSchrittWartenAuf(String(fd.get("schrittId") ?? ""), String(fd.get("wartenAuf") ?? ""));
+    rev(auftragId);
+    return ok("Grund gespeichert.");
   });
 }
 

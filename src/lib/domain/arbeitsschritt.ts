@@ -3,7 +3,7 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
-  arbeitsschritt, arbeitsschrittVorrat, artikel, auftrag, specBelegung,
+  appUser, arbeitsschritt, arbeitsschrittVorrat, artikel, auftrag, specBelegung,
 } from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -25,6 +25,7 @@ export interface SchrittRow {
   id: string;
   status: string;
   erledigtAm: Date | null;
+  erledigtVonName: string | null;
   maImport: string | null;
   bemerkungBearbeiter: string | null;
   wartenAuf: string | null;
@@ -43,6 +44,7 @@ export async function listArbeitsschritte(auftragId: string): Promise<SchrittRow
       id: arbeitsschritt.id,
       status: arbeitsschritt.status,
       erledigtAm: arbeitsschritt.erledigtAm,
+      erledigtVonName: appUser.name,
       maImport: arbeitsschritt.maImport,
       bemerkungBearbeiter: arbeitsschritt.bemerkungBearbeiter,
       wartenAuf: arbeitsschritt.wartenAuf,
@@ -55,6 +57,7 @@ export async function listArbeitsschritte(auftragId: string): Promise<SchrittRow
     })
     .from(arbeitsschritt)
     .innerJoin(arbeitsschrittVorrat, eq(arbeitsschrittVorrat.id, arbeitsschritt.vorratId))
+    .leftJoin(appUser, eq(appUser.id, arbeitsschritt.erledigtVonId))
     .where(eq(arbeitsschritt.auftragId, auftragId))
     .orderBy(asc(arbeitsschrittVorrat.reihenfolge), asc(arbeitsschritt.erledigtAm));
 
@@ -97,13 +100,16 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
     throw new DomainError("VALIDATION", "Status „Kiste vollständig“ ist nur beim Schritt „Kiste packen“ zulässig.");
   }
 
-  const done = status === "ERLEDIGT" || status === "WARTEN_AUF" || status === "KISTE_VOLLSTAENDIG";
+  // „erledigt"-Stempel (MA + Zeitpunkt) nur bei echter Erledigung, nicht bei „Warten auf".
+  const done = status === "ERLEDIGT" || status === "KISTE_VOLLSTAENDIG";
   await db
     .update(arbeitsschritt)
     .set({
       status,
-      erledigtAm: status === "OFFEN" ? null : done ? new Date() : null,
-      erledigtVonId: status === "OFFEN" ? null : user.id,
+      erledigtAm: done ? new Date() : null,
+      erledigtVonId: done ? user.id : null,
+      // Grund des Wartens nur behalten, solange der Schritt auf „Warten auf" steht.
+      wartenAuf: status === "WARTEN_AUF" ? undefined : null,
       updatedAt: new Date(),
       updatedBy: user.id,
     })
@@ -186,6 +192,19 @@ export async function setSchrittBemerkung(schrittId: string, text: string | null
     .set({
       bemerkungBearbeiter: text?.trim() || null,
       dauerMinuten: dauerMinuten ?? null,
+      updatedAt: new Date(),
+      updatedBy: user.id,
+    })
+    .where(eq(arbeitsschritt.id, schrittId));
+}
+
+/** „Grund des Wartens" setzen (nur sinnvoll, wenn der Schritt auf „Warten auf" steht). */
+export async function setSchrittWartenAuf(schrittId: string, grund: string | null) {
+  const user = await assertWrite();
+  await db
+    .update(arbeitsschritt)
+    .set({
+      wartenAuf: grund?.trim() || null,
       updatedAt: new Date(),
       updatedBy: user.id,
     })
