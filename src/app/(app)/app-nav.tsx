@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV, NAV_VERWALTUNG } from "@/lib/nav";
+import { logoutAction } from "./konto/actions";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -31,6 +32,7 @@ function NavLink({ href, label, muted }: { href: string; label: string; muted?: 
 }
 
 export function AppNav({ email }: { email: string | null }) {
+  const pathname = usePathname();
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface/85 backdrop-blur">
       <div className="mx-auto max-w-[1600px] px-4">
@@ -41,7 +43,25 @@ export function AppNav({ email }: { email: string | null }) {
             </span>
             <span className="text-sm font-semibold tracking-tight text-navy">Nik Huber Guitars</span>
           </Link>
-          <span className="ml-auto text-xs text-muted">{email}</span>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/konto"
+              className={cn(
+                "rounded-md px-2 py-1 text-xs transition-colors hover:bg-brand-soft hover:text-brand",
+                isActive(pathname, "/konto") ? "text-brand" : "text-muted",
+              )}
+            >
+              {email ?? "Konto"}
+            </Link>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-brand-soft hover:text-brand"
+              >
+                Abmelden
+              </button>
+            </form>
+          </div>
         </div>
         <nav className="flex flex-wrap items-center gap-1 pb-2.5">
           {NAV.map((n) => (
