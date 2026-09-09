@@ -93,14 +93,6 @@ export default async function AuftragDetailPage({
         <div className="grid gap-5 lg:grid-cols-2">
           <div className="space-y-5">
             <Card>
-              <CardHeader><CardTitle>Status</CardTitle></CardHeader>
-              <CardContent><StatusChanger id={id} status={a.status} /></CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Seriennummer</CardTitle></CardHeader>
-              <CardContent><SeriennummerCard id={id} bauplandatum={a.bauplandatum} auftragsart={a.auftragsart} /></CardContent>
-            </Card>
-            <Card>
               <CardHeader><CardTitle>Kunde</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {kdName ? (
@@ -132,9 +124,23 @@ export default async function AuftragDetailPage({
                 {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} /> : null}
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader><CardTitle>Seriennummer</CardTitle></CardHeader>
+              <CardContent><SeriennummerCard id={id} bauplandatum={a.bauplandatum} auftragsart={a.auftragsart} /></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Dokumente &amp; Bilder</CardTitle></CardHeader>
+              <CardContent>
+                <AnhangCard traeger="auftrag" id={id} revalidate={`/auftraege/${id}`} />
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-5">
+            <Card>
+              <CardHeader><CardTitle>Status</CardTitle></CardHeader>
+              <CardContent><StatusChanger id={id} status={a.status} /></CardContent>
+            </Card>
             <Card>
               <CardHeader><CardTitle>Kopf</CardTitle></CardHeader>
               <CardContent>
@@ -151,12 +157,6 @@ export default async function AuftragDetailPage({
                     anzahlung: a.anzahlung,
                   }}
                 />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Dokumente &amp; Bilder</CardTitle></CardHeader>
-              <CardContent>
-                <AnhangCard traeger="auftrag" id={id} revalidate={`/auftraege/${id}`} />
               </CardContent>
             </Card>
           </div>
