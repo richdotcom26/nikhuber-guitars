@@ -32,7 +32,7 @@ function NavLink({ href, label, muted }: { href: string; label: string; muted?: 
 
 export function AppNav({ email }: { email: string | null }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-line bg-surface/85 backdrop-blur">
       <div className="mx-auto max-w-[1600px] px-4">
         <div className="flex items-center gap-3 py-2.5">
           <Link href="/todo" className="flex items-center gap-2">

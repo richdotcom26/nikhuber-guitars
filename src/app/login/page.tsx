@@ -41,7 +41,7 @@ function LoginForm() {
   }
 
   const inputCls =
-    "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink shadow-sm " +
+    "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm " +
     "placeholder:text-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-1 " +
     "focus-visible:outline-brand focus-visible:border-brand";
 
@@ -78,7 +78,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-page px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 shadow-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-md bg-brand text-sm font-bold text-white">NH</span>
           <div>

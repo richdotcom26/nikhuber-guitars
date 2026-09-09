@@ -1,35 +1,35 @@
 @import "tailwindcss";
 
 /**
- * Farbwelt = dWERK VorsorgeCockpit (Werte aus dessen Farbauswahl):
- *  Text dunkel #0C2036 · mittel #15304F · gedämpft #5C6B7E
- *  Seite #ECF1F7 · Karte #FFFFFF · Linien #DBE4EF
- *  Schaltfläche #1E97D6 (Hover #1584C4) · Akzent #5BC5F2 · Akzent hell #E4F4FD
- *  Schein rgba(91,197,242,.28)
+ * Farbwelt = „Claude"-Optik (warmes Creme + Clay-Akzent):
+ *  Text dunkel #1F1C15 · Fließtext #2E2B24 · gedämpft #78736A
+ *  Seite #F5F3EC (Papier-Creme) · Karte #FDFCF9 · Linien #E5E0D3
+ *  Schaltfläche #C96442 (Hover #B4552F) · Akzent hell #E0876B · Lasur #F4EAE2
+ *  Fokus-Schein rgba(201,100,66,.22)
  * Dateneingabefelder: leicht getönter Grund + kräftigere Linie, damit sie sich
- * auch auf weißen Karten klar absetzen (--color-field / --color-field-border).
+ * auch auf hellen Karten klar absetzen (--color-field / --color-field-border).
  */
 @theme {
-  --color-brand: #1e97d6;
-  --color-brand-hover: #1584c4;
-  --color-brand-bright: #5bc5f2;
-  --color-brand-soft: #e4f4fd;
-  --color-navy: #0c2036;
-  --color-navy-light: #15304f;
-  --color-info: #1e97d6;
-  --color-success: #16a34a;
+  --color-brand: #c96442;
+  --color-brand-hover: #b4552f;
+  --color-brand-bright: #e0876b;
+  --color-brand-soft: #f4eae2;
+  --color-navy: #1f1c15;
+  --color-navy-light: #3a352c;
+  --color-info: #5c7999;
+  --color-success: #3f7a46;
 
-  --color-page: #ecf1f7;
-  --color-surface: #ffffff;
-  --color-line: #dbe4ef;
-  --color-ink: #15304f;
-  --color-muted: #5c6b7e;
+  --color-page: #f5f3ec;
+  --color-surface: #fdfcf9;
+  --color-line: #e5e0d3;
+  --color-ink: #2e2b24;
+  --color-muted: #78736a;
 
   /* Eingabefelder */
-  --color-field: #edf2f8;
-  --color-field-border: #b9c8dc;
+  --color-field: #f1eee4;
+  --color-field-border: #d7d0c0;
 
-  --color-glow: rgb(91 197 242 / 0.28);
+  --color-glow: rgb(201 100 66 / 0.22);
 }
 
 :root {

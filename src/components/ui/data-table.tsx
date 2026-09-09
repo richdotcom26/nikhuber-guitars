@@ -96,13 +96,13 @@ export function DataTable<T>({
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-medium text-ink shadow-sm hover:bg-brand-soft"
+            className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink shadow-sm hover:bg-brand-soft"
           >
             Spalten
             <span className="text-muted">▾</span>
           </button>
           {menuOpen ? (
-            <div className="absolute right-0 z-10 mt-1 w-52 rounded-md border border-line bg-white p-1.5 shadow-lg">
+            <div className="absolute right-0 z-10 mt-1 w-52 rounded-md border border-line bg-surface p-1.5 shadow-lg">
               {hideable.map((c) => (
                 <label key={c.key} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-neutral-50">
                   <input
@@ -118,9 +118,9 @@ export function DataTable<T>({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-surface shadow-sm">
         <table className="w-full border-collapse text-sm">
-          <thead className="border-b border-line bg-neutral-50/70 text-left text-[11px] font-medium uppercase tracking-wide text-muted">
+          <thead className="border-b border-line bg-page/70 text-left text-[11px] font-medium uppercase tracking-wide text-muted">
             <tr>
               {visible.map((c) => {
                 const active = sort.key === c.key;
