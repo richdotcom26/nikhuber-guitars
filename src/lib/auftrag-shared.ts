@@ -72,3 +72,16 @@ export function fortschrittFarbe(p: number | null | undefined): string {
   if (p < 85) return "#8fce93";
   return "#74c07c";
 }
+
+/** Priorität 1–3 → Sterne. */
+export function prioSterne(p: number | null | undefined): string {
+  return p && p >= 1 && p <= 3 ? "★".repeat(p) : "";
+}
+
+/** Zeilen-/Marker-Hintergrund je Priorität: leicht-gelb (1) → knall-gelb (3). */
+export function prioRowClass(p: number | null | undefined): string {
+  if (p === 3) return "bg-amber-300/80";
+  if (p === 2) return "bg-amber-200/70";
+  if (p === 1) return "bg-amber-100/60";
+  return "";
+}

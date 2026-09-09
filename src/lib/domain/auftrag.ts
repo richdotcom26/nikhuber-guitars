@@ -27,6 +27,7 @@ export {
 
 export const AUFTRAG_SORT: Record<string, unknown> = {
   nummer: auftrag.nummer,
+  prio: auftrag.prio,
   art: auftrag.auftragsart,
   datum: auftrag.auftragsdatum,
   bauplan: auftrag.bauplandatum,
@@ -74,6 +75,7 @@ export async function listAuftraege(
     .select({
       id: auftrag.id,
       nummer: auftrag.nummer,
+      prio: auftrag.prio,
       auftragsart: auftrag.auftragsart,
       status: auftrag.status,
       auftragsdatum: auftrag.auftragsdatum,
@@ -294,7 +296,7 @@ const decimalOrNull = z.preprocess(
 
 export const auftragKopfSchema = z.object({
   auftragsart: z.enum(ART_VALUES),
-  prio: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().nullable()),
+  prio: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().min(1).max(3).nullable()),
   produktionsort: z.preprocess(
     (v) => (v === "" || v == null ? null : v),
     z.enum(["RODGAU", "HAMBURG"]).nullable(),

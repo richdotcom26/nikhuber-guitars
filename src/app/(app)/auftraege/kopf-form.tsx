@@ -48,7 +48,12 @@ export function KopfForm({ v }: { v: KopfValues }) {
           </Select>
         </Field>
         <Field label="Priorität" htmlFor="prio">
-          <Input id="prio" name="prio" inputMode="numeric" defaultValue={v.prio ?? ""} />
+          <Select id="prio" name="prio" defaultValue={v.prio != null ? String(v.prio) : ""}>
+            <option value="">– keine –</option>
+            <option value="1">★ (1)</option>
+            <option value="2">★★ (2)</option>
+            <option value="3">★★★ (3)</option>
+          </Select>
         </Field>
         <Field label="Produktionsort" htmlFor="produktionsort">
           <Select id="produktionsort" name="produktionsort" defaultValue={v.produktionsort ?? ""}>

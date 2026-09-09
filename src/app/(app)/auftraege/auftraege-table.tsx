@@ -5,7 +5,7 @@ import { type Column, DataTable } from "@/components/ui/data-table";
 import { kundeKurz } from "@/lib/adressen-shared";
 import {
   AUFTRAGSART_LABEL, AUFTRAG_STATUS_LABEL, AUFTRAG_STATUS_TONE,
-  type Auftragsart, type AuftragStatus, fortschrittFarbe,
+  type Auftragsart, type AuftragStatus, fortschrittFarbe, prioRowClass, prioSterne,
 } from "@/lib/auftrag-shared";
 import type { SortSpec } from "@/lib/table-sort";
 import { formatDate, formatMoney, kontrastText } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { formatDate, formatMoney, kontrastText } from "@/lib/utils";
 export interface AuftragRow {
   id: string;
   nummer: string;
+  prio: number | null;
   auftragsart: string;
   status: string;
   auftragsdatum: string | null;
@@ -43,6 +44,12 @@ export function AuftraegeTable({
     {
       key: "nummer", header: "Nr", sortable: true, hideable: false, className: "font-mono text-xs",
       cell: (r) => <span className="font-medium hover:underline">{r.nummer}</span>,
+    },
+    {
+      key: "prio", header: "Prio", sortable: true, firstDir: "desc", align: "center", className: "w-14",
+      cell: (r) => (r.prio ? (
+        <span className="tracking-tight text-amber-600" title={`Priorität ${r.prio}`}>{prioSterne(r.prio)}</span>
+      ) : <span className="text-neutral-300">–</span>),
     },
     {
       key: "art", header: "Art", sortable: true,
@@ -114,6 +121,7 @@ export function AuftraegeTable({
       storageKey="auftraege"
       empty="Keine Aufträge."
       rowHref={(r) => `/auftraege/${r.id}`}
+      rowClassName={(r) => prioRowClass(r.prio)}
     />
   );
 }
