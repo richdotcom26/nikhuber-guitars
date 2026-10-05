@@ -1,0 +1,242 @@
+/**
+ * Inhalte des Wikis (Einstellungen → Wiki). Neue Features hier dokumentieren.
+ * Blöcke: Absatz (`p`), Liste (`ul`), Hinweis (`hinweis`). `**fett**` wird hervorgehoben.
+ */
+
+export type WikiBlock = { p: string } | { ul: string[] } | { hinweis: string };
+
+export interface WikiArtikel {
+  id: string;
+  titel: string;
+  bereich: string;
+  bloecke: WikiBlock[];
+}
+
+export const WIKI: WikiArtikel[] = [
+  /* ------------------------------------------------------------ Allgemein */
+  {
+    id: "speichern",
+    bereich: "Allgemein",
+    titel: "Speichern von Änderungen",
+    bloecke: [
+      { p: "Es gibt **kein automatisches Speichern**. Jeder Block (z. B. Kopf, Kunde, Specs, eine Positionszeile) hat seinen eigenen Button („Speichern“, „OK“ …). Erst der Klick übernimmt die Änderungen dieses Blocks." },
+      { p: "Nach dem Speichern erscheint eine grüne Meldung, bei Fehlern eine rote mit Hinweis, was fehlt." },
+      { hinweis: "Wer mehrere Blöcke ändert, muss jeden einzeln speichern. Beim Verlassen der Seite gehen ungespeicherte Eingaben verloren." },
+    ],
+  },
+  {
+    id: "listen",
+    bereich: "Allgemein",
+    titel: "Listen, Sortierung und Anzahl",
+    bloecke: [
+      { p: "Neben jeder Überschrift steht in Klammern die Anzahl der Einträge, z. B. „Anhänge (3)“ oder „Positionen (12)“." },
+      { p: "In Tabellen lässt sich mit Klick auf eine Spaltenüberschrift sortieren; ein zweiter Klick dreht die Richtung um. Ein Klick auf die Zeile öffnet den Datensatz." },
+    ],
+  },
+
+  /* ------------------------------------------------------- Konto & Login */
+  {
+    id: "konto",
+    bereich: "Konto & Anmeldung",
+    titel: "Mein Konto: Abmelden und Passwort ändern",
+    bloecke: [
+      { p: "Jeder Benutzer hat ein eigenes Login (E-Mail + Passwort). Ein Klick auf die eigene **E-Mail-Adresse oben in der Navigation** öffnet „Mein Konto“." },
+      { ul: [
+        "**Abmelden:** Button „Abmelden“ in der Navigation oder auf „Mein Konto“.",
+        "**Passwort ändern:** aktuelles Passwort eingeben, dann das neue zweimal (mindestens 8 Zeichen).",
+      ] },
+    ],
+  },
+  {
+    id: "passwort-reset",
+    bereich: "Konto & Anmeldung",
+    titel: "Passwort vergessen / Passwort-Link",
+    bloecke: [
+      { p: "Ein Admin kann unter **Einstellungen → Benutzer** für jeden Benutzer einen **Passwort-Link** erzeugen und ihm weitergeben (z. B. per Mail oder Messenger)." },
+      { ul: [
+        "Der Link führt direkt auf die Seite „Passwort setzen“. Dort das neue Passwort zweimal eingeben, danach geht es zur Anmeldung.",
+        "Der Link ist **nur einmal** verwendbar und etwa **1 Stunde** gültig. Danach einen neuen erzeugen.",
+        "Erscheint „Link ungültig oder abgelaufen“, wurde der Link schon benutzt oder ist zu alt.",
+      ] },
+    ],
+  },
+  {
+    id: "benutzer",
+    bereich: "Konto & Anmeldung",
+    titel: "Benutzer verwalten (nur Admin)",
+    bloecke: [
+      { p: "Unter **Einstellungen → Benutzer** legt ein Admin neue Benutzer an (E-Mail, Name, Rolle). Danach erscheint ein Passwort-Link, mit dem der neue Benutzer sein Passwort selbst setzt." },
+      { ul: [
+        "**Rollen:** ADMIN (alles inkl. Benutzerverwaltung), BUERO (Büro: Belege, Stammdaten), WERKSTATT (Werkstatt-Funktionen).",
+        "Zusatzrechte: „ToDo“ und „Werkstatt“ lassen sich einzeln freischalten.",
+        "Benutzer können deaktiviert werden. Es muss immer **mindestens ein aktiver Admin** bleiben.",
+      ] },
+    ],
+  },
+
+  /* ------------------------------------------------------------ Aufträge */
+  {
+    id: "auftrag-prio",
+    bereich: "Aufträge",
+    titel: "Priorität (Sterne) und gelbe Hervorhebung",
+    bloecke: [
+      { p: "Im Auftrag unter **Kopf → Priorität** gibt es die Stufen – (keine), ★, ★★ und ★★★." },
+      { ul: [
+        "In der Auftragsliste zeigt die Spalte **Prio** die Sterne; sie ist sortierbar (höchste zuerst).",
+        "Zeilen mit Priorität werden **gelb hinterlegt**: ★ hellgelb, ★★ mittel, ★★★ kräftig gelb.",
+      ] },
+    ],
+  },
+  {
+    id: "auftrag-layout",
+    bereich: "Aufträge",
+    titel: "Aufbau des Auftrag-Tabs",
+    bloecke: [
+      { p: "Links: **Kunde**, darunter **Seriennummer**, darunter **Dokumente & Bilder**. Rechts: **Status**, darunter der **Kopf** (Auftragsart, Priorität, Produktionsort, Bauplan-Monat, Umsatzerwartung, Anzahlung …)." },
+      { p: "**Bauplan-Monat:** Die Monats-Buttons setzen per Klick den Monatsersten; ein zweiter Klick entfernt ihn. Über das Datumsfeld ist jedes Datum möglich. Danach „Kopf speichern“." },
+    ],
+  },
+  {
+    id: "arbeitsschritte",
+    bereich: "Aufträge",
+    titel: "Arbeitsschritte: erledigt von wem, Warten auf …",
+    bloecke: [
+      { p: "Jeder Arbeitsschritt hat einen Status: offen, erledigt, „Warten auf …“ oder „Kiste vollständig“." },
+      { ul: [
+        "Bei **erledigt** und **Kiste vollständig** wird automatisch gespeichert, **wer** den Schritt erledigt hat und **wann** (Datum + Uhrzeit).",
+        "Bei **Warten auf …** wählt man den Grund aus: Kunde, Material / Teile, Lieferant, Lackierung / extern, Freigabe / Rückmeldung, Rückfrage intern, Sonstiges.",
+      ] },
+    ],
+  },
+
+  /* ------------------------------------------------- Angebot & Auftrag */
+  {
+    id: "modellvorlage",
+    bereich: "Angebot & Auftrag",
+    titel: "Modellvorlage übernehmen",
+    bloecke: [
+      { p: "Im Tab **Details** wählt man ein Modell und klickt **„Vorlage übernehmen“**. Dabei werden die Standard-Specs des Modells und seine Freitexte (Body, Colour, Neck, Assembly) in den Beleg kopiert." },
+      { ul: [
+        "Ist schon eine Vorlage gesetzt oder gibt es bereits Specs, fragt das Programm vorher nach, ob alles **überschrieben** werden soll.",
+        "Das Feld **„Übernommene Vorlage“** zeigt, welches Modell (langer Name) zuletzt übernommen wurde.",
+        "Die Specs werden danach sofort mit den Werten der Vorlage angezeigt.",
+      ] },
+    ],
+  },
+  {
+    id: "freitext",
+    bereich: "Angebot & Auftrag",
+    titel: "Freitext-Felder (gelb)",
+    bloecke: [
+      { p: "Freitext-Felder in den Specs werden **gelb hinterlegt, sobald etwas drinsteht**. So fallen individuelle Kundenwünsche sofort auf. Leere Freitext-Felder bleiben neutral." },
+    ],
+  },
+  {
+    id: "positionen",
+    bereich: "Angebot & Auftrag",
+    titel: "Positionen: generieren, anzeigen, bearbeiten",
+    bloecke: [
+      { p: "**„Aus Specs generieren“** erzeugt die Positionen aus Modell + Specs. **Vorhandene Positionen werden dabei gelöscht** und neu angelegt. Die Preise kommen aktuell aus den Artikeln (siehe „Preise“)." },
+      { ul: [
+        "**„nur relevante“** (über der Tabelle) ist standardmäßig angehakt: Es werden nur Positionen gezeigt, die auf dem Beleg erscheinen. Haken entfernen zeigt alle, auch die Info-Zeilen ohne Aufpreis.",
+        "Spalte **rel.**: Häkchen = Position erscheint auf dem Beleg und zählt zur Summe.",
+        "Anzahl, Einzelpreis, Rabatt % und rel. lassen sich je Zeile ändern und mit **OK** speichern. × löscht die Zeile.",
+        "**Neue Position:** Artikel suchen (Name / Nummer) oder Freitext eingeben. Bleibt der Einzelpreis bei einem Artikel leer, wird er automatisch aus dem Artikel ermittelt.",
+        "**Alle löschen** entfernt alle Positionen des Belegs.",
+      ] },
+    ],
+  },
+  {
+    id: "porto",
+    bereich: "Angebot & Auftrag",
+    titel: "Porto hinzufügen",
+    bloecke: [
+      { p: "Unter der Positionsliste (nur Angebot und Auftrag) gibt es den Button **„Porto hinzufügen“**. Er setzt automatisch das passende Porto nach dem **Staat des Kunden** ein." },
+      { ul: [
+        "Enthält der Beleg einen **Modell-Artikel (Gitarre)**, wird das **Gitarren-Porto** des Staats genommen, sonst das **Teile-Porto**.",
+        "Ist schon eine Porto-Position da, wird sie **ersetzt** – es gibt nie doppeltes Porto.",
+        "Der Preis richtet sich nach Vertriebsweg und Währung. Der Sonderrabatt des Kunden gilt **nicht** fürs Porto.",
+        "Ist für den Staat kein Porto hinterlegt, erscheint ein Hinweis. Dann unter **Einstellungen → Staaten** ein Porto zuordnen.",
+      ] },
+    ],
+  },
+  {
+    id: "preise",
+    bereich: "Angebot & Auftrag",
+    titel: "Preise nach Vertriebsweg",
+    bloecke: [
+      { p: "Der Einzelpreis einer Position wird aus dem Artikel nach dem **Vertriebsweg des Kunden** berechnet:" },
+      { ul: [
+        "**VK_EUR** (Endkunde): Artikelpreis ÷ 1,19 (netto). Ist am Artikel **„Brutto für Netto“** gesetzt, gilt der Artikelpreis direkt.",
+        "**NET1 / NET2** (Händler): Artikelpreis abzüglich Händlerrabatt aus den Firmen-Einstellungen.",
+        "**VK_US / NET_US**: US-Preis bzw. US-Preis abzüglich US-Händlerrabatt.",
+        "Artikel mit **„nicht rabattierfähig“** (z. B. alle Porto-Artikel) bekommen keinen Händlerrabatt.",
+        "Hat der Kunde einen **Sonderrabatt**, hat dieser Vorrang vor dem Händlerrabatt.",
+      ] },
+    ],
+  },
+  {
+    id: "gesamtrabatt",
+    bereich: "Angebot & Auftrag",
+    titel: "Gesamtrabatt",
+    bloecke: [
+      { p: "Im Auftrag (und in der Rechnung) kann unter den Positionen ein **Gesamtrabatt** in Prozent gewährt werden (Haken „Gesamtrabatt“ + Prozent + OK)." },
+      { ul: [
+        "Der Gesamtrabatt rechnet **nur auf rabattierfähige Positionen**. Artikel mit „nicht rabattierfähig“ – darunter **alle Porto-Artikel** – sind ausgenommen.",
+        "Freitext-Positionen ohne Artikel gelten als rabattierfähig.",
+        "Beispiel: 3.000 € Gitarre + 250 € Porto, 10 % → Rabatt 300 € (nicht 325 €), netto 2.950 €.",
+      ] },
+    ],
+  },
+
+  /* ----------------------------------------------------------- Anhänge */
+  {
+    id: "anhaenge",
+    bereich: "Dokumente & Bilder",
+    titel: "Anhänge hochladen und ansehen",
+    bloecke: [
+      { p: "Unter **Dokumente & Bilder → Anhänge** (z. B. im Auftrag, auch bei Tickets) lassen sich Dateien bis 50 MB hochladen: Datei wählen, optional die Art (Bild, Beleg-PDF, CITES …) – sonst wird sie automatisch erkannt – und **Hochladen**." },
+      { ul: [
+        "**Fotos** erscheinen als Vorschaubild, **PDFs** mit einem roten „PDF“-Kästchen.",
+        "Klick auf Vorschaubild oder Dateiname öffnet die Datei **groß auf der Seite**. Mit den Pfeilen ‹ › oder den Pfeiltasten blättert man durch alle Bilder/PDFs; **Esc** oder Klick daneben schließt.",
+        "**Herunterladen** speichert die Datei. Andere Dateitypen (Word, Excel …) werden direkt heruntergeladen.",
+        "Bei **Tickets** kann man einen Screenshot mit **Strg + V** direkt einfügen.",
+        "Löschen (×) dürfen Admin und Büro.",
+      ] },
+      { hinweis: "Die Vorschau-Links sind aus Sicherheitsgründen 10 Minuten gültig. War die Seite länger offen, einmal neu laden." },
+    ],
+  },
+
+  /* ------------------------------------------------------------ Tickets */
+  {
+    id: "tickets",
+    bereich: "Tickets",
+    titel: "Tickets: Bugs, Wünsche, Fragen",
+    bloecke: [
+      { p: "Unter **Tickets** meldet jeder Benutzer Fehler oder Wünsche zur App. Typen: **Bug, Wunsch, Frage, Sonstiges**; dazu Titel, Beschreibung, Priorität (niedrig / mittel / hoch) und Screenshots." },
+      { ul: [
+        "Status: Neu → In Arbeit → Rückfrage → Erledigt (oder Abgelehnt).",
+        "Beim Ticket wird der **Aufwand** (Umsetzungszeit) festgehalten.",
+        "Wird ein Ticket auf **Erledigt** gesetzt, bekommt der Ersteller eine **E-Mail**.",
+        "Ein Kommentar als **Rückfrage** setzt das Ticket auf „Rückfrage“ und schickt der jeweils anderen Seite eine E-Mail.",
+        "Offene Tickets stehen oben, erledigte/abgelehnte unten.",
+      ] },
+    ],
+  },
+
+  /* ------------------------------------------------------- Einstellungen */
+  {
+    id: "staaten",
+    bereich: "Einstellungen",
+    titel: "Staaten und Porto-Zuordnung",
+    bloecke: [
+      { p: "Unter **Einstellungen → Staaten** hat jeder Staat Kürzel, Region, Standard-Sprache, -Währung und -Zahlungsbedingung – und zwei Porto-Artikel:" },
+      { ul: [
+        "**Porto Gitarre**: wird bei Belegen mit Gitarre (Modell-Artikel) eingesetzt.",
+        "**Porto Teile**: für alle anderen Belege (z. B. Ersatzteile).",
+        "Zur Auswahl stehen alle aktiven Artikel der Gruppe **Versand**. Preise ändert man wie gewohnt am Artikel.",
+        "Neue Länder-Portos: Artikel in der Gruppe Versand anlegen (als „nicht rabattierfähig“) und beim Staat zuordnen.",
+      ] },
+    ],
+  },
+];

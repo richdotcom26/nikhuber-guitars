@@ -12,6 +12,7 @@ import { BenutzerPanel } from "./benutzer-panel";
 import { FirmaForm } from "./firma-form";
 import { ModellgruppenPanel } from "./modellgruppen-panel";
 import { StaatenPanel } from "./staaten-panel";
+import { WikiPanel } from "./wiki-panel";
 import { ZaehlerPanel } from "./zaehler-panel";
 import { ZahlungenPanel } from "./zahlungen-panel";
 
@@ -22,6 +23,7 @@ const BASE_TABS: readonly TabItem[] = [
   { key: "modellgruppen", label: "Modellgruppen" },
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
   { key: "zaehler", label: "Belegnummern" },
+  { key: "wiki", label: "Wiki" },
 ];
 
 export default async function EinstellungenPage({
@@ -40,7 +42,7 @@ export default async function EinstellungenPage({
     <div>
       <PageHeader
         title="Einstellungen"
-        description="Firmenstammdaten, Zahlungsbedingungen, Staaten, Modellgruppen, Arbeitsschritte und Belegnummernkreise."
+        description="Firmenstammdaten, Zahlungsbedingungen, Staaten, Modellgruppen, Arbeitsschritte, Belegnummernkreise und das Wiki mit Erklärungen zu allen Funktionen."
       />
       <Tabs items={TABS} active={active} basePath="/einstellungen" className="mb-5" />
 
@@ -56,6 +58,7 @@ export default async function EinstellungenPage({
       {active === "modellgruppen" && <ModellgruppenPanel rows={await listModellgruppen()} />}
       {active === "arbeitsschritte" && <ArbeitsschrittePanel rows={await listArbeitsschrittVorrat()} />}
       {active === "zaehler" && <ZaehlerPanel rows={await listZaehler()} />}
+      {active === "wiki" && <WikiPanel />}
       {active === "benutzer" && user.rolle === "ADMIN" && (
         <BenutzerPanel
           rows={(await listBenutzer()).map((r) => ({ ...r, updatedAt: r.updatedAt.toISOString() }))}
