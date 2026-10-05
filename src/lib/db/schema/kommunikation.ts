@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean, date, index, integer, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
@@ -23,10 +24,13 @@ export const belegTemplate = pgTable("beleg_template", {
   ...auditCols,
 });
 
+/** Textbausteine für Mails (Einstellungen → Textbausteine). Je Belegart + Sprache ein Standard. */
 export const mailTemplate = pgTable("mail_template", {
   id: uuid("id").primaryKey().defaultRandom(),
   belegart: docArtEnum("belegart").notNull(),
   sprache: spracheEnum("sprache").notNull(),
+  name: text("name"),
+  istStandard: boolean("ist_standard").default(false).notNull(),
   betreff: text("betreff"),
   bodyHtml: text("body_html"),           // Platzhalter {{briefanrede}} {{auftragsnummer}} {{model}} {{rechnungsnummer}}
   ...auditCols,
@@ -48,6 +52,8 @@ export const mailversand = pgTable("mailversand", {
   wiedervorlage: date("wiedervorlage"),
   gesendetAm: timestamp("gesendet_am", { withTimezone: true }),   // gesetzt beim erfolgreichen SMTP-Versand
   fehlerText: text("fehler_text"),                                // letzte Versand-Fehlermeldung
+  // Mitgesendete Dateien (Verweise auf bestehende Anhänge, z. B. Rechnungs-PDF + Fotos)
+  anhangIds: uuid("anhang_ids").array().default(sql`'{}'::uuid[]`).notNull(),
   ...auditCols,   // erzeugen != senden — Versand ist separater Schritt
 });
 
@@ -67,6 +73,7 @@ export const anhang = pgTable("anhang", {
   pfad: text("pfad"),                    // Supabase-Storage-Key
   groesse: integer("groesse"),
   mime: text("mime"),
+  mitRechnung: boolean("mit_rechnung").default(false).notNull(), // Foto beim Rechnungsversand vorausgewählt
   ...auditCols,
 }, (t) => ({
   auftragIdx: index("anhang_auftrag_idx").on(t.auftragId),

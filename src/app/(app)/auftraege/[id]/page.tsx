@@ -131,7 +131,7 @@ export default async function AuftragDetailPage({
             <Card>
               <CardHeader><CardTitle>Dokumente &amp; Bilder</CardTitle></CardHeader>
               <CardContent>
-                <AnhangCard traeger="auftrag" id={id} revalidate={`/auftraege/${id}`} />
+                <AnhangCard traeger="auftrag" id={id} revalidate={`/auftraege/${id}`} rechnungFlag />
               </CardContent>
             </Card>
           </div>

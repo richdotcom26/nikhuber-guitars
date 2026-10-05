@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { anhang } from "@/lib/db/schema";
+import { anhang, rechnung } from "@/lib/db/schema";
 import {
   ANHANG_ART_VALUES, ANHANG_SPALTE, ANHANG_TRAEGER, type AnhangArt, type AnhangTraeger,
 } from "@/lib/anhang-shared";
@@ -42,6 +42,7 @@ export interface AnhangRow {
   dateiname: string | null;
   groesse: number | null;
   mime: string | null;
+  mitRechnung: boolean;
   createdAt: Date;
 }
 
@@ -55,6 +56,7 @@ export async function listAnhaenge(traeger: AnhangTraeger, id: string): Promise<
       dateiname: anhang.dateiname,
       groesse: anhang.groesse,
       mime: anhang.mime,
+      mitRechnung: anhang.mitRechnung,
       createdAt: anhang.createdAt,
     })
     .from(anhang)
@@ -119,30 +121,83 @@ export async function uploadAnhang(form: FormData): Promise<string> {
   }
   if (file.size > MAX_BYTES) throw new DomainError("VALIDATION", "Datei größer als 50 MB.");
 
-  const feld = ANHANG_FELD[parsed.traeger];
-  const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 120);
-  const key = `${parsed.traeger}/${parsed.id}/${randomUUID()}-${safeName}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
+  return speichereAnhang({
+    traeger: parsed.traeger,
+    traegerId: parsed.id,
+    dateiname: file.name,
+    bytes: Buffer.from(await file.arrayBuffer()),
+    mime: file.type || null,
+    art: parsed.art ?? (file.type.startsWith("image/") ? "BILD" : "SONSTIGES"),
+    userId: user.id,
+  });
+}
+
+/**
+ * Datei in den Storage legen + anhang-Zeile anlegen (ohne Rollenprüfung — Aufrufer prüft).
+ * Wird vom Upload und vom Archivieren erzeugter PDFs genutzt.
+ */
+export async function speichereAnhang(p: {
+  traeger: AnhangTraeger;
+  traegerId: string;
+  dateiname: string;
+  bytes: Buffer;
+  mime: string | null;
+  art: AnhangArt;
+  userId: string;
+}): Promise<string> {
+  const safeName = p.dateiname.replace(/[^\w.\- ]+/g, "_").slice(0, 120);
+  const key = `${p.traeger}/${p.traegerId}/${randomUUID()}-${safeName}`;
 
   const { error } = await supabaseAdmin()
     .storage.from(ANHANG_BUCKET)
-    .upload(key, bytes, { contentType: file.type || "application/octet-stream", upsert: false });
+    .upload(key, p.bytes, { contentType: p.mime || "application/octet-stream", upsert: false });
   if (error) throw new DomainError("STATE", `Upload fehlgeschlagen: ${error.message}`);
 
+  try {
+    const [row] = await db
+      .insert(anhang)
+      .values({
+        [ANHANG_FELD[p.traeger]]: p.traegerId,
+        art: p.art,
+        dateiname: p.dateiname,
+        pfad: key,
+        groesse: p.bytes.length,
+        mime: p.mime,
+        createdBy: p.userId,
+        updatedBy: p.userId,
+      })
+      .returning({ id: anhang.id });
+    return row.id;
+  } catch (e) {
+    await supabaseAdmin().storage.from(ANHANG_BUCKET).remove([key]).catch(() => {});
+    throw e;
+  }
+}
+
+/** Dateiinhalt aus dem Storage laden (für Mail-Anhänge). */
+export async function ladeAnhangDatei(id: string) {
   const [row] = await db
-    .insert(anhang)
-    .values({
-      [feld]: parsed.id,
-      art: parsed.art ?? (file.type.startsWith("image/") ? "BILD" : "SONSTIGES"),
-      dateiname: file.name,
-      pfad: key,
-      groesse: file.size,
-      mime: file.type || null,
-      createdBy: user.id,
-      updatedBy: user.id,
-    })
-    .returning({ id: anhang.id });
-  return row.id;
+    .select({ pfad: anhang.pfad, dateiname: anhang.dateiname, mime: anhang.mime })
+    .from(anhang)
+    .where(eq(anhang.id, id));
+  if (!row?.pfad) throw new DomainError("NOT_FOUND", "Anhang nicht gefunden.");
+  const { data, error } = await supabaseAdmin().storage.from(ANHANG_BUCKET).download(row.pfad);
+  if (error || !data) throw new DomainError("STATE", `Datei nicht ladbar: ${error?.message ?? "unbekannt"}`);
+  return {
+    dateiname: row.dateiname ?? "datei",
+    mime: row.mime ?? "application/octet-stream",
+    bytes: Buffer.from(await data.arrayBuffer()),
+  };
+}
+
+/** Foto „Mit Rechnung senden" an/aus. */
+export async function setAnhangMitRechnung(id: string, an: boolean) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO", "WERKSTATT");
+  await db
+    .update(anhang)
+    .set({ mitRechnung: an, updatedAt: new Date(), updatedBy: user.id })
+    .where(eq(anhang.id, id));
 }
 
 export async function deleteAnhang(id: string) {
@@ -150,6 +205,11 @@ export async function deleteAnhang(id: string) {
   assertRolle(user, "ADMIN", "BUERO");
   const [row] = await db.select({ pfad: anhang.pfad }).from(anhang).where(eq(anhang.id, id));
   if (!row) throw new DomainError("NOT_FOUND", "Anhang nicht gefunden.");
+  const [archiv] = await db.select({ nummer: rechnung.nummer }).from(rechnung)
+    .where(eq(rechnung.erechnungAssetId, id));
+  if (archiv) {
+    throw new DomainError("STATE", `Archiviertes PDF der Rechnung ${archiv.nummer} kann nicht gelöscht werden.`);
+  }
   if (row.pfad) {
     await supabaseAdmin().storage.from(ANHANG_BUCKET).remove([row.pfad]);
   }

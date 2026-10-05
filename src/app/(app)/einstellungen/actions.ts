@@ -9,6 +9,9 @@ import {
   firmaSettingSchema, staatSchema, updateFirmaSetting, updateStaat,
   updateZahlungsbedingung, zahlungsbedingungSchema,
 } from "@/lib/domain/stammdaten";
+import {
+  deleteTextbaustein, saveTextbaustein, textbausteinSchema,
+} from "@/lib/domain/textbausteine";
 
 const BASE = "/einstellungen";
 
@@ -147,5 +150,30 @@ export async function benutzerRecoveryLinkAction(_p: ActionState, fd: FormData):
     const { benutzerRecoveryLink } = await import("@/lib/domain/benutzer");
     const link = await benutzerRecoveryLink(String(fd.get("id") ?? ""));
     return ok(`Passwort-Link (an den Benutzer weitergeben): ${link}`);
+  });
+}
+
+/* ---- Textbausteine (Mail) ---- */
+
+export async function saveTextbausteinAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(formData.get("id") ?? "") || null;
+    await saveTextbaustein(id, parseForm(textbausteinSchema, formData));
+    revalidatePath(BASE);
+    return ok("Textbaustein gespeichert.");
+  });
+}
+
+export async function deleteTextbausteinAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return runAction(async () => {
+    await deleteTextbaustein(String(formData.get("id") ?? ""));
+    revalidatePath(BASE);
+    return ok("Textbaustein gelöscht.");
   });
 }

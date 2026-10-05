@@ -10,7 +10,7 @@ import {
 } from "@/lib/rechnung-shared";
 import { isDomainError } from "@/lib/domain/errors";
 import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
@@ -20,6 +20,7 @@ import {
 import {
   AnzahlungForm, KopfForm, StornoGutschriftButtons, ZahlungForm,
 } from "../forms";
+import { ErstellenButtons } from "../erstellen-buttons";
 
 const TABS: readonly TabItem[] = [
   { key: "rechnung", label: "Rechnung" },
@@ -32,10 +33,10 @@ export default async function RechnungDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; mail?: string }>;
 }) {
   const { id } = await params;
-  const { tab } = await searchParams;
+  const { tab, mail } = await searchParams;
   const active = TABS.some((t) => t.key === tab) ? tab! : "rechnung";
 
   let data: Awaited<ReturnType<typeof getRechnung>>;
@@ -49,6 +50,7 @@ export default async function RechnungDetailPage({
   const kdName = r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || null;
   const cur = r.kdWaehrung === "USD" ? "USD" : "EUR";
   const gebucht = r.gebuchtBeimSteuerbuero;
+  const fest = !!r.festgeschriebenAm;
 
   return (
     <div className="space-y-5">
@@ -73,14 +75,39 @@ export default async function RechnungDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>
-            <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
-            <a href={`/druck/rechnung/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>PDF</a>
-            {r.belegart === "RECHNUNG" || r.belegart === "GUTSCHRIFT" || r.belegart === "STORNORECHNUNG" ? (
-              <a href={`/druck/rechnung/${id}/pdf?zugferd=1`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="PDF/A-3 mit eingebettetem ZUGFeRD-XML (Beta)">E-Rechnung</a>
-            ) : null}
+            {fest ? (
+              <>
+                <a href={`/rechnungen/${id}/dokument`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="Archiviertes PDF (E-Rechnung, ZUGFeRD)">PDF</a>
+                <Link href={`/rechnungen/${id}/mail`} className={buttonClasses()}>Per E-Mail versenden</Link>
+              </>
+            ) : (
+              <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
+            )}
           </div>
         }
       />
+
+      {mail === "ok" ? (
+        <div className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+          E-Mail mit der Rechnung wurde versendet (Protokoll unter <Link href="/mailversand" className="underline">Mailversand</Link>).
+        </div>
+      ) : null}
+
+      {fest ? (
+        <div className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-muted">
+          <b className="text-ink">Erstellt und festgeschrieben</b> am {formatDateTime(r.festgeschriebenAm)} — das PDF ist archiviert,
+          Positionen, Datum und Anzahlung sind gesperrt. Korrekturen nur über Gutschrift/Storno.
+        </div>
+      ) : r.status === "BEZAHLT" || r.status === "RG_STORNIERT" ? null : (
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <span className="text-sm text-muted">
+              1. <b className="text-ink">Vorschau</b> prüfen · 2. Rechnung <b className="text-ink">erstellen</b> (PDF wird archiviert, Rechnung gesperrt) · 3. per E-Mail versenden
+            </span>
+            <ErstellenButtons id={id} />
+          </CardContent>
+        </Card>
+      )}
 
       {r.belegart === "RECHNUNG" && !gebucht ? (
         <StornoGutschriftButtons id={id} isRechnung />
@@ -107,6 +134,7 @@ export default async function RechnungDetailPage({
                   reportMonat={r.reportMonat}
                   bemerkungRechnung={r.bemerkungRechnung}
                   gebuchtBeimSteuerbuero={gebucht}
+                  gesperrt={fest}
                 />
               </CardContent>
             </Card>
@@ -148,6 +176,7 @@ export default async function RechnungDetailPage({
                   beruecksichtigen={r.anzahlungBeruecksichtigen}
                   brutto={r.anzahlungBrutto}
                   datum={r.anzahlungDatum}
+                  gesperrt={fest}
                 />
               </CardContent>
             </Card>
@@ -171,9 +200,19 @@ export default async function RechnungDetailPage({
       ) : null}
 
       {active === "positionen" ? (
-        gebucht ? (
-          <Card><CardContent className="py-4 text-sm text-amber-800">
-            Positionen gesperrt (beim Steuerbüro gebucht).
+        gebucht || fest ? (
+          <Card><CardContent className="space-y-2 py-4 text-sm">
+            <p className="text-amber-800">
+              Positionen gesperrt ({fest ? "Rechnung erstellt und festgeschrieben" : "beim Steuerbüro gebucht"}).
+            </p>
+            <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
+              {(await listRechnungPositionen(id)).filter((p) => p.reRelevant).map((p) => (
+                <li key={p.id} className="flex justify-between gap-3 px-2 py-1.5">
+                  <span>{p.posNr}. {p.artikelName ?? "–"} <span className="text-muted">× {Number(p.anzahl)}</span></span>
+                  <span className="tabular-nums">{formatMoney(p.gesamtpreis, cur)}</span>
+                </li>
+              ))}
+            </ul>
           </CardContent></Card>
         ) : (
           <PositionenPanel

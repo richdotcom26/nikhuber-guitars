@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { angebot, auftrag, kunde, mailversand, rechnung } from "@/lib/db/schema";
 import { MAIL_ART_VALUES, MAIL_STATUS_VALUES } from "@/lib/mailversand-shared";
 import { getTransport, mailKonfig, pruefeSmtp } from "@/lib/mail/transport";
+import { ladeAnhangDatei } from "./anhang";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
@@ -186,6 +187,9 @@ export async function deleteMailversand(id: string) {
 
 /* -------------------------------------------------------------------- Versand */
 
+/** Gesamtgröße der Mail-Anhänge (Strato nimmt bis ~50 MB; mit Puffer für Base64). */
+const MAX_ANHANG_BYTES = 25 * 1024 * 1024;
+
 /** SMTP-Verbindung prüfen (für die Statusanzeige). */
 export async function mailKonfigStatus() {
   await requireUser();
@@ -217,6 +221,19 @@ export async function sendeMailversand(id: string): Promise<{ ok: boolean; messa
   const text = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim();
 
   try {
+    const attachments = [];
+    let gesamt = 0;
+    for (const aid of row.anhangIds ?? []) {
+      const f = await ladeAnhangDatei(aid);
+      gesamt += f.bytes.length;
+      attachments.push({ filename: f.dateiname, content: f.bytes, contentType: f.mime });
+    }
+    if (gesamt > MAX_ANHANG_BYTES) {
+      throw new Error(
+        `Anhänge zu groß (${(gesamt / 1024 / 1024).toFixed(1)} MB, max. ${MAX_ANHANG_BYTES / 1024 / 1024} MB). Bitte weniger Fotos auswählen.`,
+      );
+    }
+
     const info = await getTransport().sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: an,
@@ -225,6 +242,7 @@ export async function sendeMailversand(id: string): Promise<{ ok: boolean; messa
       subject: row.betreff,
       html: html || undefined,
       text: text || row.betreff,
+      attachments,
     });
     await db.update(mailversand)
       .set({

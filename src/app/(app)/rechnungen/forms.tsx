@@ -14,7 +14,7 @@ import {
 /* ---------------------------------------------------------------------- Kopf */
 
 export function KopfForm({
-  id, status, rechnungsdatum, lieferdatum, reportMonat, bemerkungRechnung, gebuchtBeimSteuerbuero,
+  id, status, rechnungsdatum, lieferdatum, reportMonat, bemerkungRechnung, gebuchtBeimSteuerbuero, gesperrt = false,
 }: {
   id: string;
   status: string;
@@ -23,6 +23,8 @@ export function KopfForm({
   reportMonat: string | null;
   bemerkungRechnung: string | null;
   gebuchtBeimSteuerbuero: boolean;
+  /** Festgeschrieben: Datum/Lieferdatum/Bemerkung gesperrt (stehen auf dem archivierten PDF). */
+  gesperrt?: boolean;
 }) {
   const [state, action] = useActionState(saveKopfAction, IDLE);
   return (
@@ -36,17 +38,17 @@ export function KopfForm({
           </Select>
         </Field>
         <Field label="Rechnungsdatum" htmlFor="rechnungsdatum">
-          <Input id="rechnungsdatum" name="rechnungsdatum" type="date" defaultValue={rechnungsdatum ?? ""} />
+          <Input id="rechnungsdatum" name="rechnungsdatum" type="date" defaultValue={rechnungsdatum ?? ""} disabled={gesperrt} />
         </Field>
         <Field label="Lieferdatum" htmlFor="lieferdatum">
-          <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={lieferdatum ?? ""} />
+          <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={lieferdatum ?? ""} disabled={gesperrt} />
         </Field>
         <Field label="Report-Monat" htmlFor="reportMonat" hint="YYYY-MM">
           <Input id="reportMonat" name="reportMonat" placeholder="2026-09" defaultValue={reportMonat ?? ""} />
         </Field>
       </div>
       <Field label="Bemerkung" htmlFor="bemerkungRechnung">
-        <Textarea id="bemerkungRechnung" name="bemerkungRechnung" defaultValue={bemerkungRechnung ?? ""} rows={2} />
+        <Textarea id="bemerkungRechnung" name="bemerkungRechnung" defaultValue={bemerkungRechnung ?? ""} rows={2} disabled={gesperrt} />
       </Field>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="gebuchtBeimSteuerbuero" defaultChecked={gebuchtBeimSteuerbuero} />
@@ -112,16 +114,18 @@ export function ZahlungForm({
 /* ------------------------------------------------------------------ Anzahlung */
 
 export function AnzahlungForm({
-  id, beruecksichtigen, brutto, datum,
+  id, beruecksichtigen, brutto, datum, gesperrt = false,
 }: {
   id: string;
   beruecksichtigen: boolean;
   brutto: string | null;
   datum: string | null;
+  gesperrt?: boolean;
 }) {
   const [state, action] = useActionState(saveAnzahlungAction, IDLE);
   return (
-    <form action={action} className="flex flex-wrap items-end gap-2">
+    <form action={action}>
+      <fieldset disabled={gesperrt} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="id" value={id} />
       <label className="flex items-center gap-1 text-xs text-neutral-500">
         <input type="checkbox" name="anzahlungBeruecksichtigen" defaultChecked={beruecksichtigen} />
@@ -133,8 +137,9 @@ export function AnzahlungForm({
       <Field label="Datum" htmlFor="anzahlungDatum">
         <Input id="anzahlungDatum" name="anzahlungDatum" type="date" defaultValue={datum ?? ""} className="h-8 w-40" />
       </Field>
-      <SubmitButton size="sm" variant="outline">OK</SubmitButton>
+      {gesperrt ? null : <SubmitButton size="sm" variant="outline">OK</SubmitButton>}
       {state && !state.ok ? <FormMessage state={state} className="w-full" /> : null}
+      </fieldset>
     </form>
   );
 }

@@ -11,7 +11,7 @@ import {
 } from "@/lib/anhang-shared";
 import { formatDate } from "@/lib/utils";
 import {
-  anhangUrlAction, deleteAnhangAction, uploadAnhangAction,
+  anhangUrlAction, deleteAnhangAction, setMitRechnungAction, uploadAnhangAction,
 } from "./anhang-actions";
 
 export interface AnhangItem {
@@ -20,6 +20,7 @@ export interface AnhangItem {
   dateiname: string | null;
   groesse: number | null;
   mime: string | null;
+  mitRechnung?: boolean;
   createdAt: string | Date;
   /** Signierte Inline-URL für die Vorschau (nur bei image/* und PDF). */
   previewUrl?: string | null;
@@ -32,6 +33,7 @@ export function AnhangPanel({
   revalidate,
   title = "Anhänge",
   paste = false,
+  rechnungFlag = false,
 }: {
   traeger: AnhangTraeger;
   id: string;
@@ -41,6 +43,8 @@ export function AnhangPanel({
   title?: string;
   /** Screenshot direkt aus der Zwischenablage (Strg+V) hochladen. */
   paste?: boolean;
+  /** Bei Fotos Häkchen „Mit Rechnung senden" anzeigen (Auftrag). */
+  rechnungFlag?: boolean;
 }) {
   const [upState, upAction] = useActionState(uploadAnhangAction, IDLE);
   const [delState, delAction] = useActionState(deleteAnhangAction, IDLE);
@@ -141,6 +145,9 @@ export function AnhangPanel({
               >
                 {pending && openId === a.id ? "öffne …" : (a.dateiname ?? "(ohne Namen)")}
               </button>
+              {rechnungFlag && a.mime?.startsWith("image/") ? (
+                <MitRechnungToggle id={a.id} an={!!a.mitRechnung} back={revalidate} />
+              ) : null}
               {a.art ? <Badge tone="neutral">{ANHANG_ART_LABEL[a.art]}</Badge> : null}
               <span className="w-16 shrink-0 text-right text-xs text-neutral-400">{formatBytes(a.groesse)}</span>
               <span className="w-20 shrink-0 text-right text-xs text-neutral-400">{formatDate(a.createdAt)}</span>
@@ -252,6 +259,33 @@ export function AnhangPanel({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Häkchen „Mit Rechnung senden" — optimistisch, speichert sofort. */
+function MitRechnungToggle({ id, an, back }: { id: string; an: boolean; back: string }) {
+  const [wert, setWert] = useState(an);
+  const [pending, startTransition] = useTransition();
+  return (
+    <label
+      className="flex shrink-0 cursor-pointer items-center gap-1 text-xs text-muted"
+      title="Foto beim Versand der Rechnung vorausgewählt anhängen"
+    >
+      <input
+        type="checkbox"
+        checked={wert}
+        disabled={pending}
+        onChange={(e) => {
+          const neu = e.target.checked;
+          setWert(neu);
+          startTransition(async () => {
+            const res = await setMitRechnungAction(id, neu, back);
+            if (!res?.ok) setWert(!neu);
+          });
+        }}
+      />
+      Mit Rechnung
+    </label>
   );
 }
 

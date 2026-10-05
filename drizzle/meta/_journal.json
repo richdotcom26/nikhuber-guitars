@@ -29,6 +29,13 @@
       "when": 1791234303773,
       "tag": "0003_staat_porto",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791237130555,
+      "tag": "0004_rechnung_festschreiben",
+      "breakpoints": true
     }
   ]
 }

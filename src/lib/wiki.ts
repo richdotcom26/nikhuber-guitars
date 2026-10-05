@@ -204,6 +204,55 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "rechnung-erstellen",
+    bereich: "Rechnungen",
+    titel: "Rechnung erstellen (Vorschau → erstellen → senden)",
+    bloecke: [
+      { p: "Eine neue Rechnung ist zunächst ein **Entwurf**: Positionen, Datum und Anzahlung lassen sich noch ändern. Der Ablauf:" },
+      { ul: [
+        "**1. Vorschau** (oben rechts) – Rechnung prüfen.",
+        "**2. „Rechnung erstellen“** – das PDF wird als **E-Rechnung (ZUGFeRD)** erzeugt und unveränderbar archiviert, die Rechnung wird **festgeschrieben**. Danach fragt das Programm, ob sie per E-Mail versendet werden soll.",
+        "**Alternativ „Rechnung erstellen und per E-Mail versenden“** – wie oben, öffnet danach direkt das E-Mail-Fenster.",
+      ] },
+      { p: "Nach dem Erstellen gilt:" },
+      { ul: [
+        "Positionen, Rechnungsdatum, Lieferdatum, Bemerkung und Anzahlung sind **gesperrt**.",
+        "Der Button **PDF** öffnet immer das archivierte Original – es ändert sich nicht mehr.",
+        "Status, Zahlung, Report-Monat und „beim Steuerbüro gebucht“ bleiben änderbar.",
+        "Korrekturen nur über **Gutschrift / Storno** (erzeugt eine neue Rechnung, die wieder erstellt werden kann).",
+        "Das archivierte PDF kann nicht gelöscht werden.",
+      ] },
+      { hinweis: "„Beim Steuerbüro gebucht“ ist davon getrennt: das Häkchen setzt man, wenn das Steuerbüro die Rechnung tatsächlich gebucht hat." },
+    ],
+  },
+  {
+    id: "rechnung-mail",
+    bereich: "Rechnungen",
+    titel: "Rechnung per E-Mail versenden",
+    bloecke: [
+      { p: "Nach dem Erstellen öffnet **„Per E-Mail versenden“** das interne E-Mail-Fenster:" },
+      { ul: [
+        "**An:** E-Mail aus dem Kundendatensatz (änderbar, mehrere Adressen mit Komma).",
+        "**Weitere Empfänger (CC):** beliebige Adresse von Hand eintragen. Ist beim Kunden eine **„E-Mail Rechnung CC“** (Rechnungsempfänger) hinterlegt, fügt der Button **„+ Rechnungsempfänger“** sie per Klick ein.",
+        "**Textbaustein:** Standardtext in der Sprache des Kunden ist vorausgewählt; andere Bausteine lassen sich auswählen. Betreff und Text sind danach frei änderbar.",
+        "**Anhänge:** Das Rechnungs-PDF ist immer dabei. **Fotos** vom Auftrag (und von der Rechnung) können per Häkchen mitgeschickt werden – Fotos mit „Mit Rechnung“ sind vorausgewählt. Max. 25 MB insgesamt.",
+        "**E-Mail senden** verschickt sofort über info@nikhuber-guitars.com. Die Mail wird unter **Mailversand** protokolliert (bei Fehlern dort mit Fehlermeldung).",
+      ] },
+    ],
+  },
+  {
+    id: "rechnung-fotos",
+    bereich: "Rechnungen",
+    titel: "Fotos der fertigen Gitarre mitsenden",
+    bloecke: [
+      { p: "Fotos der fertigen Gitarre im **Auftrag** unter **Dokumente & Bilder** hochladen. Bei jedem Foto gibt es das Häkchen **„Mit Rechnung“**." },
+      { ul: [
+        "Angehakte Fotos sind im E-Mail-Fenster der Rechnung **automatisch ausgewählt**.",
+        "Dort kann man trotzdem jedes Foto noch an- oder abwählen.",
+      ] },
+    ],
+  },
+  {
     id: "rechnung-adhoc",
     bereich: "Rechnungen",
     titel: "Rechnung ohne Auftrag (Kleinteile, Ersatzteile)",
@@ -229,6 +278,7 @@ export const WIKI: WikiArtikel[] = [
         "Klick auf Vorschaubild oder Dateiname öffnet die Datei **groß auf der Seite**. Mit den Pfeilen ‹ › oder den Pfeiltasten blättert man durch alle Bilder/PDFs; **Esc** oder Klick daneben schließt.",
         "**Herunterladen** speichert die Datei. Andere Dateitypen (Word, Excel …) werden direkt heruntergeladen.",
         "Bei **Tickets** kann man einen Screenshot mit **Strg + V** direkt einfügen.",
+        "Im **Auftrag** haben Fotos das Häkchen **„Mit Rechnung“** – solche Fotos werden beim Rechnungsversand vorausgewählt.",
         "Löschen (×) dürfen Admin und Büro.",
       ] },
       { hinweis: "Die Vorschau-Links sind aus Sicherheitsgründen 10 Minuten gültig. War die Seite länger offen, einmal neu laden." },
@@ -253,6 +303,19 @@ export const WIKI: WikiArtikel[] = [
   },
 
   /* ------------------------------------------------------- Einstellungen */
+  {
+    id: "textbausteine",
+    bereich: "Einstellungen",
+    titel: "Textbausteine für E-Mails",
+    bloecke: [
+      { p: "Unter **Einstellungen → Textbausteine** werden die Texte für E-Mails gepflegt (Name, Belegart, Sprache DE/EN, Betreff, Text)." },
+      { ul: [
+        "Je Belegart und Sprache kann ein Baustein **Standard** sein – er wird im E-Mail-Fenster automatisch passend zur Kundensprache gewählt.",
+        "Platzhalter werden beim Einfügen ersetzt: {{briefanrede}} (z. B. „Hallo Rainer,“), {{rechnungsnummer}}, {{auftragsnummer}}, {{model}}, {{kunde}}.",
+        "Der Text ist Klartext; Zeilenumbrüche bleiben in der Mail erhalten.",
+      ] },
+    ],
+  },
   {
     id: "staaten",
     bereich: "Einstellungen",

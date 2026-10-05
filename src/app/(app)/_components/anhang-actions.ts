@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   type ActionState, ok, runAction,
 } from "@/lib/domain/action-state";
-import { anhangUrl, deleteAnhang, uploadAnhang } from "@/lib/domain/anhang";
+import { anhangUrl, deleteAnhang, setAnhangMitRechnung, uploadAnhang } from "@/lib/domain/anhang";
 
 export async function uploadAnhangAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async () => {
@@ -21,6 +21,15 @@ export async function deleteAnhangAction(_p: ActionState, fd: FormData): Promise
     const back = String(fd.get("_revalidate") ?? "");
     if (back) revalidatePath(back);
     return ok("Anhang gelöscht.");
+  });
+}
+
+/** Foto beim Rechnungsversand vorauswählen (an/aus). */
+export async function setMitRechnungAction(id: string, an: boolean, back: string): Promise<ActionState> {
+  return runAction(async () => {
+    await setAnhangMitRechnung(id, an);
+    if (back) revalidatePath(back);
+    return ok();
   });
 }
 

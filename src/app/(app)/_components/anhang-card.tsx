@@ -9,6 +9,7 @@ export async function AnhangCard({
   revalidate,
   title,
   paste,
+  rechnungFlag,
 }: {
   traeger: AnhangTraeger;
   id: string;
@@ -16,6 +17,8 @@ export async function AnhangCard({
   title?: string;
   /** Screenshot per Strg+V hochladen (z. B. bei Tickets). */
   paste?: boolean;
+  /** Häkchen „Mit Rechnung senden" bei Fotos (Auftrag). */
+  rechnungFlag?: boolean;
 }) {
   const rows = await listAnhaenge(traeger, id);
   const items = await Promise.all(
@@ -34,6 +37,7 @@ export async function AnhangCard({
       revalidate={revalidate}
       title={title}
       paste={paste}
+      rechnungFlag={rechnungFlag}
       rows={items}
     />
   );

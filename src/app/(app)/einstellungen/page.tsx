@@ -12,6 +12,8 @@ import { BenutzerPanel } from "./benutzer-panel";
 import { FirmaForm } from "./firma-form";
 import { ModellgruppenPanel } from "./modellgruppen-panel";
 import { StaatenPanel } from "./staaten-panel";
+import { listMailVorlagen } from "@/lib/domain/textbausteine";
+import { TextbausteinePanel } from "./textbausteine-panel";
 import { WikiPanel } from "./wiki-panel";
 import { ZaehlerPanel } from "./zaehler-panel";
 import { ZahlungenPanel } from "./zahlungen-panel";
@@ -23,6 +25,7 @@ const BASE_TABS: readonly TabItem[] = [
   { key: "modellgruppen", label: "Modellgruppen" },
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
   { key: "zaehler", label: "Belegnummern" },
+  { key: "textbausteine", label: "Textbausteine" },
   { key: "wiki", label: "Wiki" },
 ];
 
@@ -58,6 +61,7 @@ export default async function EinstellungenPage({
       {active === "modellgruppen" && <ModellgruppenPanel rows={await listModellgruppen()} />}
       {active === "arbeitsschritte" && <ArbeitsschrittePanel rows={await listArbeitsschrittVorrat()} />}
       {active === "zaehler" && <ZaehlerPanel rows={await listZaehler()} />}
+      {active === "textbausteine" && <TextbausteinePanel rows={await listMailVorlagen()} />}
       {active === "wiki" && <WikiPanel />}
       {active === "benutzer" && user.rolle === "ADMIN" && (
         <BenutzerPanel

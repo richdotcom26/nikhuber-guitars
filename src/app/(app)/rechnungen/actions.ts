@@ -11,9 +11,43 @@ import {
 } from "@/lib/domain/belege";
 import {
   anzahlungSchema, assertPositionArtikel, assertRechnungEditierbar, createRechnungOhneAuftrag,
-  gutschrift, positionenAusAuftrag, recordZahlung, rechnungKopfSchema, setAnzahlung,
+  festschreiben, gutschrift, positionenAusAuftrag, recordZahlung, rechnungKopfSchema, setAnzahlung,
   stornoRechnung, teilGutschrift, updateRechnungKopf, zahlungSchema,
 } from "@/lib/domain/rechnung";
+import { rechnungMailSchema, sendeRechnungMail } from "@/lib/domain/rechnung-mail";
+
+/** „Rechnung erstellen": PDF archivieren + festschreiben. */
+export async function festschreibenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await festschreiben(id);
+    rev(id);
+    return ok("Rechnung erstellt und festgeschrieben.");
+  });
+}
+
+/** Mail mit Rechnungs-PDF (+ Fotos) senden; bei Erfolg zurück zur Rechnung. */
+export async function sendeRechnungMailAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let zurueck: string | null = null;
+  const res = await runAction(async () => {
+    const input = rechnungMailSchema.parse({
+      id: fd.get("id"),
+      an: fd.get("an") ?? "",
+      cc: fd.get("cc") ?? "",
+      betreff: fd.get("betreff") ?? "",
+      text: fd.get("text") ?? "",
+      bildIds: fd.getAll("bildId").map(String),
+    });
+    const r = await sendeRechnungMail(input);
+    rev(input.id);
+    revalidatePath("/mailversand");
+    if (!r.ok) return fail(r.message);
+    zurueck = `/rechnungen/${input.id}?mail=ok`;
+    return ok(r.message);
+  });
+  if (zurueck) redirect(zurueck);
+  return res;
+}
 
 export async function createRechnungOhneAuftragAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   let id: string | null = null;

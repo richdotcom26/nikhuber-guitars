@@ -1,5 +1,9 @@
 import "server-only";
-import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { renderBelegPdf } from "@/lib/pdf/render";
+import { embedZugferd } from "@/lib/pdf/zugferd";
+import { speichereAnhang } from "./anhang";
+import { renderBelegData } from "./beleg-render";
 import { z } from "zod";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
@@ -197,17 +201,78 @@ export async function createRechnungOhneAuftrag(kundeId: string): Promise<string
 
 /* ------------------------------------------------------- Positionen-Guards */
 
-/** Positionen dürfen nur geändert werden, solange die Rechnung nicht beim Steuerbüro gebucht ist. */
+/**
+ * Positionen/Kopf dürfen nur geändert werden, solange die Rechnung weder festgeschrieben
+ * („Rechnung erstellen") noch beim Steuerbüro gebucht ist.
+ */
 export async function assertRechnungEditierbar(id: string) {
   const [r] = await db
-    .select({ gebucht: rechnung.gebuchtBeimSteuerbuero, auftragId: rechnung.auftragId })
+    .select({
+      gebucht: rechnung.gebuchtBeimSteuerbuero,
+      festgeschriebenAm: rechnung.festgeschriebenAm,
+      auftragId: rechnung.auftragId,
+    })
     .from(rechnung)
     .where(eq(rechnung.id, id));
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
+  if (r.festgeschriebenAm) {
+    throw new DomainError("STATE", "Rechnung ist erstellt und festgeschrieben — Änderungen nur über Gutschrift/Storno.");
+  }
   if (r.gebucht) {
     throw new DomainError("STATE", "Beim Steuerbüro gebucht — Positionen sind gesperrt.");
   }
   return r;
+}
+
+/* ------------------------------------------------- Rechnung erstellen (festschreiben) */
+
+/**
+ * „Rechnung erstellen": PDF (bei Rechnung/Gutschrift/Storno als ZUGFeRD-E-Rechnung) erzeugen,
+ * unveränderbar im Storage archivieren und die Rechnung festschreiben (Positionen, Kopf,
+ * Anzahlung gesperrt). Gibt die Anhang-ID des archivierten PDFs zurück.
+ */
+export async function festschreiben(id: string): Promise<string> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const [r] = await db.select().from(rechnung).where(eq(rechnung.id, id));
+  if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
+  if (r.festgeschriebenAm) throw new DomainError("CONFLICT", "Rechnung ist bereits erstellt.");
+  if (!r.kundeId) throw new DomainError("STATE", "Kein Kunde hinterlegt.");
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(belegPosition)
+    .where(and(eq(belegPosition.rechnungId, id), eq(belegPosition.reRelevant, true)));
+  if (n === 0) throw new DomainError("STATE", "Die Rechnung hat keine Positionen.");
+
+  const data = await renderBelegData("rechnung", id);
+  const base = await renderBelegPdf(data);
+  const pdf = await embedZugferd(base, data);
+  const dateiname = `${data.titel}_${data.nummer}.pdf`.replace(/[^\w.-]+/g, "_");
+
+  const anhangId = await speichereAnhang({
+    traeger: "rechnung",
+    traegerId: id,
+    dateiname,
+    bytes: Buffer.from(pdf),
+    mime: "application/pdf",
+    art: "BELEG_PDF",
+    userId: user.id,
+  });
+
+  // Nur festschreiben, wenn nicht parallel schon geschehen.
+  const res = await db
+    .update(rechnung)
+    .set({
+      festgeschriebenAm: new Date(),
+      festgeschriebenVon: user.id,
+      erechnungAssetId: anhangId,
+      updatedAt: new Date(),
+      updatedBy: user.id,
+    })
+    .where(and(eq(rechnung.id, id), isNull(rechnung.festgeschriebenAm)))
+    .returning({ id: rechnung.id });
+  if (res.length === 0) throw new DomainError("CONFLICT", "Rechnung wurde gerade schon erstellt.");
+  return anhangId;
 }
 
 /** Ad-hoc-Rechnungen (ohne Auftrag) sind für Nicht-Gitarren-Artikel: keine Modell-Artikel. */
@@ -370,12 +435,16 @@ export type RechnungKopfInput = z.infer<typeof rechnungKopfSchema>;
 export async function updateRechnungKopf(id: string, input: RechnungKopfInput) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
-  const res = await db
+  const [r] = await db.select({ fest: rechnung.festgeschriebenAm }).from(rechnung).where(eq(rechnung.id, id));
+  if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
+  // Festgeschrieben: Inhalte des Dokuments (Datum, Lieferdatum, Bemerkung) bleiben unverändert.
+  const set = r.fest
+    ? { status: input.status, gebuchtBeimSteuerbuero: input.gebuchtBeimSteuerbuero, reportMonat: input.reportMonat }
+    : input;
+  await db
     .update(rechnung)
-    .set({ ...input, updatedAt: new Date(), updatedBy: user.id })
-    .where(eq(rechnung.id, id))
-    .returning({ id: rechnung.id });
-  if (res.length === 0) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
+    .set({ ...set, updatedAt: new Date(), updatedBy: user.id })
+    .where(eq(rechnung.id, id));
 }
 
 /* --------------------------------------------------------------------- Zahlung */
@@ -437,6 +506,7 @@ export async function setAnzahlung(id: string, input: AnzahlungInput) {
   assertRolle(user, "ADMIN", "BUERO");
   const [r] = await db.select().from(rechnung).where(eq(rechnung.id, id));
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
+  if (r.festgeschriebenAm) throw new DomainError("STATE", "Rechnung ist erstellt — Anzahlung kann nicht mehr geändert werden.");
   const brutto = Number(r.summeBrutto ?? 0);
   const anzahlung = input.anzahlungBeruecksichtigen ? Number(input.anzahlungBrutto ?? 0) : 0;
   await db

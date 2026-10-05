@@ -163,7 +163,10 @@ export const rechnung = pgTable("rechnung", {
   bemerkungRechnung: text("bemerkung_rechnung"),
 
   // E-Rechnung (7dd): erzeugtes ZUGFeRD-PDF unveränderbar archivieren
-  erechnungAssetId: uuid("erechnung_asset_id"),
+  erechnungAssetId: uuid("erechnung_asset_id"),   // -> anhang.id (Art BELEG_PDF)
+  // Festgeschrieben = „Rechnung erstellen": PDF archiviert, Positionen/Kopf/Anzahlung gesperrt.
+  festgeschriebenAm: timestamp("festgeschrieben_am", { withTimezone: true }),
+  festgeschriebenVon: uuid("festgeschrieben_von"), // -> app_user.id
   ...auditCols,
 }, (t) => ({ nummerIdx: index("rechnung_nummer_idx").on(t.nummer) }));
 
