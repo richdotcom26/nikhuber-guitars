@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
-  boolean, check, date, index, integer, numeric, pgTable, text, timestamp, uuid,
+  boolean, check, date, index, integer, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import {
@@ -135,16 +135,23 @@ export const auftrag = pgTable("auftrag", {
 export const rechnung = pgTable("rechnung", {
   id: uuid("id").primaryKey().defaultRandom(),
   ...kopf(),
+  // Entwurf hat KEINE Nummer — Vergabe erst beim Buchen (§ 14 UStG: fortlaufend, lückenlos).
+  // RG- (Rechnung) und ST- (Storno/Korrektur) teilen sich einen Zähler (wie Ninox).
+  nummer: text("nummer"),
   belegart: rechnungBelegartEnum("belegart").default("RECHNUNG").notNull(),
-  status: rechnungStatusEnum("status").default("OFFEN").notNull(),
+  // ENTWURF (frei editier-/löschbar) → GEBUCHT (gesperrt) → BEZAHLT / STORNIERT
+  status: rechnungStatusEnum("status").default("ENTWURF").notNull(),
   zahlungsstatus: zahlungsstatusEnum("zahlungsstatus"),
-  rechnungsdatum: date("rechnungsdatum"),
+  rechnungsdatum: date("rechnungsdatum"),   // wird beim Buchen gesetzt
   lieferdatum: date("lieferdatum"),
-  auftragId: uuid("auftrag_id").references(() => auftrag.id),      // echte FK (BC.G1)
+  auftragId: uuid("auftrag_id").references(() => auftrag.id),      // echte FK (BC.G1); ein Auftrag kann mehrere Rechnungen haben
   referenzRechnungId: uuid("referenz_rechnung_id")
-    .references((): AnyPgColumn => rechnung.id),                   // Storno/Gutschrift -> Original
-  teilgutschrift: boolean("teilgutschrift").default(false).notNull(), // GUTSCHRIFT-Untervariante (Ninox: Nummernpräfix "TGS")
-  // Nummer bei Storno/Gutschrift = Präfix (S/GS/TGS) + Original.nummer — verbraucht keinen zaehler.
+    .references((): AnyPgColumn => rechnung.id),                   // Storno/Korrektur -> Original
+  teilgutschrift: boolean("teilgutschrift").default(false).notNull(), // Altbestand (Ninox „TGS")
+
+  // Snapshot beim Buchen (unabhängig von späteren Stammdaten-Änderungen)
+  zahlungsbedingungText: text("zahlungsbedingung_text"),
+  mwstSatz: numeric("mwst_satz", { precision: 5, scale: 2 }),
 
   anzahlungBeruecksichtigen: boolean("anzahlung_beruecksichtigen").default(false).notNull(),
   anzahlungBrutto: numeric("anzahlung_brutto", { precision: 12, scale: 2 }),
@@ -162,13 +169,17 @@ export const rechnung = pgTable("rechnung", {
   reportMonat: text("report_monat"),                              // 'YYYY-MM' -> Reporting
   bemerkungRechnung: text("bemerkung_rechnung"),
 
-  // E-Rechnung (7dd): erzeugtes ZUGFeRD-PDF unveränderbar archivieren
+  // E-Rechnung (7dd): beim Buchen erzeugtes ZUGFeRD-PDF, unveränderbar archiviert
   erechnungAssetId: uuid("erechnung_asset_id"),   // -> anhang.id (Art BELEG_PDF)
-  // Festgeschrieben = „Rechnung erstellen": PDF archiviert, Positionen/Kopf/Anzahlung gesperrt.
-  festgeschriebenAm: timestamp("festgeschrieben_am", { withTimezone: true }),
-  festgeschriebenVon: uuid("festgeschrieben_von"), // -> app_user.id
+  // Spaltenname historisch „festgeschrieben_*" (0004) — fachlich: gebucht.
+  gebuchtAm: timestamp("festgeschrieben_am", { withTimezone: true }),
+  gebuchtVon: uuid("festgeschrieben_von"), // -> app_user.id
   ...auditCols,
-}, (t) => ({ nummerIdx: index("rechnung_nummer_idx").on(t.nummer) }));
+}, (t) => ({
+  nummerIdx: index("rechnung_nummer_idx").on(t.nummer),
+  // In der App gebuchte Nummern sind eindeutig (Altbestand aus Ninox enthält Dubletten).
+  nummerUnique: uniqueIndex("rechnung_nummer_gebucht_uq").on(t.nummer).where(sql`${t.gebuchtAm} is not null`),
+}));
 
 // -------------------------------------------------------------- BELEG_POSITION
 export const belegPosition = pgTable("beleg_position", {
@@ -189,8 +200,14 @@ export const belegPosition = pgTable("beleg_position", {
   reRelevant: boolean("re_relevant").default(true).notNull(),       // Druck/Summen/Nummerierung
   vkRetailWert: numeric("vk_retail_wert", { precision: 12, scale: 2 }),
   herkunftSlotKey: text("herkunft_slot_key"),                       // welcher Spec-Slot diese Position erzeugte
+  // Rechnungspositionen: MwSt-Satz-Snapshot + Verweis auf die Auftragsposition
+  // (Nachverfolgung „schon berechnet" bei Teilrechnungen; Storno/Korrektur übernehmen den Verweis).
+  mwstSatz: numeric("mwst_satz", { precision: 5, scale: 2 }),
+  quellPositionId: uuid("quell_position_id")
+    .references((): AnyPgColumn => belegPosition.id, { onDelete: "set null" }),
   ...auditCols,
 }, (t) => ({
+  quellIdx: index("beleg_position_quell_idx").on(t.quellPositionId),
   oneParent: check(
     "beleg_position_one_parent",
     sql`((${t.angebotId} IS NOT NULL)::int + (${t.auftragId} IS NOT NULL)::int + (${t.rechnungId} IS NOT NULL)::int) = 1`,

@@ -35,7 +35,7 @@ function steuerKategorie(data: BelegRenderData): {
 }
 
 function typeCode(belegart: string | null): string {
-  if (belegart === "GUTSCHRIFT" || belegart === "STORNORECHNUNG") return "381";
+  if (belegart === "RECHNUNGSKORREKTUR" || belegart === "STORNORECHNUNG") return "381";
   return "380";
 }
 

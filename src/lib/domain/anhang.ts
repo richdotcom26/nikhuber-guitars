@@ -8,6 +8,7 @@ import {
   ANHANG_ART_VALUES, ANHANG_SPALTE, ANHANG_TRAEGER, type AnhangArt, type AnhangTraeger,
 } from "@/lib/anhang-shared";
 import { ANHANG_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
+import type { Tx } from "./belege";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 
@@ -144,6 +145,10 @@ export async function speichereAnhang(p: {
   mime: string | null;
   art: AnhangArt;
   userId: string;
+  /** Innerhalb einer laufenden Transaktion (z. B. Rechnung buchen) einfügen. */
+  tx?: Tx;
+  /** Meldet den Storage-Key nach dem Upload — der Aufrufer räumt bei Rollback auf. */
+  onUploaded?: (key: string) => void;
 }): Promise<string> {
   const safeName = p.dateiname.replace(/[^\w.\- ]+/g, "_").slice(0, 120);
   const key = `${p.traeger}/${p.traegerId}/${randomUUID()}-${safeName}`;
@@ -152,9 +157,10 @@ export async function speichereAnhang(p: {
     .storage.from(ANHANG_BUCKET)
     .upload(key, p.bytes, { contentType: p.mime || "application/octet-stream", upsert: false });
   if (error) throw new DomainError("STATE", `Upload fehlgeschlagen: ${error.message}`);
+  p.onUploaded?.(key);
 
   try {
-    const [row] = await db
+    const [row] = await (p.tx ?? db)
       .insert(anhang)
       .values({
         [ANHANG_FELD[p.traeger]]: p.traegerId,

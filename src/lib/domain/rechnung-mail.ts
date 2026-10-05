@@ -18,8 +18,8 @@ export async function rechnungMailKontext(id: string) {
   await requireUser();
   const [r] = await db.select().from(rechnung).where(eq(rechnung.id, id));
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
-  if (!r.festgeschriebenAm || !r.erechnungAssetId) {
-    throw new DomainError("STATE", "Die Rechnung muss zuerst erstellt werden.");
+  if (r.status === "ENTWURF" || !r.erechnungAssetId || !r.nummer) {
+    throw new DomainError("STATE", "Die Rechnung muss zuerst gebucht werden.");
   }
 
   const [k] = r.kundeId
@@ -63,6 +63,7 @@ export async function rechnungMailKontext(id: string) {
 
   return {
     rechnung: { id: r.id, nummer: r.nummer, belegart: r.belegart, auftragId: r.auftragId },
+    titel: r.belegart === "RECHNUNG" ? "Rechnung" : r.belegart === "STORNORECHNUNG" ? "Stornorechnung" : "Rechnungskorrektur",
     sprache,
     an: k?.email ?? "",
     rechnungsEmpfaenger: k?.emailRechnungCc ?? null,
@@ -98,8 +99,8 @@ export async function sendeRechnungMail(input: RechnungMailInput) {
 
   const [r] = await db.select().from(rechnung).where(eq(rechnung.id, input.id));
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
-  if (!r.festgeschriebenAm || !r.erechnungAssetId) {
-    throw new DomainError("STATE", "Die Rechnung muss zuerst erstellt werden.");
+  if (r.status === "ENTWURF" || !r.erechnungAssetId || !r.nummer) {
+    throw new DomainError("STATE", "Die Rechnung muss zuerst gebucht werden.");
   }
 
   const an = splitEmails(input.an);
@@ -125,7 +126,7 @@ export async function sendeRechnungMail(input: RechnungMailInput) {
   const [m] = await db
     .insert(mailversand)
     .values({
-      art: r.belegart === "GUTSCHRIFT" ? "GUTSCHRIFT" : "RECHNUNG",
+      art: r.belegart === "RECHNUNG" ? "RECHNUNG" : "GUTSCHRIFT",
       status: "ENTWURF",
       rechnungId: r.id,
       auftragId: r.auftragId,

@@ -19,7 +19,7 @@ import {
   getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
-import { createRechnungFromAuftrag } from "@/lib/domain/rechnung";
+import { createEntwurfAusAuftrag } from "@/lib/domain/rechnung";
 import {
   loescheSeriennummer, vergebeSeriennummerAuto, vergebeSeriennummerManuell,
 } from "@/lib/domain/seriennummer";
@@ -270,8 +270,8 @@ export async function loescheSerAction(_p: ActionState, fd: FormData): Promise<A
 export async function createRechnungAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   let rechnungId: string | null = null;
   const res = await runAction(async () => {
-    rechnungId = await createRechnungFromAuftrag(String(fd.get("id") ?? ""));
-    return ok("Rechnung erstellt.");
+    rechnungId = await createEntwurfAusAuftrag(String(fd.get("id") ?? ""));
+    return ok("Rechnungsentwurf erstellt.");
   });
   if (rechnungId) redirect(`/rechnungen/${rechnungId}`);
   return res;

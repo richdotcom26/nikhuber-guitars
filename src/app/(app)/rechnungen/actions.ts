@@ -10,20 +10,33 @@ import {
   tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import {
-  anzahlungSchema, assertPositionArtikel, assertRechnungEditierbar, createRechnungOhneAuftrag,
-  festschreiben, gutschrift, positionenAusAuftrag, recordZahlung, rechnungKopfSchema, setAnzahlung,
-  stornoRechnung, teilGutschrift, updateRechnungKopf, zahlungSchema,
+  anzahlungSchema, assertPositionArtikel, assertRechnungEditierbar, buchen, createRechnungOhneAuftrag,
+  deleteEntwurf, korrekturEntwurf, positionenAusAuftrag, recordZahlung, rechnungKopfSchema, setAnzahlung,
+  stornieren, updateRechnungKopf, zahlungSchema,
 } from "@/lib/domain/rechnung";
 import { rechnungMailSchema, sendeRechnungMail } from "@/lib/domain/rechnung-mail";
 
-/** „Rechnung erstellen": PDF archivieren + festschreiben. */
-export async function festschreibenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+/** Entwurf buchen: Nummer, Datum, Sperre, E-Rechnung — in einer Transaktion. */
+export async function buchenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async () => {
     const id = String(fd.get("id") ?? "");
-    await festschreiben(id);
+    const { nummer } = await buchen(id);
     rev(id);
-    return ok("Rechnung erstellt und festgeschrieben.");
+    return ok(`Gebucht als ${nummer}.`);
   });
+}
+
+/** Entwurf löschen (hat noch keine Nummer). */
+export async function deleteEntwurfAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let weg = false;
+  const res = await runAction(async () => {
+    await deleteEntwurf(String(fd.get("id") ?? ""));
+    revalidatePath("/rechnungen");
+    weg = true;
+    return ok("Entwurf gelöscht.");
+  });
+  if (weg) redirect("/rechnungen");
+  return res;
 }
 
 /** Mail mit Rechnungs-PDF (+ Fotos) senden; bei Erfolg zurück zur Rechnung. */
@@ -56,7 +69,7 @@ export async function createRechnungOhneAuftragAction(_p: ActionState, fd: FormD
     if (!kundeId) return fail("Kein Kunde gewählt.");
     id = await createRechnungOhneAuftrag(kundeId);
     revalidatePath("/rechnungen");
-    return ok("Rechnung angelegt.");
+    return ok("Rechnungsentwurf angelegt.");
   });
   if (id) redirect(`/rechnungen/${id}?tab=positionen`);
   return res;
@@ -94,29 +107,32 @@ export async function saveAnzahlungAction(_p: ActionState, fd: FormData): Promis
   });
 }
 
+/** Stornorechnung: vollständige negative Kopie, sofort gebucht (ST-Nummer). */
 export async function stornoAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   let neuId: string | null = null;
   const res = await runAction(async () => {
-    neuId = await stornoRechnung(String(fd.get("id") ?? ""));
-    return ok("Stornorechnung erstellt.");
-  });
-  if (neuId) redirect(`/rechnungen/${neuId}`);
-  return res;
-}
-
-export async function gutschriftAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  let neuId: string | null = null;
-  const teil = fd.get("teil") === "true";
-  const res = await runAction(async () => {
     const id = String(fd.get("id") ?? "");
-    neuId = teil ? await teilGutschrift(id) : await gutschrift(id);
-    return ok("Gutschrift erstellt.");
+    neuId = await stornieren(id);
+    rev(id);
+    return ok("Stornorechnung gebucht.");
   });
   if (neuId) redirect(`/rechnungen/${neuId}`);
   return res;
 }
 
-/* ---- Positionen (nur wenn nicht beim Steuerbüro gebucht — Guard in UI + hier) ---- */
+/** Rechnungskorrektur als Entwurf (Positionen anpassen, dann buchen). */
+export async function korrekturAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let neuId: string | null = null;
+  const res = await runAction(async () => {
+    neuId = await korrekturEntwurf(String(fd.get("id") ?? ""));
+    revalidatePath("/rechnungen");
+    return ok("Korrektur-Entwurf angelegt.");
+  });
+  if (neuId) redirect(`/rechnungen/${neuId}?tab=positionen`);
+  return res;
+}
+
+/* ---- Positionen (nur im Entwurf — Guard im Service) ---- */
 
 export async function addPositionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async () => {

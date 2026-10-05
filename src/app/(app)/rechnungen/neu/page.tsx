@@ -19,7 +19,7 @@ export default async function NeueRechnungPage({
     <div className="space-y-5">
       <PageHeader
         title="Neue Rechnung ohne Auftrag"
-        description="Für Kleinteile, Ersatzteile usw. Gitarren (Modell-Artikel) werden über einen Auftrag abgerechnet."
+        description="Legt einen Rechnungsentwurf an (noch ohne Nummer). Für Kleinteile, Ersatzteile usw. — Gitarren (Modell-Artikel) werden über einen Auftrag abgerechnet."
         actions={<Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>}
       />
       <Card>

@@ -6,6 +6,7 @@ import {
 } from "@/lib/db/schema";
 import { SPEC_SLOT_BY_KEY } from "@/lib/specs/slots";
 import { berechneBriefkopf } from "@/lib/adressen-shared";
+import { abrechnungsStand, assertAuftragPositionenAenderbar } from "./abrechnung";
 import { computeTiers } from "./artikel";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -29,14 +30,23 @@ const HEAD = { angebot, auftrag, rechnung } as const;
 const PREFIX = { ANGEBOT: "AN", AUFTRAG: "A", RECHNUNG: "RG" } as const;
 type ZaehlerArt = keyof typeof PREFIX;
 
+/** Drizzle-Transaktion (für Funktionen, die innerhalb einer laufenden Transaktion arbeiten). */
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 /**
- * Fortlaufende Belegnummer `PREFIX-JAHR-####`. Transaktional (FOR UPDATE).
- * Initialisiert den Zähler bei Bedarf aus dem höchsten vorhandenen Wert des Jahres
- * (Ninox-Altbestand), damit keine Kollision mit importierten Nummern entsteht.
+ * Fortlaufende Belegnummer `PREFIX-JAHR-####` (FOR UPDATE auf den Zähler → keine Doppelvergabe).
+ * Die laufende Nummer läuft wie in Ninox über Jahresgrenzen weiter: ein neuer Jahres-Zähler
+ * startet beim höchsten vorhandenen Wert aller Jahre (inkl. Altbestand).
+ * `prefix` überschreibt das Präfix (ST- für Storno/Korrektur teilt sich den RECHNUNG-Zähler).
+ * Mit `tx` läuft die Vergabe in der Transaktion des Aufrufers (z. B. Buchen) — scheitert die,
+ * wird auch die Nummer zurückgerollt (keine Lücke).
  */
-export async function allocateNummer(art: ZaehlerArt, jahr: number): Promise<string> {
-  const prefix = PREFIX[art];
-  return db.transaction(async (tx) => {
+export async function allocateNummer(
+  art: ZaehlerArt,
+  jahr: number,
+  opts: { tx?: Tx; prefix?: string } = {},
+): Promise<string> {
+  const run = async (tx: Tx) => {
     const rows = await tx
       .select()
       .from(zaehler)
@@ -47,21 +57,22 @@ export async function allocateNummer(art: ZaehlerArt, jahr: number): Promise<str
     if (rows.length === 0) {
       const head = art === "ANGEBOT" ? angebot : art === "AUFTRAG" ? auftrag : rechnung;
       const [{ maxLfd }] = await tx
-        .select({
-          maxLfd: sql<number>`coalesce(max(
-            (regexp_replace(${head.nummer}, '^[A-Z]+-\\d{4}-', ''))::int
-          ), 0)`,
-        })
+        .select({ maxLfd: sql<number>`coalesce(max(substring(${head.nummer} from '(\\d+)$')::int), 0)` })
         .from(head)
-        .where(sql`${head.nummer} ~ ('^' || ${prefix} || '-' || ${jahr}::text || '-\\d+$')`);
-      stand = (maxLfd ?? 0) + 1;
+        .where(sql`${head.nummer} ~ '-\\d{4}-\\d+$'`);
+      const [{ maxZ }] = await tx
+        .select({ maxZ: sql<number>`coalesce(max(${zaehler.stand}), 0)` })
+        .from(zaehler)
+        .where(eq(zaehler.art, art));
+      stand = Math.max(Number(maxLfd ?? 0), Number(maxZ ?? 0)) + 1;
       await tx.insert(zaehler).values({ art, jahr, stand });
     } else {
       stand = rows[0].stand + 1;
       await tx.update(zaehler).set({ stand }).where(and(eq(zaehler.art, art), eq(zaehler.jahr, jahr)));
     }
-    return `${prefix}-${jahr}-${String(stand).padStart(4, "0")}`;
-  });
+    return `${opts.prefix ?? PREFIX[art]}-${jahr}-${String(stand).padStart(4, "0")}`;
+  };
+  return opts.tx ? run(opts.tx) : db.transaction(run);
 }
 
 /* ------------------------------------------------------------- KD-Snapshot */
@@ -135,6 +146,7 @@ export interface PositionInput {
 export async function addPosition(traeger: PosTraeger, traegerId: string, input: PositionInput) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  if (traeger === "auftrag") await assertAuftragPositionenAenderbar(traegerId, { art: "neu" });
   await db.insert(belegPosition).values({
     [POS_KEY[traeger]]: traegerId,
     artikelId: input.artikelId ?? null,
@@ -160,6 +172,20 @@ export async function updatePosition(
 ) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  if (traeger === "auftrag") {
+    const [alt] = await db
+      .select({ einzelpreis: belegPosition.einzelpreis, rabattProzent: belegPosition.rabattProzent })
+      .from(belegPosition)
+      .where(eq(belegPosition.id, posId));
+    const num = (v: string | number | null | undefined) => (v == null ? null : Number(v));
+    const preisOderRabatt = !!alt && (
+      ("einzelpreis" in patch && num(patch.einzelpreis) !== num(alt.einzelpreis))
+      || (patch.rabattProzent != null && num(patch.rabattProzent) !== num(alt.rabattProzent))
+    );
+    await assertAuftragPositionenAenderbar(traegerId, {
+      art: "aendern", posId, anzahl: patch.anzahl, preisOderRabatt,
+    });
+  }
   const set: Record<string, unknown> = { updatedAt: new Date(), updatedBy: user.id };
   if (patch.anzahl != null) set.anzahl = String(patch.anzahl);
   if ("einzelpreis" in patch) set.einzelpreis = patch.einzelpreis == null ? null : String(patch.einzelpreis);
@@ -180,6 +206,7 @@ export async function updatePosition(
 export async function deletePosition(traeger: PosTraeger, traegerId: string, posId: string) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  if (traeger === "auftrag") await assertAuftragPositionenAenderbar(traegerId, { art: "loeschen", posId });
   await db.delete(belegPosition).where(and(eq(belegPosition.id, posId), eq(POS_COL[traeger], traegerId)));
   await renumberPositionen(traeger, traegerId);
   await recomputeSummen(traeger, traegerId);
@@ -188,6 +215,7 @@ export async function deletePosition(traeger: PosTraeger, traegerId: string, pos
 export async function deleteAllePositionen(traeger: PosTraeger, traegerId: string) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  if (traeger === "auftrag") await assertAuftragPositionenAenderbar(traegerId, { art: "ganz" });
   await db.delete(belegPosition).where(eq(POS_COL[traeger], traegerId));
   await recomputeSummen(traeger, traegerId);
 }
@@ -339,6 +367,7 @@ export async function generatePositionen(traeger: SpecBelegTraeger, traegerId: s
   if (!h) throw new DomainError("NOT_FOUND", "Beleg nicht gefunden.");
   if (!h.modellArtikelId) throw new DomainError("STATE", "Keine Modellvorlage gewählt.");
   if (!h.kundeId) throw new DomainError("STATE", "Kein Kunde gewählt.");
+  if (traeger === "auftrag") await assertAuftragPositionenAenderbar(traegerId, { art: "ganz" });
 
   const specs = await db
     .select({
@@ -466,6 +495,10 @@ export async function addPorto(traeger: SpecBelegTraeger, traegerId: string): Pr
 
   const preis = tierPreis(a, h.kdVertriebsweg, h.kdWaehrung, null, await positionMargen());
   const alte = pos.filter((p) => p.gruppe === "VERSAND").map((p) => p.id);
+  if (traeger === "auftrag") {
+    await assertAuftragPositionenAenderbar(traegerId, { art: "neu" });
+    for (const posId of alte) await assertAuftragPositionenAenderbar(traegerId, { art: "loeschen", posId });
+  }
 
   await db.transaction(async (tx) => {
     if (alte.length) await tx.delete(belegPosition).where(inArray(belegPosition.id, alte));
@@ -523,8 +556,9 @@ export async function recomputeSummen(traeger: PosTraeger, traegerId: string) {
     : 0;
   const summeNetto = Math.round((summePositionen - gesamtrabattWert) * 100) / 100;
 
-  const fs = await getFirmaSetting();
-  const mwstSatz = Number(fs.mwstSatz);
+  // Rechnung: MwSt-Satz aus dem Snapshot (beim Buchen eingefroren), sonst aktueller Satz
+  const snapSatz = "mwstSatz" in h ? h.mwstSatz : null;
+  const mwstSatz = snapSatz != null ? Number(snapSatz) : Number((await getFirmaSetting()).mwstSatz);
   const summeMwst = h.kdSteuerpflichtig
     ? Math.round(summeNetto * (mwstSatz / 100) * 100) / 100
     : 0;
@@ -553,6 +587,9 @@ export async function setGesamtrabatt(
   const head = HEAD[traeger];
   const [h] = await db.select().from(head).where(eq(head.id, traegerId));
   if (!h) throw new DomainError("NOT_FOUND", "Beleg nicht gefunden.");
+  if (traeger === "auftrag" && (await abrechnungsStand(traegerId)).teilweise) {
+    throw new DomainError("STATE", "Der Auftrag ist schon (teilweise) berechnet — Gesamtrabatt nicht mehr änderbar.");
+  }
   const { rabattBasis } = await positionsSummen(traeger, traegerId);
 
   let prozent = Number(h.gesamtrabattProzent ?? 0);

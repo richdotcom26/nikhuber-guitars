@@ -39,7 +39,7 @@ export async function monatsUebersicht(jahr: number): Promise<{ zeilen: MonatsZe
       extract(month from r.rechnungsdatum)::int as monat,
       count(*) filter (where r.belegart = 'RECHNUNG')::int          as anzahl_rg,
       count(*) filter (where r.belegart = 'STORNORECHNUNG')::int    as anzahl_storno,
-      count(*) filter (where r.belegart = 'GUTSCHRIFT')::int        as anzahl_gutschrift,
+      count(*) filter (where r.belegart = 'RECHNUNGSKORREKTUR')::int as anzahl_gutschrift, -- Rechnungskorrekturen
       coalesce(sum(pos.netto) filter (where r.belegart = 'RECHNUNG'), 0)       as positionen_netto,
       coalesce(sum(r.zahlbetrag) filter (where r.belegart = 'RECHNUNG'), 0)    as bezahlt,
       coalesce(sum(pos.netto) filter (where r.belegart <> 'RECHNUNG'), 0)      as o_gutschrift_netto

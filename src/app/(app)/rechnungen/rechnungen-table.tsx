@@ -11,7 +11,7 @@ import { formatDate, formatMoney } from "@/lib/utils";
 
 export interface RechnungRow {
   id: string;
-  nummer: string;
+  nummer: string | null;
   belegart: string;
   status: string;
   rechnungsdatum: string | null;
@@ -36,7 +36,9 @@ export function RechnungenTable({
   const columns: Column<RechnungRow>[] = [
     {
       key: "nummer", header: "RG-Nr", sortable: true, hideable: false, className: "font-mono text-xs",
-      cell: (r) => <span className="font-medium hover:underline">{r.nummer}</span>,
+      cell: (r) => (r.nummer
+        ? <span className="font-medium hover:underline">{r.nummer}</span>
+        : <span className="font-sans italic text-muted hover:underline">Entwurf</span>),
     },
     {
       key: "art", header: "Art", sortable: true,

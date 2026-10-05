@@ -61,11 +61,15 @@ export const produktionsortEnum = pgEnum("produktionsort", ["RODGAU", "HAMBURG"]
 export const zaehlerArtEnum = pgEnum("zaehler_art", ["ANGEBOT", "AUFTRAG", "RECHNUNG"]);
 
 // --- Rechnung / Zahlung -------------------------------------------------------
+// Belegtyp: Rechnung / Stornorechnung / Rechnungskorrektur (ex „Gutschrift", umbenannt 0005).
 export const rechnungBelegartEnum = pgEnum("rechnung_belegart", [
-  "RECHNUNG", "STORNORECHNUNG", "GUTSCHRIFT",
+  "RECHNUNG", "STORNORECHNUNG", "RECHNUNGSKORREKTUR",
 ]);
+// Aktiv genutzt: ENTWURF, GEBUCHT, BEZAHLT, STORNIERT. Die übrigen Werte sind Altbestand
+// (Postgres kann Enum-Werte nicht einfach entfernen) und kommen in den Daten nicht mehr vor.
 export const rechnungStatusEnum = pgEnum("rechnung_status", [
   "OFFEN", "BEZAHLT", "STORNORECHNUNG", "GUTSCHRIFT", "RG_STORNIERT",
+  "ENTWURF", "GEBUCHT", "STORNIERT",
 ]);
 export const zahlungsstatusEnum = pgEnum("zahlungsstatus", [
   "ANGEZAHLT", "TEILZAHLUNG", "BEZAHLT", "ANGEMAHNT",

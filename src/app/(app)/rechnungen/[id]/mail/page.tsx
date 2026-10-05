@@ -21,8 +21,8 @@ export default async function RechnungMailPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-5">
       <PageHeader
-        title={`Rechnung ${ctx.rechnung.nummer} per E-Mail senden`}
-        description="Das archivierte Rechnungs-PDF (E-Rechnung) wird immer angehängt. Fotos optional."
+        title={`${ctx.titel} ${ctx.rechnung.nummer} per E-Mail senden`}
+        description="Die archivierte E-Rechnung (PDF) wird immer angehängt. Fotos optional."
         actions={<Link href={`/rechnungen/${id}`} className={buttonClasses("outline")}>Abbrechen</Link>}
       />
       {!mailKonfig() ? (

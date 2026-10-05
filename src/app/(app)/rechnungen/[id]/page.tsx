@@ -17,10 +17,10 @@ import {
   addPositionAction, deleteAllePositionenAction, deletePositionAction, positionenAusAuftragAction,
   updatePositionAction,
 } from "../actions";
+import { BuchenButtons } from "../erstellen-buttons";
 import {
-  AnzahlungForm, KopfForm, StornoGutschriftButtons, ZahlungForm,
+  AnzahlungForm, KopfForm, KorrekturButtons, ZahlungForm,
 } from "../forms";
-import { ErstellenButtons } from "../erstellen-buttons";
 
 const TABS: readonly TabItem[] = [
   { key: "rechnung", label: "Rechnung" },
@@ -49,25 +49,25 @@ export default async function RechnungDetailPage({
   const r = data.rechnung;
   const kdName = r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || null;
   const cur = r.kdWaehrung === "USD" ? "USD" : "EUR";
-  const gebucht = r.gebuchtBeimSteuerbuero;
-  const fest = !!r.festgeschriebenAm;
+  const entwurf = r.status === "ENTWURF";
+  const art = RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart;
+  const korrigierbar = r.belegart === "RECHNUNG" && (r.status === "GEBUCHT" || r.status === "BEZAHLT");
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title={r.nummer}
+        title={r.nummer ?? `${art} (Entwurf)`}
         description={
           <span className="flex flex-wrap items-center gap-2">
-            <Badge>{RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}</Badge>
-            {r.teilgutschrift ? <Badge tone="blue">Teil</Badge> : null}
+            <Badge>{art}</Badge>
             <Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>
               {RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}
             </Badge>
-            <span>{formatDate(r.rechnungsdatum)}</span>
+            {r.rechnungsdatum ? <span>{formatDate(r.rechnungsdatum)}</span> : null}
             {kdName ? <span>· {kdName}</span> : null}
             {data.referenz ? (
               <Link href={`/rechnungen/${data.referenz.id}`} className="text-xs text-blue-700 hover:underline">
-                → Referenz {data.referenz.nummer}
+                → zu Rechnung {data.referenz.nummer}
               </Link>
             ) : null}
           </span>
@@ -75,13 +75,15 @@ export default async function RechnungDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Link href="/rechnungen" className={buttonClasses("outline")}>Zurück</Link>
-            {fest ? (
+            {r.erechnungAssetId ? (
               <>
-                <a href={`/rechnungen/${id}/dokument`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="Archiviertes PDF (E-Rechnung, ZUGFeRD)">PDF</a>
+                <a href={`/rechnungen/${id}/dokument`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="Archivierte E-Rechnung (ZUGFeRD)">PDF</a>
                 <Link href={`/rechnungen/${id}/mail`} className={buttonClasses()}>Per E-Mail versenden</Link>
               </>
             ) : (
-              <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
+              <a href={`/druck/rechnung/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>
+                {entwurf ? "Vorschau" : "Ansicht"}
+              </a>
             )}
           </div>
         }
@@ -89,32 +91,42 @@ export default async function RechnungDetailPage({
 
       {mail === "ok" ? (
         <div className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
-          E-Mail mit der Rechnung wurde versendet (Protokoll unter <Link href="/mailversand" className="underline">Mailversand</Link>).
+          E-Mail wurde versendet (Protokoll unter <Link href="/mailversand" className="underline">Mailversand</Link>).
         </div>
       ) : null}
 
-      {fest ? (
-        <div className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-muted">
-          <b className="text-ink">Erstellt und festgeschrieben</b> am {formatDateTime(r.festgeschriebenAm)} — das PDF ist archiviert,
-          Positionen, Datum und Anzahlung sind gesperrt. Korrekturen nur über Gutschrift/Storno.
-        </div>
-      ) : r.status === "BEZAHLT" || r.status === "RG_STORNIERT" ? null : (
+      {entwurf ? (
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
             <span className="text-sm text-muted">
-              1. <b className="text-ink">Vorschau</b> prüfen · 2. Rechnung <b className="text-ink">erstellen</b> (PDF wird archiviert, Rechnung gesperrt) · 3. per E-Mail versenden
+              <b className="text-ink">Entwurf</b> — frei änderbar, noch ohne Nummer. 1. Vorschau prüfen · 2. <b className="text-ink">Buchen</b>
+              {" "}(Nummer, Datum, E-Rechnung, Sperre) · 3. per E-Mail versenden
             </span>
-            <ErstellenButtons id={id} />
+            <BuchenButtons id={id} />
           </CardContent>
         </Card>
+      ) : (
+        <div className="space-y-2 rounded-md border border-line bg-surface px-3 py-2 text-sm text-muted">
+          <div>
+            <b className="text-ink">Gebucht</b>
+            {r.gebuchtAm ? <> am {formatDateTime(r.gebuchtAm)}</> : " (Altbestand aus Ninox)"} — der Beleg ist gesperrt.
+            {r.belegart === "RECHNUNG" ? " Korrekturen nur über Storno oder Rechnungskorrektur." : null}
+          </div>
+          {korrigierbar ? <KorrekturButtons id={id} /> : null}
+        </div>
       )}
 
-      {r.belegart === "RECHNUNG" && !gebucht ? (
-        <StornoGutschriftButtons id={id} isRechnung />
-      ) : r.belegart === "RECHNUNG" && gebucht ? (
-        <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Beim Steuerbüro gebucht — Änderungen nur über <b>Gutschrift + neue Rechnung</b>.
-          <StornoGutschriftButtons id={id} isRechnung />
+      {data.folgebelege.length > 0 ? (
+        <div className="rounded-md border border-line px-3 py-2 text-sm">
+          <span className="text-muted">Folgebelege: </span>
+          {data.folgebelege.map((f, i) => (
+            <span key={f.id}>
+              {i > 0 ? " · " : ""}
+              <Link href={`/rechnungen/${f.id}`} className="text-blue-700 hover:underline">
+                {RG_BELEGART_LABEL[f.belegart as RgBelegart]} {f.nummer ?? "(Entwurf)"}
+              </Link>
+            </span>
+          ))}
         </div>
       ) : null}
 
@@ -127,14 +139,14 @@ export default async function RechnungDetailPage({
               <CardHeader><CardTitle>Beleg</CardTitle></CardHeader>
               <CardContent>
                 <KopfForm
+                  key={r.updatedAt.toISOString()}
                   id={id}
-                  status={r.status}
+                  entwurf={entwurf}
                   rechnungsdatum={r.rechnungsdatum}
                   lieferdatum={r.lieferdatum}
                   reportMonat={r.reportMonat}
                   bemerkungRechnung={r.bemerkungRechnung}
-                  gebuchtBeimSteuerbuero={gebucht}
-                  gesperrt={fest}
+                  gebuchtBeimSteuerbuero={r.gebuchtBeimSteuerbuero}
                 />
               </CardContent>
             </Card>
@@ -166,6 +178,9 @@ export default async function RechnungDetailPage({
                     → Kundendatensatz
                   </Link>
                 ) : null}
+                {!entwurf && r.zahlungsbedingungText ? (
+                  <div className="pt-1 text-xs text-muted">Zahlungsbedingung: {r.zahlungsbedingungText}</div>
+                ) : null}
               </CardContent>
             </Card>
             <Card>
@@ -176,7 +191,7 @@ export default async function RechnungDetailPage({
                   beruecksichtigen={r.anzahlungBeruecksichtigen}
                   brutto={r.anzahlungBrutto}
                   datum={r.anzahlungDatum}
-                  gesperrt={fest}
+                  gesperrt={!entwurf}
                 />
               </CardContent>
             </Card>
@@ -186,7 +201,7 @@ export default async function RechnungDetailPage({
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <dt className="text-neutral-500">Netto</dt>
                   <dd className="text-right tabular-nums">{formatMoney(r.summeNetto, cur)}</dd>
-                  <dt className="text-neutral-500">MwSt</dt>
+                  <dt className="text-neutral-500">MwSt{r.mwstSatz ? ` (${Number(r.mwstSatz)} %)` : ""}</dt>
                   <dd className="text-right tabular-nums">{formatMoney(r.summeMwst, cur)}</dd>
                   <dt className="font-semibold">Brutto</dt>
                   <dd className="text-right font-semibold tabular-nums">{formatMoney(r.summeBrutto, cur)}</dd>
@@ -200,11 +215,9 @@ export default async function RechnungDetailPage({
       ) : null}
 
       {active === "positionen" ? (
-        gebucht || fest ? (
+        !entwurf ? (
           <Card><CardContent className="space-y-2 py-4 text-sm">
-            <p className="text-amber-800">
-              Positionen gesperrt ({fest ? "Rechnung erstellt und festgeschrieben" : "beim Steuerbüro gebucht"}).
-            </p>
+            <p className="text-muted">Positionen gesperrt (gebucht).</p>
             <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
               {(await listRechnungPositionen(id)).filter((p) => p.reRelevant).map((p) => (
                 <li key={p.id} className="flex justify-between gap-3 px-2 py-1.5">
@@ -237,11 +250,11 @@ export default async function RechnungDetailPage({
             }}
             waehrung={r.kdWaehrung}
             vertriebsweg={r.kdVertriebsweg}
-            canGenerate={!!r.auftragId}
-            generateLabel="Aus Auftrag neu einlesen"
-            generateConfirm="Alle Positionen dieser Rechnung durch die aktuellen Positionen des Auftrags ersetzen?"
+            canGenerate={!!r.auftragId && r.belegart === "RECHNUNG"}
+            generateLabel="Offene Positionen aus Auftrag einlesen"
+            generateConfirm="Alle Positionen dieses Entwurfs durch die noch offenen (nicht berechneten) Positionen des Auftrags ersetzen?"
             actions={{
-              generate: r.auftragId ? positionenAusAuftragAction : undefined,
+              generate: r.auftragId && r.belegart === "RECHNUNG" ? positionenAusAuftragAction : undefined,
               deleteAll: deleteAllePositionenAction,
               add: addPositionAction,
               update: updatePositionAction,
@@ -252,21 +265,25 @@ export default async function RechnungDetailPage({
       ) : null}
 
       {active === "zahlung" ? (
-        <Card>
-          <CardHeader><CardTitle>Zahlung (manuell erfasst)</CardTitle></CardHeader>
-          <CardContent>
-            <ZahlungForm
-              id={id}
-              zahlungsdatum={r.zahlungsdatum}
-              zahlbetrag={r.zahlbetrag}
-              zahlungAnBank={r.zahlungAnBank}
-              zahlungsstatus={r.zahlungsstatus}
-              abzugProzent={r.abzugProzent}
-              rechnungsbetrag={r.rechnungsbetrag}
-              differenzZahlung={r.differenzZahlung}
-            />
-          </CardContent>
-        </Card>
+        entwurf ? (
+          <Card><CardContent className="py-4 text-sm text-muted">Zahlungen werden nach dem Buchen erfasst.</CardContent></Card>
+        ) : (
+          <Card>
+            <CardHeader><CardTitle>Zahlung (manuell erfasst)</CardTitle></CardHeader>
+            <CardContent>
+              <ZahlungForm
+                id={id}
+                zahlungsdatum={r.zahlungsdatum}
+                zahlbetrag={r.zahlbetrag}
+                zahlungAnBank={r.zahlungAnBank}
+                zahlungsstatus={r.zahlungsstatus}
+                abzugProzent={r.abzugProzent}
+                rechnungsbetrag={r.rechnungsbetrag}
+                differenzZahlung={r.differenzZahlung}
+              />
+            </CardContent>
+          </Card>
+        )
       ) : null}
     </div>
   );

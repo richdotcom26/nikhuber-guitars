@@ -5,26 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select, Textarea } from "@/components/ui/input";
-import { BANK_VALUES, RG_STATUS, ZAHLUNGSSTATUS_VALUES } from "@/lib/rechnung-shared";
+import { BANK_VALUES, ZAHLUNGSSTATUS_VALUES } from "@/lib/rechnung-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import {
-  gutschriftAction, saveAnzahlungAction, saveKopfAction, saveZahlungAction, stornoAction,
+  korrekturAction, saveAnzahlungAction, saveKopfAction, saveZahlungAction, stornoAction,
 } from "./actions";
 
 /* ---------------------------------------------------------------------- Kopf */
 
+/**
+ * Entwurf: Lieferdatum, Bemerkung, Report-Monat (Rechnungsdatum + Nummer kommen beim Buchen).
+ * Gebucht: Inhalt gesperrt — nur Report-Monat und „beim Steuerbüro gebucht".
+ */
 export function KopfForm({
-  id, status, rechnungsdatum, lieferdatum, reportMonat, bemerkungRechnung, gebuchtBeimSteuerbuero, gesperrt = false,
+  id, entwurf, rechnungsdatum, lieferdatum, reportMonat, bemerkungRechnung, gebuchtBeimSteuerbuero,
 }: {
   id: string;
-  status: string;
+  entwurf: boolean;
   rechnungsdatum: string | null;
   lieferdatum: string | null;
   reportMonat: string | null;
   bemerkungRechnung: string | null;
   gebuchtBeimSteuerbuero: boolean;
-  /** Festgeschrieben: Datum/Lieferdatum/Bemerkung gesperrt (stehen auf dem archivierten PDF). */
-  gesperrt?: boolean;
 }) {
   const [state, action] = useActionState(saveKopfAction, IDLE);
   return (
@@ -32,28 +34,25 @@ export function KopfForm({
       <input type="hidden" name="id" value={id} />
       {state ? <FormMessage state={state} /> : null}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Status" htmlFor="status">
-          <Select id="status" name="status" defaultValue={status}>
-            {RG_STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </Select>
-        </Field>
-        <Field label="Rechnungsdatum" htmlFor="rechnungsdatum">
-          <Input id="rechnungsdatum" name="rechnungsdatum" type="date" defaultValue={rechnungsdatum ?? ""} disabled={gesperrt} />
+        <Field label="Rechnungsdatum" hint={entwurf ? "wird beim Buchen gesetzt" : undefined}>
+          <Input value={rechnungsdatum ?? ""} type={rechnungsdatum ? "date" : "text"} placeholder="– beim Buchen –" disabled readOnly />
         </Field>
         <Field label="Lieferdatum" htmlFor="lieferdatum">
-          <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={lieferdatum ?? ""} disabled={gesperrt} />
+          <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={lieferdatum ?? ""} disabled={!entwurf} />
         </Field>
         <Field label="Report-Monat" htmlFor="reportMonat" hint="YYYY-MM">
           <Input id="reportMonat" name="reportMonat" placeholder="2026-09" defaultValue={reportMonat ?? ""} />
         </Field>
       </div>
-      <Field label="Bemerkung" htmlFor="bemerkungRechnung">
-        <Textarea id="bemerkungRechnung" name="bemerkungRechnung" defaultValue={bemerkungRechnung ?? ""} rows={2} disabled={gesperrt} />
+      <Field label="Bemerkung (steht auf der Rechnung)" htmlFor="bemerkungRechnung">
+        <Textarea id="bemerkungRechnung" name="bemerkungRechnung" defaultValue={bemerkungRechnung ?? ""} rows={2} disabled={!entwurf} />
       </Field>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="gebuchtBeimSteuerbuero" defaultChecked={gebuchtBeimSteuerbuero} />
-        beim Steuerbüro gebucht (sperrt Positionsänderungen)
-      </label>
+      {entwurf ? null : (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="gebuchtBeimSteuerbuero" defaultChecked={gebuchtBeimSteuerbuero} />
+          beim Steuerbüro gebucht
+        </label>
+      )}
       <SubmitButton>Speichern</SubmitButton>
     </form>
   );
@@ -144,42 +143,38 @@ export function AnzahlungForm({
   );
 }
 
-/* ---------------------------------------------------------- Storno / Gutschrift */
+/* ---------------------------------------------------- Storno / Rechnungskorrektur */
 
-export function StornoGutschriftButtons({ id, isRechnung }: { id: string; isRechnung: boolean }) {
-  const [confirm, setConfirm] = useState<null | "storno" | "gs" | "tgs">(null);
+/** Für gebuchte Rechnungen: Storno (sofort gebucht) oder Rechnungskorrektur (Entwurf). */
+export function KorrekturButtons({ id }: { id: string }) {
+  const [frage, setFrage] = useState<null | "storno" | "korrektur">(null);
   const [stState, stAction] = useActionState(stornoAction, IDLE);
-  const [gsState, gsAction] = useActionState(gutschriftAction, IDLE);
+  const [koState, koAction] = useActionState(korrekturAction, IDLE);
 
-  if (!isRechnung) return null;
-
-  if (!confirm) {
+  if (!frage) {
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => setConfirm("storno")}>Stornorechnung</Button>
-        <Button variant="outline" size="sm" onClick={() => setConfirm("gs")}>Gutschrift</Button>
-        <Button variant="outline" size="sm" onClick={() => setConfirm("tgs")}>Teil-Gutschrift</Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setFrage("storno")}>Stornieren</Button>
+        <Button variant="outline" size="sm" onClick={() => setFrage("korrektur")}>Rechnungskorrektur</Button>
       </div>
     );
   }
 
-  const label =
-    confirm === "storno" ? "Stornorechnung erstellen (Original wird storniert)?"
-    : confirm === "gs" ? "Volle Gutschrift erstellen?"
-    : "Leere Teil-Gutschrift erstellen?";
+  const text = frage === "storno"
+    ? "Stornorechnung buchen? Sie ist eine vollständige negative Kopie mit eigener ST-Nummer; diese Rechnung wird als „storniert“ gekennzeichnet. Danach ggf. eine neue Rechnung erstellen."
+    : "Rechnungskorrektur anlegen? Es entsteht ein Entwurf mit allen Positionen negativ — nicht betroffene Positionen löschen bzw. Mengen anpassen, dann buchen (ST-Nummer).";
 
   return (
     <form
-      action={confirm === "storno" ? stAction : gsAction}
+      action={frage === "storno" ? stAction : koAction}
       className="flex flex-wrap items-center gap-2 rounded-md bg-neutral-50 px-3 py-2"
     >
       <input type="hidden" name="id" value={id} />
-      {confirm !== "storno" ? <input type="hidden" name="teil" value={confirm === "tgs" ? "true" : "false"} /> : null}
-      <span className="text-sm text-neutral-700">{label}</span>
-      <SubmitButton size="sm" pendingText="…">Ja</SubmitButton>
-      <Button size="sm" variant="ghost" onClick={() => setConfirm(null)}>Abbrechen</Button>
-      {stState && !stState.ok ? <span className="text-xs text-red-600">{stState.message}</span> : null}
-      {gsState && !gsState.ok ? <span className="text-xs text-red-600">{gsState.message}</span> : null}
+      <span className="text-sm text-neutral-700">{text}</span>
+      <SubmitButton size="sm" pendingText="…">{frage === "storno" ? "Ja, stornieren" : "Ja, Entwurf anlegen"}</SubmitButton>
+      <Button size="sm" variant="ghost" onClick={() => setFrage(null)}>Abbrechen</Button>
+      {stState && !stState.ok ? <span className="w-full text-xs text-red-600">{stState.message}</span> : null}
+      {koState && !koState.ok ? <span className="w-full text-xs text-red-600">{koState.message}</span> : null}
     </form>
   );
 }

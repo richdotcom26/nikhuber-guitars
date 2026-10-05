@@ -32,7 +32,7 @@ export interface BelegRenderData {
     ustId: string | null; iban: string | null; bic: string | null;
   };
   titel: string;
-  belegart: string | null;   // rechnung: RECHNUNG | STORNORECHNUNG | GUTSCHRIFT
+  belegart: string | null;   // rechnung: RECHNUNG | STORNORECHNUNG | RECHNUNGSKORREKTUR
   nummer: string;
   datum: string | null;
   referenzNummer: string | null;
@@ -91,8 +91,14 @@ function titelFor(art: BelegArt, belegart: string | null, sprache: "DE" | "EN"):
   if (art === "angebot") return de ? "Angebot" : "Offer";
   if (art === "auftrag") return de ? "Auftragsbestätigung" : "Order Confirmation";
   if (belegart === "STORNORECHNUNG") return de ? "Stornorechnung" : "Cancellation Invoice";
-  if (belegart === "GUTSCHRIFT") return de ? "Gutschrift" : "Credit Note";
+  if (belegart === "RECHNUNGSKORREKTUR") return de ? "Rechnungskorrektur" : "Invoice Correction";
   return de ? "Rechnung" : "Invoice";
+}
+
+/** Werte, die beim Buchen innerhalb der Transaktion feststehen, aber noch nicht committet sind. */
+export interface RenderOverrides {
+  nummer?: string;
+  datum?: string;
 }
 
 /** ZusatzEU-Fußnote — an das Steuerergebnis gekoppelt, NICHT nur an die Region (7v). */
@@ -113,7 +119,11 @@ function steuerHinweis(
     : "Export delivery exempt from VAT.";
 }
 
-export async function renderBelegData(art: BelegArt, id: string): Promise<BelegRenderData> {
+export async function renderBelegData(
+  art: BelegArt,
+  id: string,
+  over: RenderOverrides = {},
+): Promise<BelegRenderData> {
   await requireUser();
   const head = HEAD[art];
   const [h] = await db.select().from(head).where(eq(head.id, id));
@@ -138,9 +148,11 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
     staatCode = st?.kuerzel ?? null;
   }
 
-  // Zahlungsbedingung: über den Kunden (Kopf hat keine eigene Referenz).
-  let zbText: string | null = null;
-  if (h.kundeId) {
+  const rr = art === "rechnung" ? (h as typeof rechnung.$inferSelect) : null;
+
+  // Zahlungsbedingung: Rechnung → Snapshot; sonst über den Kunden (Kopf hat keine eigene Referenz).
+  let zbText: string | null = rr?.zahlungsbedingungText ?? null;
+  if (!zbText && h.kundeId) {
     const rows = (await db.execute(sql`
       select z.bezeichnung, z.bezeichnung_en
       from kunde k join zahlungsbedingung z on z.id = k.zahlungsbedingung_id
@@ -168,7 +180,10 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
     briefkopfManuell: h.kdBriefkopf,
   });
 
-  const rr = art === "rechnung" ? (h as typeof rechnung.$inferSelect) : null;
+  const referenzNummer = rr?.referenzRechnungId
+    ? (await db.select({ n: rechnung.nummer }).from(rechnung).where(eq(rechnung.id, rr.referenzRechnungId)))[0]?.n ?? null
+    : null;
+  const entwurf = rr?.status === "ENTWURF" && !over.nummer;
 
   return {
     art,
@@ -187,15 +202,15 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
       iban: fs.iban,
       bic: fs.bic,
     },
-    titel: titelFor(art, rr?.belegart ?? null, sprache),
+    titel: (entwurf ? (sprache === "DE" ? "ENTWURF – " : "DRAFT – ") : "") + titelFor(art, rr?.belegart ?? null, sprache),
     belegart: rr?.belegart ?? null,
     region: h.kdRegion ?? null,
-    nummer: h.nummer,
+    nummer: over.nummer ?? h.nummer ?? (sprache === "DE" ? "(wird beim Buchen vergeben)" : "(assigned on posting)"),
     datum:
       art === "angebot" ? (h as typeof angebot.$inferSelect).angebotsdatum
       : art === "auftrag" ? (h as typeof auftrag.$inferSelect).auftragsdatum
-      : rr!.rechnungsdatum,
-    referenzNummer: null,
+      : over.datum ?? rr!.rechnungsdatum,
+    referenzNummer,
     auftragNummer: rr?.auftragId
       ? (await db.select({ n: auftrag.nummer }).from(auftrag).where(eq(auftrag.id, rr.auftragId)))[0]?.n ?? null
       : null,
@@ -227,7 +242,7 @@ export async function renderBelegData(art: BelegArt, id: string): Promise<BelegR
       gesamtrabattWert: h.gesamtrabattWert,
       gesamtrabattAktiv: h.gesamtrabattAktiv,
       netto: h.summeNetto,
-      mwstSatz: fs.mwstSatz,
+      mwstSatz: rr?.mwstSatz ?? fs.mwstSatz,
       mwst: h.summeMwst,
       brutto: h.summeBrutto,
     },

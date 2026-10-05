@@ -191,38 +191,58 @@ export const WIKI: WikiArtikel[] = [
 
   /* --------------------------------------------------------- Rechnungen */
   {
-    id: "rechnung-positionen",
+    id: "rechnung-ablauf",
     bereich: "Rechnungen",
-    titel: "Positionen der Rechnung",
+    titel: "Ablauf: Entwurf → Buchen → Versenden",
     bloecke: [
-      { p: "Eine Rechnung aus einem Auftrag übernimmt beim Anlegen die relevanten Positionen des Auftrags. Danach lassen sich die Positionen wie gewohnt bearbeiten." },
+      { p: "Rechnungen entstehen in zwei Stufen – so verlangen es § 14 UStG (fortlaufende, einmalige Nummer) und die GoBD (Unveränderbarkeit):" },
       { ul: [
-        "**Alle löschen** entfernt (nach Rückfrage) alle Positionen der Rechnung.",
-        "**Aus Auftrag neu einlesen** ersetzt alle Positionen der Rechnung durch die aktuellen relevanten Positionen des Auftrags – praktisch, wenn der Auftrag nachträglich geändert wurde.",
-        "Ist die Rechnung **beim Steuerbüro gebucht**, sind die Positionen gesperrt. Korrekturen dann nur über Gutschrift + neue Rechnung.",
+        "**Entwurf:** Im Auftrag unter **Rechnung → „Rechnungsentwurf erstellen“** (oder unter Rechnungen → „Neue Rechnung ohne Auftrag“). Der Entwurf hat **noch keine Nummer und kein Datum**, ist frei änderbar und kann **gelöscht** werden – es entsteht keine Lücke.",
+        "**Vorschau** prüfen (oben rechts) – das Dokument ist dort als „ENTWURF“ gekennzeichnet.",
+        "**Buchen:** In einem Schritt wird die **Rechnungsnummer** vergeben, das **Rechnungsdatum auf heute** gesetzt, die Rechnung **gesperrt** und die **E-Rechnung (ZUGFeRD-PDF)** erzeugt und unveränderbar abgelegt. Schlägt ein Teil fehl, passiert gar nichts (keine Nummer verbraucht).",
+        "**„Buchen und per E-Mail versenden“** öffnet danach direkt das E-Mail-Fenster; nach einfachem „Buchen“ fragt das Programm nach.",
+      ] },
+      { p: "Nach dem Buchen gilt:" },
+      { ul: [
+        "Positionen, Lieferdatum, Bemerkung und Anzahlung sind **gesperrt**; **PDF** öffnet immer das archivierte Original.",
+        "Änderbar bleiben nur Zahlung (→ Status „Bezahlt“), Report-Monat und „beim Steuerbüro gebucht“.",
+        "Korrekturen **nur über neue Belege**: Storno oder Rechnungskorrektur (siehe dort).",
+      ] },
+      { hinweis: "Nummernkreis: Rechnungen (RG-) und Stornos/Korrekturen (ST-) teilen sich wie in Ninox einen fortlaufenden Zähler, z. B. RG-2026-3723, ST-2026-3724, RG-2026-3725. Die laufende Nummer geht über den Jahreswechsel weiter." },
+    ],
+  },
+  {
+    id: "rechnung-teil",
+    bereich: "Rechnungen",
+    titel: "Teilrechnungen und Abrechnungsstand des Auftrags",
+    bloecke: [
+      { p: "Ein Auftrag kann **mehrere Rechnungen** haben. Jede Rechnungsposition merkt sich, aus welcher Auftragsposition sie stammt." },
+      { ul: [
+        "Ein neuer Entwurf übernimmt nur die **noch offenen Mengen** – bereits gebuchte Mengen werden abgezogen. Für eine Teilrechnung im Entwurf einfach Positionen löschen oder Mengen reduzieren.",
+        "**„Offene Positionen aus Auftrag einlesen“** im Entwurf setzt die Positionen auf den aktuellen offenen Stand zurück.",
+        "Im Auftrag zeigt der Tab **Rechnung** den Stand („noch nicht / teilweise / vollständig berechnet“); in den Positionen steht bei berechneten Zeilen „berechnet: x von y“.",
+        "Ein Storno gibt die Mengen wieder frei – danach kann neu abgerechnet werden.",
+      ] },
+      { p: "Der **Auftrag bleibt änderbar, solange er nicht vollständig berechnet ist**. Dabei gilt:" },
+      { ul: [
+        "Schon berechnete Positionen: nicht löschbar, Preis und Rabatt gesperrt, Menge nicht unter die berechnete Menge.",
+        "„Aus Specs generieren“, „Alle löschen“ und Gesamtrabatt nur, solange noch nichts berechnet ist.",
+        "Vollständig berechnet → alle Positionen gesperrt.",
       ] },
     ],
   },
   {
-    id: "rechnung-erstellen",
+    id: "rechnung-storno",
     bereich: "Rechnungen",
-    titel: "Rechnung erstellen (Vorschau → erstellen → senden)",
+    titel: "Storno und Rechnungskorrektur",
     bloecke: [
-      { p: "Eine neue Rechnung ist zunächst ein **Entwurf**: Positionen, Datum und Anzahlung lassen sich noch ändern. Der Ablauf:" },
+      { p: "Gebuchte Rechnungen werden nie geändert. Korrekturen laufen über eigene Belege mit Verweis auf das Original:" },
       { ul: [
-        "**1. Vorschau** (oben rechts) – Rechnung prüfen.",
-        "**2. „Rechnung erstellen“** – das PDF wird als **E-Rechnung (ZUGFeRD)** erzeugt und unveränderbar archiviert, die Rechnung wird **festgeschrieben**. Danach fragt das Programm, ob sie per E-Mail versendet werden soll.",
-        "**Alternativ „Rechnung erstellen und per E-Mail versenden“** – wie oben, öffnet danach direkt das E-Mail-Fenster.",
+        "**Stornieren:** erzeugt eine **Stornorechnung** – vollständige Kopie mit negativen Beträgen, eigener ST-Nummer und Verweis aufs Original – und bucht sie sofort. Das Original wird als **„Storniert“** gekennzeichnet, bleibt sonst unverändert. War die Rechnung falsch: stornieren und eine neue Rechnung erstellen.",
+        "**Rechnungskorrektur** (z. B. eine Position zurück): legt einen **Entwurf** mit allen Positionen negativ an. Nicht betroffene Positionen löschen bzw. Mengen anpassen, dann **buchen** (ST-Nummer).",
+        "Auf dem PDF steht „Bezug: Rechnung RG-…“. In der Originalrechnung werden die Folgebelege verlinkt.",
       ] },
-      { p: "Nach dem Erstellen gilt:" },
-      { ul: [
-        "Positionen, Rechnungsdatum, Lieferdatum, Bemerkung und Anzahlung sind **gesperrt**.",
-        "Der Button **PDF** öffnet immer das archivierte Original – es ändert sich nicht mehr.",
-        "Status, Zahlung, Report-Monat und „beim Steuerbüro gebucht“ bleiben änderbar.",
-        "Korrekturen nur über **Gutschrift / Storno** (erzeugt eine neue Rechnung, die wieder erstellt werden kann).",
-        "Das archivierte PDF kann nicht gelöscht werden.",
-      ] },
-      { hinweis: "„Beim Steuerbüro gebucht“ ist davon getrennt: das Häkchen setzt man, wenn das Steuerbüro die Rechnung tatsächlich gebucht hat." },
+      { hinweis: "Begriff: „Gutschrift“ bedeutet umsatzsteuerlich die Abrechnung durch den Leistungsempfänger (§ 14 Abs. 2 UStG). Die frühere „Gutschrift“ heißt deshalb jetzt Rechnungskorrektur." },
     ],
   },
   {
@@ -230,7 +250,7 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Rechnungen",
     titel: "Rechnung per E-Mail versenden",
     bloecke: [
-      { p: "Nach dem Erstellen öffnet **„Per E-Mail versenden“** das interne E-Mail-Fenster:" },
+      { p: "Nach dem Buchen öffnet **„Per E-Mail versenden“** das interne E-Mail-Fenster:" },
       { ul: [
         "**An:** E-Mail aus dem Kundendatensatz (änderbar, mehrere Adressen mit Komma).",
         "**Weitere Empfänger (CC):** beliebige Adresse von Hand eintragen. Ist beim Kunden eine **„E-Mail Rechnung CC“** (Rechnungsempfänger) hinterlegt, fügt der Button **„+ Rechnungsempfänger“** sie per Klick ein.",
@@ -257,11 +277,11 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Rechnungen",
     titel: "Rechnung ohne Auftrag (Kleinteile, Ersatzteile)",
     bloecke: [
-      { p: "Unter **Rechnungen → „Neue Rechnung ohne Auftrag“** lässt sich direkt eine Rechnung erstellen: Kunde suchen, **„Rechnung anlegen“** klicken. Die Rechnung öffnet sich im Tab Positionen; dort die Artikel über „Neue Position“ hinzufügen." },
+      { p: "Unter **Rechnungen → „Neue Rechnung ohne Auftrag“**: Kunde suchen, **„Entwurf anlegen“** klicken. Der Entwurf öffnet sich im Tab Positionen; dort die Artikel über „Neue Position“ hinzufügen und anschließend buchen." },
       { ul: [
         "Gedacht für **Nicht-Gitarren-Artikel**: Kleinteile, Ersatzteile, Zubehör usw.",
         "**Modell-Artikel (Gitarren)** können hier nicht hinzugefügt werden – Gitarren werden immer über einen Auftrag abgerechnet.",
-        "Kundendaten (Adresse, Währung, Vertriebsweg, Steuer) werden beim Anlegen vom Kunden übernommen.",
+        "Kundendaten (Adresse, Währung, Vertriebsweg, Steuer) werden vom Kunden übernommen; die Adresse wird beim Buchen nochmals aktualisiert.",
       ] },
     ],
   },

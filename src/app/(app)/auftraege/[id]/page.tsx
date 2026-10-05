@@ -16,7 +16,12 @@ import { listPositionen } from "@/lib/domain/belege";
 import { isDomainError } from "@/lib/domain/errors";
 import { getAuftragSeriennummer } from "@/lib/domain/seriennummer";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatMoney } from "@/lib/utils";
+import { abrechnungsStand } from "@/lib/domain/abrechnung";
+import { rechnungenZuAuftrag } from "@/lib/domain/rechnung";
+import {
+  RG_BELEGART_LABEL, RG_STATUS_LABEL, RG_STATUS_TONE, type RgBelegart, type RgStatus,
+} from "@/lib/rechnung-shared";
 import { SeriennummerPanel } from "../seriennummer-panel";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
@@ -168,7 +173,10 @@ export default async function AuftragDetailPage({
       {active === "positionen" ? (
         <PositionenPanel
           belegId={id}
-          rows={(await listPositionen("auftrag", id)).map((p) => ({
+          rows={(await Promise.all([listPositionen("auftrag", id), abrechnungsStand(id)])
+            .then(([pos, stand]) => pos.map((p) => ({ p, b: stand.byId.get(p.id)?.berechnet ?? 0 }))))
+            .map(({ p, b }) => ({
+            hinweis: b > 0 ? `berechnet: ${b} von ${Number(p.anzahl)}` : null,
             id: p.id,
             posNr: p.posNr,
             artikelName: p.artikelName,
@@ -228,28 +236,7 @@ export default async function AuftragDetailPage({
         />
       ) : null}
 
-      {active === "rechnung" ? (
-        <Card>
-          <CardHeader><CardTitle>Rechnungen</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <CreateRechnungButton auftragId={id} />
-            {data.rechnungen.length === 0 ? (
-              <p className="text-neutral-400">Noch keine Rechnung.</p>
-            ) : (
-              <ul className="divide-y divide-neutral-100">
-                {data.rechnungen.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between py-1.5">
-                    <Link href={`/rechnungen/${r.id}`} className="font-mono hover:underline">{r.nummer}</Link>
-                    <span className="flex gap-1">
-                      <Badge>{r.belegart}</Badge><Badge>{r.status}</Badge>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
+      {active === "rechnung" ? <RechnungTab auftragId={id} /> : null}
     </div>
   );
 }
@@ -342,5 +329,48 @@ async function SeriennummerCard({
       bauplandatum={bauplandatum}
       auftragsart={auftragsart}
     />
+  );
+}
+
+/** Rechnungs-Tab: Abrechnungsstand + Rechnungen (Entwürfe, gebuchte Belege, Storno/Korrektur). */
+async function RechnungTab({ auftragId }: { auftragId: string }) {
+  const [stand, rechnungen] = await Promise.all([abrechnungsStand(auftragId), rechnungenZuAuftrag(auftragId)]);
+  const offen = stand.positionen.filter((p) => p.offen > 0).length;
+  const hatEntwurf = rechnungen.some((r) => r.status === "ENTWURF" && r.belegart === "RECHNUNG");
+  return (
+    <Card>
+      <CardHeader><CardTitle>Rechnungen ({rechnungen.length})</CardTitle></CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className={stand.vollstaendig ? "text-green-700" : "text-muted"}>
+          {stand.vollstaendig
+            ? "Vollständig berechnet — die Positionen des Auftrags sind gesperrt."
+            : stand.teilweise
+              ? `Teilweise berechnet — ${offen} von ${stand.positionen.length} Positionen noch offen.`
+              : "Noch nicht berechnet."}
+        </p>
+        {!stand.vollstaendig ? (
+          <CreateRechnungButton auftragId={auftragId} label={hatEntwurf ? "Rechnungsentwurf öffnen" : "Rechnungsentwurf erstellen"} />
+        ) : null}
+        {rechnungen.length === 0 ? (
+          <p className="text-neutral-400">Noch keine Rechnung.</p>
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {rechnungen.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-2 py-1.5">
+                <Link href={`/rechnungen/${r.id}`} className="font-mono hover:underline">
+                  {r.nummer ?? <span className="font-sans italic text-muted">Entwurf</span>}
+                </Link>
+                <span className="flex items-center gap-2">
+                  <span className="text-xs text-muted">{formatDate(r.rechnungsdatum)}</span>
+                  <span className="tabular-nums">{formatMoney(r.summeBrutto, r.kdWaehrung === "USD" ? "USD" : "EUR")}</span>
+                  <Badge>{RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}</Badge>
+                  <Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>{RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}</Badge>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }

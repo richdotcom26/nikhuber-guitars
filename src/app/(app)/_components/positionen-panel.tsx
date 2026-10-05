@@ -21,6 +21,8 @@ export interface PositionRow {
   gesamtpreis: string | null;
   reRelevant: boolean;
   herkunftSlotKey: string | null;
+  /** z. B. „berechnet: 1 von 1" (Auftrag). */
+  hinweis?: string | null;
 }
 
 export interface Summen {
@@ -196,6 +198,7 @@ function PosRow({
         {row.artikelBeschreibung ? (
           <div className="text-xs text-neutral-400">{row.artikelBeschreibung}</div>
         ) : null}
+        {row.hinweis ? <div className="text-xs font-medium text-green-700">{row.hinweis}</div> : null}
       </TD>
       <TD colSpan={5}>
         <form action={action} className="flex items-center justify-end gap-1.5">

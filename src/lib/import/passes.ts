@@ -859,11 +859,14 @@ export async function importArbeitsschritte(ctx: Ctx) {
 }
 
 // ===================================================== rechnungen (BC + CC)
+// Ninox „Gutschrift" → Rechnungskorrektur (neues Belegmodell, Migration 0005).
 const RECHNUNG_BELEGART: Record<string, string> = {
-  "1": "RECHNUNG", "2": "STORNORECHNUNG", "5": "GUTSCHRIFT",
+  "1": "RECHNUNG", "2": "STORNORECHNUNG", "5": "RECHNUNGSKORREKTUR",
 };
+// Ninox-Belege sind alle bereits verschickt → gebucht. Status „Stornorechnung"/„Gutschrift"
+// beschrieben in Ninox den Belegtyp, nicht den Zustand → ebenfalls GEBUCHT.
 const RECHNUNG_STATUS: Record<string, string> = {
-  "1": "OFFEN", "2": "BEZAHLT", "3": "STORNORECHNUNG", "4": "GUTSCHRIFT", "5": "RG_STORNIERT",
+  "1": "GEBUCHT", "2": "BEZAHLT", "3": "GEBUCHT", "4": "GEBUCHT", "5": "STORNIERT",
 };
 const ZAHLUNGSSTATUS: Record<string, string> = {
   "1": "ANGEZAHLT", "2": "TEILZAHLUNG", "3": "BEZAHLT", "4": "ANGEMAHNT",
@@ -906,7 +909,7 @@ export async function importRechnungen(ctx: Ctx) {
       modellArtikelId,
       auftragId,
       belegart: RECHNUNG_BELEGART[String(f(ctx, bc, rec, "Belegart"))] ?? "RECHNUNG",
-      status: RECHNUNG_STATUS[String(f(ctx, bc, rec, "Rechnungsstatus"))] ?? "OFFEN",
+      status: RECHNUNG_STATUS[String(f(ctx, bc, rec, "Rechnungsstatus"))] ?? "GEBUCHT",
       zahlungsstatus: ZAHLUNGSSTATUS[String(f(ctx, bc, rec, "Zahlungsstatus"))] ?? null,
       rechnungsdatum: ninoxDateOnly(f(ctx, bc, rec, "Rechnungsdatum")),
       lieferdatum: ninoxDateOnly(f(ctx, bc, rec, "Lieferdatum")),
@@ -967,8 +970,80 @@ export async function importRechnungen(ctx: Ctx) {
     await db.update(s.rechnung).set({ referenzRechnungId: rid }).where(sql`id = ${id}`);
   }
   await insertChunked(s.belegPosition, positions, 500);
-  ctx.log(`rechnung ${headers.length} (${refUpdates.length}× Storno/Gutschrift-Bezug), ` +
-    `positionen ${positions.length}`);
+  const v = await verknuepfeRechnungspositionen();
+  ctx.log(`rechnung ${headers.length} (${refUpdates.length}× Storno/Korrektur-Bezug), ` +
+    `positionen ${positions.length}, mit Auftragsposition verknüpft ${v.rechnung}/${v.rechnungGesamt}` +
+    `, Storno/Korrektur ${v.storno}/${v.stornoGesamt}`);
+}
+
+/**
+ * Altbestand: Rechnungspositionen den Auftragspositionen zuordnen (quell_position_id), damit
+ * der Abrechnungsstand („schon berechnet") stimmt. Ninox kennt diesen Verweis nicht — Zuordnung
+ * je Auftrag über Artikel + Bezeichnung. Storno/Korrektur übernehmen den Verweis vom Original.
+ */
+export async function verknuepfeRechnungspositionen() {
+  type P = { id: string; artikel_id: string | null; artikel_name: string | null; traeger: string };
+  const rows = <T>(r: unknown) => r as T[];
+
+  const rpos = rows<P>(await db.execute(sql`
+    select p.id, p.artikel_id, p.artikel_name, r.auftrag_id as traeger
+    from beleg_position p join rechnung r on r.id = p.rechnung_id
+    where r.belegart = 'RECHNUNG' and r.auftrag_id is not null and r.status <> 'ENTWURF'
+      and p.quell_position_id is null
+    order by r.auftrag_id, p.pos_nr nulls last, p.created_at`));
+  const apos = rows<P>(await db.execute(sql`
+    select p.id, p.artikel_id, p.artikel_name, p.auftrag_id as traeger
+    from beleg_position p
+    where p.auftrag_id in (select auftrag_id from rechnung where auftrag_id is not null)
+    order by p.auftrag_id, p.pos_nr nulls last, p.created_at`));
+  const byAuftrag = new Map<string, P[]>();
+  for (const p of apos) {
+    if (!byAuftrag.has(p.traeger)) byAuftrag.set(p.traeger, []);
+    byAuftrag.get(p.traeger)!.push(p);
+  }
+  const used = new Set<string>();
+  const pairs: [string, string][] = [];
+  for (const rp of rpos) {
+    const c = (byAuftrag.get(rp.traeger) ?? []).filter((x) => !used.has(x.id));
+    const m = c.find((x) => x.artikel_id && x.artikel_id === rp.artikel_id && x.artikel_name === rp.artikel_name)
+      ?? c.find((x) => x.artikel_id && x.artikel_id === rp.artikel_id)
+      ?? c.find((x) => x.artikel_name && x.artikel_name === rp.artikel_name);
+    if (m) { used.add(m.id); pairs.push([rp.id, m.id]); }
+  }
+  await setzeQuelle(pairs);
+
+  type S = { id: string; artikel_id: string | null; artikel_name: string | null; ref: string };
+  const spos = rows<S>(await db.execute(sql`
+    select p.id, p.artikel_id, p.artikel_name, r.referenz_rechnung_id as ref
+    from beleg_position p join rechnung r on r.id = p.rechnung_id
+    where r.belegart <> 'RECHNUNG' and r.referenz_rechnung_id is not null and p.quell_position_id is null`));
+  type O = { artikel_id: string | null; artikel_name: string | null; rechnung_id: string; quell: string };
+  const opos = rows<O>(await db.execute(sql`
+    select p.artikel_id, p.artikel_name, p.rechnung_id, p.quell_position_id as quell
+    from beleg_position p where p.quell_position_id is not null
+      and p.rechnung_id in (select referenz_rechnung_id from rechnung where referenz_rechnung_id is not null)`));
+  const byR = new Map<string, O[]>();
+  for (const p of opos) {
+    if (!byR.has(p.rechnung_id)) byR.set(p.rechnung_id, []);
+    byR.get(p.rechnung_id)!.push(p);
+  }
+  const pairs2: [string, string][] = [];
+  for (const sp of spos) {
+    const c = byR.get(sp.ref) ?? [];
+    const m = c.find((x) => x.artikel_id === sp.artikel_id && x.artikel_name === sp.artikel_name)
+      ?? c.find((x) => x.artikel_name === sp.artikel_name);
+    if (m) pairs2.push([sp.id, m.quell]);
+  }
+  await setzeQuelle(pairs2);
+  return { rechnung: pairs.length, rechnungGesamt: rpos.length, storno: pairs2.length, stornoGesamt: spos.length };
+}
+
+async function setzeQuelle(pairs: [string, string][]) {
+  for (let i = 0; i < pairs.length; i += 500) {
+    const values = sql.join(pairs.slice(i, i + 500).map(([id, q]) => sql`(${id}::uuid, ${q}::uuid)`), sql`, `);
+    await db.execute(sql`update beleg_position p set quell_position_id = v.q
+      from (values ${values}) as v(id, q) where p.id = v.id`);
+  }
 }
 
 // ========================================================= seriennummer (7w)

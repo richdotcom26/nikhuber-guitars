@@ -10,7 +10,7 @@ export function CreateRechnungButton({ kundeId }: { kundeId: string }) {
   return (
     <form action={action} className="inline">
       <input type="hidden" name="kundeId" value={kundeId} />
-      <SubmitButton size="sm" pendingText="Anlegen …">Rechnung anlegen</SubmitButton>
+      <SubmitButton size="sm" pendingText="Anlegen …">Entwurf anlegen</SubmitButton>
       {state && !state.ok ? <span className="ml-2 text-xs text-red-600">{state.message}</span> : null}
     </form>
   );
