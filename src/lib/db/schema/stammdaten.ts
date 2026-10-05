@@ -4,6 +4,7 @@ import {
   boolean, date, integer, numeric, pgTable, primaryKey, text, timestamp, unique, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
+import { artikel } from "./artikel";
 import { regionEnum, spracheEnum, waehrungEnum, zaehlerArtEnum } from "./_enums";
 
 /**
@@ -56,6 +57,11 @@ export const staat = pgTable("staat", {
   defaultWaehrung: waehrungEnum("default_waehrung"),
   defaultZahlungsbedingungId: uuid("default_zahlungsbedingung_id")
     .references((): AnyPgColumn => zahlungsbedingung.id),
+  // Porto-Artikel (Gruppe VERSAND) für „Porto hinzufügen" in Angebot/Auftrag
+  portoGitarreArtikelId: uuid("porto_gitarre_artikel_id")
+    .references((): AnyPgColumn => artikel.id, { onDelete: "set null" }),
+  portoTeileArtikelId: uuid("porto_teile_artikel_id")
+    .references((): AnyPgColumn => artikel.id, { onDelete: "set null" }),
   ...auditCols,
 });
 

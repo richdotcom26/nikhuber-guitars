@@ -23,7 +23,7 @@ import { PositionenPanel } from "../../_components/positionen-panel";
 import { SpecsEditor } from "../../specs-editor";
 import { VorlagePicker } from "../../_components/vorlage-picker";
 import {
-  addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
+  addPortoAction, addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
   generatePositionenAction, setGesamtrabattAction, updatePositionAction,
 } from "../actions";
 import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
@@ -195,6 +195,7 @@ export default async function AuftragDetailPage({
             add: addPositionAction,
             update: updatePositionAction,
             remove: deletePositionAction,
+            porto: addPortoAction,
           }}
           gesamtrabatt={{
             aktiv: a.gesamtrabattAktiv,

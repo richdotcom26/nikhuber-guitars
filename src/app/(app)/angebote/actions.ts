@@ -9,7 +9,7 @@ import {
   angebotKopfSchema, createAngebot, setAngebotKunde, updateAngebotKopf,
 } from "@/lib/domain/angebot";
 import {
-  addPosition, angebotToAuftrag, applyModellvorlage, deleteAllePositionen,
+  addPorto, addPosition, angebotToAuftrag, applyModellvorlage, deleteAllePositionen,
   deletePosition, generatePositionen, getArtikelForPosition, positionMargen, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 
@@ -67,6 +67,15 @@ export async function generatePositionenAction(_p: ActionState, fd: FormData): P
     await generatePositionen("angebot", id);
     rev(id);
     return ok("Positionen erzeugt.");
+  });
+}
+
+export async function addPortoAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const msg = await addPorto("angebot", id);
+    rev(id);
+    return ok(msg);
   });
 }
 

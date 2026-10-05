@@ -17,24 +17,42 @@ interface StaatRow {
   defaultSprache: "DE" | "EN" | null;
   defaultWaehrung: "EUR" | "USD" | null;
   defaultZahlungsbedingungId: string | null;
+  portoGitarreArtikelId: string | null;
+  portoTeileArtikelId: string | null;
   updatedAt: string | Date;
 }
 interface ZbRow { id: string; bezeichnung: string }
+interface PortoRow { id: string; name: string | null; vkEur: string | null; vkUs: string | null }
 
 const REGIONEN = ["D", "EU", "WELT", "ASIEN", "USA"] as const;
+const COLS = 8;
+
+function portoLabel(p: PortoRow): string {
+  const preise = [
+    Number(p.vkEur) ? `${Number(p.vkEur).toFixed(2)} €` : null,
+    Number(p.vkUs) ? `${Number(p.vkUs).toFixed(2)} $` : null,
+  ].filter(Boolean).join(" / ");
+  return `${p.name ?? "–"}${preise ? ` (${preise})` : ""}`;
+}
 
 export function StaatenPanel({
   rows,
   zahlungsbedingungen,
+  portoArtikel,
 }: {
   rows: StaatRow[];
   zahlungsbedingungen: ZbRow[];
+  portoArtikel: PortoRow[];
 }) {
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
   const zbName = useMemo(
     () => new Map(zahlungsbedingungen.map((z) => [z.id, z.bezeichnung])),
     [zahlungsbedingungen],
+  );
+  const portoName = useMemo(
+    () => new Map(portoArtikel.map((p) => [p.id, portoLabel(p)])),
+    [portoArtikel],
   );
 
   const filtered = useMemo(() => {
@@ -71,12 +89,13 @@ export function StaatenPanel({
               <TH className="w-20">Sprache</TH>
               <TH className="w-20">Währung</TH>
               <TH>Zahlungsbedingung (Default)</TH>
+              <TH>Porto Gitarre / Teile</TH>
               <TH className="w-28 text-right">Aktion</TH>
             </TR>
           </THead>
           <TBody>
             {adding ? (
-              <StaatEditRow zbs={zahlungsbedingungen} onDone={() => setAdding(false)} />
+              <StaatEditRow zbs={zahlungsbedingungen} porto={portoArtikel} onDone={() => setAdding(false)} />
             ) : null}
             {filtered.map((r) => (
               // Key mit updatedAt: nach dem Speichern remountet die Zeile im Ansichtsmodus.
@@ -85,10 +104,12 @@ export function StaatenPanel({
                 row={r}
                 zbs={zahlungsbedingungen}
                 zbName={zbName}
+                porto={portoArtikel}
+                portoName={portoName}
               />
             ))}
             {filtered.length === 0 && !adding ? (
-              <TR><TD colSpan={7} className="py-4 text-center text-neutral-400">Kein Treffer.</TD></TR>
+              <TR><TD colSpan={COLS} className="py-4 text-center text-neutral-400">Kein Treffer.</TD></TR>
             ) : null}
           </TBody>
         </Table>
@@ -101,13 +122,17 @@ function StaatViewOrEdit({
   row,
   zbs,
   zbName,
+  porto,
+  portoName,
 }: {
   row: StaatRow;
   zbs: ZbRow[];
   zbName: Map<string, string>;
+  porto: PortoRow[];
+  portoName: Map<string, string>;
 }) {
   const [editing, setEditing] = useState(false);
-  if (editing) return <StaatEditRow row={row} zbs={zbs} onDone={() => setEditing(false)} />;
+  if (editing) return <StaatEditRow row={row} zbs={zbs} porto={porto} onDone={() => setEditing(false)} />;
   return (
     <TR>
       <TD className="font-mono text-xs">{row.kuerzel ?? "–"}</TD>
@@ -117,6 +142,14 @@ function StaatViewOrEdit({
       <TD>{row.defaultWaehrung ?? "–"}</TD>
       <TD className="text-neutral-500">
         {row.defaultZahlungsbedingungId ? zbName.get(row.defaultZahlungsbedingungId) ?? "–" : "–"}
+      </TD>
+      <TD className="text-xs">
+        <div className={row.portoGitarreArtikelId ? "" : "text-neutral-400"}>
+          {row.portoGitarreArtikelId ? portoName.get(row.portoGitarreArtikelId) ?? "–" : "– kein Gitarren-Porto –"}
+        </div>
+        <div className="text-muted">
+          {row.portoTeileArtikelId ? portoName.get(row.portoTeileArtikelId) ?? "–" : "–"}
+        </div>
       </TD>
       <TD className="text-right">
         <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearbeiten</Button>
@@ -128,10 +161,12 @@ function StaatViewOrEdit({
 function StaatEditRow({
   row,
   zbs,
+  porto,
   onDone,
 }: {
   row?: StaatRow;
   zbs: ZbRow[];
+  porto: PortoRow[];
   onDone: () => void;
 }) {
   const [state, action] = useActionState(saveStaatAction, IDLE);
@@ -142,43 +177,55 @@ function StaatEditRow({
 
   return (
     <TR className="bg-neutral-50">
-      <TD colSpan={7} className="py-2">
-        <form
-          action={action}
-          className="grid grid-cols-1 gap-2 sm:grid-cols-[5rem_1fr_7rem_6rem_6rem_1fr_auto] sm:items-center"
-        >
+      <TD colSpan={COLS} className="py-2">
+        <form action={action} className="space-y-2">
           {row ? <input type="hidden" name="id" value={row.id} /> : null}
-          <Input name="kuerzel" placeholder="DE" defaultValue={row?.kuerzel ?? ""} className="h-8" />
-          <Input name="name" placeholder="Name" defaultValue={row?.name ?? ""} required className="h-8" />
-          <Select name="region" defaultValue={row?.region ?? "EU"} className="h-8">
-            {REGIONEN.map((r) => <option key={r} value={r}>{r}</option>)}
-          </Select>
-          <Select name="defaultSprache" defaultValue={row?.defaultSprache ?? ""} className="h-8">
-            <option value="">–</option>
-            <option value="DE">DE</option>
-            <option value="EN">EN</option>
-          </Select>
-          <Select name="defaultWaehrung" defaultValue={row?.defaultWaehrung ?? ""} className="h-8">
-            <option value="">–</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-          </Select>
-          <Select
-            name="defaultZahlungsbedingungId"
-            defaultValue={row?.defaultZahlungsbedingungId ?? ""}
-            className="h-8"
-          >
-            <option value="">–</option>
-            {zbs.map((z) => <option key={z.id} value={z.id}>{z.bezeichnung}</option>)}
-          </Select>
-          <div className="flex gap-1">
-            <SubmitButton size="sm">Speichern</SubmitButton>
-            <Button size="sm" variant="ghost" onClick={onDone}>Abbrechen</Button>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[5rem_1fr_7rem_6rem_6rem_1fr] sm:items-center">
+            <Input name="kuerzel" placeholder="DE" defaultValue={row?.kuerzel ?? ""} className="h-8" />
+            <Input name="name" placeholder="Name" defaultValue={row?.name ?? ""} required className="h-8" />
+            <Select name="region" defaultValue={row?.region ?? "EU"} className="h-8">
+              {REGIONEN.map((r) => <option key={r} value={r}>{r}</option>)}
+            </Select>
+            <Select name="defaultSprache" defaultValue={row?.defaultSprache ?? ""} className="h-8">
+              <option value="">–</option>
+              <option value="DE">DE</option>
+              <option value="EN">EN</option>
+            </Select>
+            <Select name="defaultWaehrung" defaultValue={row?.defaultWaehrung ?? ""} className="h-8">
+              <option value="">–</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </Select>
+            <Select
+              name="defaultZahlungsbedingungId"
+              defaultValue={row?.defaultZahlungsbedingungId ?? ""}
+              className="h-8"
+            >
+              <option value="">–</option>
+              {zbs.map((z) => <option key={z.id} value={z.id}>{z.bezeichnung}</option>)}
+            </Select>
           </div>
-          <FormMessage
-            state={state && !state.ok ? state : null}
-            className="sm:col-span-7"
-          />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              Porto Gitarre
+              <Select name="portoGitarreArtikelId" defaultValue={row?.portoGitarreArtikelId ?? ""} className="h-8">
+                <option value="">–</option>
+                {porto.map((p) => <option key={p.id} value={p.id}>{portoLabel(p)}</option>)}
+              </Select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              Porto Teile
+              <Select name="portoTeileArtikelId" defaultValue={row?.portoTeileArtikelId ?? ""} className="h-8">
+                <option value="">–</option>
+                {porto.map((p) => <option key={p.id} value={p.id}>{portoLabel(p)}</option>)}
+              </Select>
+            </label>
+            <div className="flex gap-1">
+              <SubmitButton size="sm">Speichern</SubmitButton>
+              <Button size="sm" variant="ghost" onClick={onDone}>Abbrechen</Button>
+            </div>
+          </div>
+          <FormMessage state={state && !state.ok ? state : null} />
         </form>
       </TD>
     </TR>

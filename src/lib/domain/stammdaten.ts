@@ -1,9 +1,9 @@
 import "server-only";
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
-  firmaSetting, staat, zaehler, zahlungsbedingung,
+  artikel, firmaSetting, staat, zaehler, zahlungsbedingung,
 } from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -161,6 +161,19 @@ export async function listStaaten() {
   return db.select().from(staat).orderBy(asc(staat.name));
 }
 
+/** Aktive Versand-Artikel (Auswahl für Porto je Staat). */
+export async function listPortoArtikel() {
+  return db
+    .select({ id: artikel.id, name: artikel.nameKurz, vkEur: artikel.vkEur, vkUs: artikel.vkUs })
+    .from(artikel)
+    .where(and(
+      eq(artikel.artikelgruppe, "VERSAND"),
+      eq(artikel.datensatzInaktiv, false),
+      isNull(artikel.deletedAt),
+    ))
+    .orderBy(asc(artikel.nameKurz));
+}
+
 export const staatSchema = z.object({
   kuerzel: nullableText,
   name: z.string().trim().min(1, "Pflichtfeld"),
@@ -168,6 +181,8 @@ export const staatSchema = z.object({
   defaultSprache: emptyToNull(z.enum(["DE", "EN"])),
   defaultWaehrung: emptyToNull(z.enum(["EUR", "USD"])),
   defaultZahlungsbedingungId: emptyToNull(z.uuid()),
+  portoGitarreArtikelId: emptyToNull(z.uuid()),
+  portoTeileArtikelId: emptyToNull(z.uuid()),
 });
 export type StaatInput = z.infer<typeof staatSchema>;
 

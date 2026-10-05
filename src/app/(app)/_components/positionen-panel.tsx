@@ -38,6 +38,8 @@ export interface PositionenActions {
   add: Act;
   update: Act;
   remove: Act;
+  /** „Porto hinzufügen" (nur Angebot/Auftrag). */
+  porto?: Act;
 }
 
 export function PositionenPanel({
@@ -123,6 +125,8 @@ export function PositionenPanel({
           </TBody>
         </Table>
 
+        {actions.porto ? <PortoButton belegId={belegId} act={actions.porto} /> : null}
+
         <NewPosition belegId={belegId} waehrung={waehrung} vertriebsweg={vertriebsweg} addAct={actions.add} />
 
         {gesamtrabatt ? (
@@ -198,6 +202,18 @@ function PosRow({
         {delState && !delState.ok ? <p className="text-xs text-red-600">{delState.message}</p> : null}
       </TD>
     </TR>
+  );
+}
+
+function PortoButton({ belegId, act }: { belegId: string; act: Act }) {
+  const [state, action] = useActionState(act, IDLE);
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="id" value={belegId} />
+      <SubmitButton size="sm" variant="outline" pendingText="…">Porto hinzufügen</SubmitButton>
+      <span className="text-xs text-muted">Gitarren- oder Teile-Porto je nach Staat des Kunden</span>
+      {state ? <FormMessage state={state} className="w-full" /> : null}
+    </form>
   );
 }
 

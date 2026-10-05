@@ -18,7 +18,7 @@ import { formatDate } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
-  addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
+  addPortoAction, addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
   generatePositionenAction, updatePositionAction,
 } from "../actions";
 import { KopfForm } from "../kopf-form";
@@ -168,6 +168,7 @@ export default async function AngebotDetailPage({
             add: addPositionAction,
             update: updatePositionAction,
             remove: deletePositionAction,
+            porto: addPortoAction,
           }}
         />
       ) : null}

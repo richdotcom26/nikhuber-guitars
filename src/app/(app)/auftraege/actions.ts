@@ -15,7 +15,7 @@ import {
   refreshFortschritt, setAuftragKunde, updateAuftragKopf,
 } from "@/lib/domain/auftrag";
 import {
-  addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
+  addPorto, addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
   getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
@@ -103,6 +103,14 @@ export async function generatePositionenAction(_p: ActionState, fd: FormData): P
     await generatePositionen("auftrag", id);
     rev(id);
     return ok("Positionen erzeugt.");
+  });
+}
+export async function addPortoAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const msg = await addPorto("auftrag", id);
+    rev(id);
+    return ok(msg);
   });
 }
 export async function deleteAllePositionenAction(_p: ActionState, fd: FormData): Promise<ActionState> {

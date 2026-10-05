@@ -5,7 +5,7 @@ import { listModellgruppen } from "@/lib/domain/bauplanung";
 import { requireUser } from "@/lib/domain/context";
 import { listBenutzer } from "@/lib/domain/benutzer";
 import {
-  getFirmaSetting, listStaaten, listZaehler, listZahlungsbedingungen,
+  getFirmaSetting, listPortoArtikel, listStaaten, listZaehler, listZahlungsbedingungen,
 } from "@/lib/domain/stammdaten";
 import { ArbeitsschrittePanel } from "./arbeitsschritte-panel";
 import { BenutzerPanel } from "./benutzer-panel";
@@ -50,6 +50,7 @@ export default async function EinstellungenPage({
         <StaatenPanel
           rows={await listStaaten()}
           zahlungsbedingungen={await listZahlungsbedingungen()}
+          portoArtikel={await listPortoArtikel()}
         />
       )}
       {active === "modellgruppen" && <ModellgruppenPanel rows={await listModellgruppen()} />}

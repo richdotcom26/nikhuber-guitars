@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   angebot, artikel, auftrag, belegPosition, kunde, rechnung, specBelegung, staat, zaehler,
@@ -422,6 +422,72 @@ export async function generatePositionen(traeger: SpecBelegTraeger, traegerId: s
     .update(head)
     .set({ positionenAnzeigen: true, updatedAt: new Date(), updatedBy: user.id })
     .where(eq(head.id, traegerId));
+}
+
+/* -------------------------------------------------------------------- Porto */
+
+/**
+ * Porto-Position nach Staat des Kunden anhängen. Enthält der Beleg einen Modell-Artikel
+ * (Gitarre) → Gitarren-Porto des Staats, sonst Teile-Porto. Vorhandene Versand-Positionen
+ * werden ersetzt (kein doppeltes Porto). Sonderrabatt gilt nicht fürs Porto.
+ */
+export async function addPorto(traeger: SpecBelegTraeger, traegerId: string): Promise<string> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const head = HEAD[traeger];
+  const [h] = await db.select().from(head).where(eq(head.id, traegerId));
+  if (!h) throw new DomainError("NOT_FOUND", "Beleg nicht gefunden.");
+
+  let staatId = h.kdStaatId;
+  if (!staatId && h.kundeId) {
+    const [k] = await db.select({ staatId: kunde.staatId }).from(kunde).where(eq(kunde.id, h.kundeId));
+    staatId = k?.staatId ?? null;
+  }
+  if (!staatId) throw new DomainError("STATE", "Beim Kunden ist kein Staat hinterlegt.");
+  const [s] = await db.select().from(staat).where(eq(staat.id, staatId));
+  if (!s) throw new DomainError("NOT_FOUND", "Staat nicht gefunden.");
+
+  const pos = await db
+    .select({ id: belegPosition.id, gruppe: artikel.artikelgruppe })
+    .from(belegPosition)
+    .innerJoin(artikel, eq(artikel.id, belegPosition.artikelId))
+    .where(eq(POS_COL[traeger], traegerId));
+  const istGitarre = pos.some((p) => p.gruppe === "MODEL");
+
+  const portoId = istGitarre ? s.portoGitarreArtikelId : s.portoTeileArtikelId;
+  if (!portoId) {
+    throw new DomainError(
+      "STATE",
+      `Für ${s.name} ist kein ${istGitarre ? "Gitarren" : "Teile"}-Porto hinterlegt (Einstellungen → Staaten).`,
+    );
+  }
+  const [a] = await db.select().from(artikel).where(eq(artikel.id, portoId));
+  if (!a) throw new DomainError("NOT_FOUND", "Porto-Artikel nicht gefunden.");
+
+  const preis = tierPreis(a, h.kdVertriebsweg, h.kdWaehrung, null, await positionMargen());
+  const alte = pos.filter((p) => p.gruppe === "VERSAND").map((p) => p.id);
+
+  await db.transaction(async (tx) => {
+    if (alte.length) await tx.delete(belegPosition).where(inArray(belegPosition.id, alte));
+    await tx.insert(belegPosition).values({
+      [POS_KEY[traeger]]: traegerId,
+      artikelId: a.id,
+      artikelName: a.nameBelege ?? a.nameLang ?? a.nameKurz,
+      artikelBeschreibung: a.beschreibung,
+      anzahl: "1",
+      einzelpreis: preis == null ? null : String(preis),
+      rabattProzent: "0",
+      reRelevant: true,
+      herkunftSlotKey: "porto",
+      createdBy: user.id,
+      updatedBy: user.id,
+    });
+  });
+  await renumberPositionen(traeger, traegerId);
+  await recomputeSummen(traeger, traegerId);
+
+  const name = a.nameBelege ?? a.nameKurz ?? "Porto";
+  return alte.length ? `Porto ersetzt: ${name}` : `Porto hinzugefügt: ${name}`;
 }
 
 /* --------------------------------------------------------------------- Summen */
