@@ -32,8 +32,11 @@ export interface Summen {
 
 type Act = (prev: ActionState, fd: FormData) => Promise<ActionState>;
 
+const NOOP: Act = async () => IDLE;
+
 export interface PositionenActions {
-  generate: Act;
+  /** Fehlt bei Rechnungen ohne Auftrag → kein Button. */
+  generate?: Act;
   deleteAll: Act;
   add: Act;
   update: Act;
@@ -49,6 +52,8 @@ export function PositionenPanel({
   waehrung,
   vertriebsweg,
   canGenerate,
+  generateLabel = "Aus Specs generieren",
+  generateConfirm,
   actions,
   gesamtrabatt,
 }: {
@@ -58,6 +63,10 @@ export function PositionenPanel({
   waehrung: string | null;
   vertriebsweg: string | null;
   canGenerate: boolean;
+  /** Beschriftung des Generieren-Buttons (Rechnung: „Aus Auftrag neu einlesen"). */
+  generateLabel?: string;
+  /** Sicherheitsabfrage vor dem Generieren. */
+  generateConfirm?: string;
   actions: PositionenActions;
   gesamtrabatt?: {
     aktiv: boolean;
@@ -70,7 +79,7 @@ export function PositionenPanel({
   const [onlyRelevant, setOnlyRelevant] = useState(true);
   const shown = onlyRelevant ? rows.filter((r) => r.reRelevant) : rows;
 
-  const [genState, genAction] = useActionState(actions.generate, IDLE);
+  const [genState, genAction] = useActionState(actions.generate ?? NOOP, IDLE);
   const [delAllState, delAllAction] = useActionState(actions.deleteAll, IDLE);
   const [grState, grAction] = useActionState(gesamtrabatt?.action ?? actions.update, IDLE);
 
@@ -83,13 +92,21 @@ export function PositionenPanel({
             <input type="checkbox" checked={onlyRelevant} onChange={(e) => setOnlyRelevant(e.target.checked)} />
             nur relevante
           </label>
-          <form action={genAction}>
-            <input type="hidden" name="id" value={belegId} />
-            <SubmitButton size="sm" variant="outline" disabled={!canGenerate} pendingText="…">
-              Aus Specs generieren
-            </SubmitButton>
-          </form>
-          <form action={delAllAction}>
+          {actions.generate ? (
+            <form
+              action={genAction}
+              onSubmit={(e) => { if (generateConfirm && !confirm(generateConfirm)) e.preventDefault(); }}
+            >
+              <input type="hidden" name="id" value={belegId} />
+              <SubmitButton size="sm" variant="outline" disabled={!canGenerate} pendingText="…">
+                {generateLabel}
+              </SubmitButton>
+            </form>
+          ) : null}
+          <form
+            action={delAllAction}
+            onSubmit={(e) => { if (!confirm("Wirklich alle Positionen löschen?")) e.preventDefault(); }}
+          >
             <input type="hidden" name="id" value={belegId} />
             <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">Alle löschen</SubmitButton>
           </form>
@@ -97,7 +114,7 @@ export function PositionenPanel({
       </CardHeader>
       <CardContent className="space-y-3">
         {genState ? <FormMessage state={genState} /> : null}
-        {delAllState && !delAllState.ok ? <FormMessage state={delAllState} /> : null}
+        {delAllState ? <FormMessage state={delAllState} /> : null}
 
         <Table>
           <THead>

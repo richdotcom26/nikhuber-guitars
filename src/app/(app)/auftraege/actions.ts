@@ -166,7 +166,8 @@ export async function updatePositionAction(_p: ActionState, fd: FormData): Promi
       patch.einzelpreis = s === "" ? null : Number(s);
     }
     if (g("rabattProzent") != null) patch.rabattProzent = Number(g("rabattProzent")!.replace(",", ".")) || 0;
-    if (fd.has("reRelevant")) patch.reRelevant = fd.get("reRelevant") === "on" || fd.get("reRelevant") === "true";
+    // Zeilenformular enthält die Checkbox immer; nicht angehakt = wird nicht mitgesendet
+    patch.reRelevant = fd.get("reRelevant") === "on" || fd.get("reRelevant") === "true";
     await updatePosition("auftrag", id, posId, patch);
     rev(id);
     return ok("Position gespeichert.");

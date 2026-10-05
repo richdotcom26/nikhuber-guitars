@@ -14,7 +14,8 @@ import { formatDate, formatMoney } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
-  addPositionAction, deletePositionAction, noGenerateAction, updatePositionAction,
+  addPositionAction, deleteAllePositionenAction, deletePositionAction, positionenAusAuftragAction,
+  updatePositionAction,
 } from "../actions";
 import {
   AnzahlungForm, KopfForm, StornoGutschriftButtons, ZahlungForm,
@@ -131,7 +132,7 @@ export default async function RechnungDetailPage({
                     {data.auftragInfo.modellName ? <div className="text-neutral-500">{data.auftragInfo.modellName}</div> : null}
                     {data.auftragInfo.serNr ? <div className="text-neutral-500">Ser# {data.auftragInfo.serNr}</div> : null}
                   </>
-                ) : <span className="text-neutral-400">Kein Auftrag verknüpft.</span>}
+                ) : <span className="text-neutral-400">Ohne Auftrag (Ad-hoc-Rechnung für Kleinteile / Ersatzteile).</span>}
                 {r.kundeId ? (
                   <Link href={`/adressen/${r.kundeId}`} className="inline-block text-xs text-blue-700 hover:underline">
                     → Kundendatensatz
@@ -197,10 +198,12 @@ export default async function RechnungDetailPage({
             }}
             waehrung={r.kdWaehrung}
             vertriebsweg={r.kdVertriebsweg}
-            canGenerate={false}
+            canGenerate={!!r.auftragId}
+            generateLabel="Aus Auftrag neu einlesen"
+            generateConfirm="Alle Positionen dieser Rechnung durch die aktuellen Positionen des Auftrags ersetzen?"
             actions={{
-              generate: noGenerateAction,
-              deleteAll: noGenerateAction,
+              generate: r.auftragId ? positionenAusAuftragAction : undefined,
+              deleteAll: deleteAllePositionenAction,
               add: addPositionAction,
               update: updatePositionAction,
               remove: deletePositionAction,

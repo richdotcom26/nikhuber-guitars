@@ -32,7 +32,8 @@ export default async function RechnungenPage({
     <div>
       <PageHeader
         title="Rechnungen"
-        count={`${total} Belege — Erstellung erfolgt aus dem Auftrag`}
+        count={`${total} Belege`}
+        actions={<Link href="/rechnungen/neu" className={buttonClasses()}>Neue Rechnung ohne Auftrag</Link>}
       />
 
       <form method="get" className="mb-3 flex items-center gap-2">

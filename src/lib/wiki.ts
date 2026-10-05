@@ -142,7 +142,7 @@ export const WIKI: WikiArtikel[] = [
         "Spalte **rel.**: Häkchen = Position erscheint auf dem Beleg und zählt zur Summe.",
         "Anzahl, Einzelpreis, Rabatt % und rel. lassen sich je Zeile ändern und mit **OK** speichern. × löscht die Zeile.",
         "**Neue Position:** Artikel suchen (Name / Nummer) oder Freitext eingeben. Bleibt der Einzelpreis bei einem Artikel leer, wird er automatisch aus dem Artikel ermittelt.",
-        "**Alle löschen** entfernt alle Positionen des Belegs.",
+        "**Alle löschen** entfernt nach einer Sicherheitsabfrage alle Positionen des Belegs.",
       ] },
     ],
   },
@@ -185,6 +185,34 @@ export const WIKI: WikiArtikel[] = [
         "Der Gesamtrabatt rechnet **nur auf rabattierfähige Positionen**. Artikel mit „nicht rabattierfähig“ – darunter **alle Porto-Artikel** – sind ausgenommen.",
         "Freitext-Positionen ohne Artikel gelten als rabattierfähig.",
         "Beispiel: 3.000 € Gitarre + 250 € Porto, 10 % → Rabatt 300 € (nicht 325 €), netto 2.950 €.",
+      ] },
+    ],
+  },
+
+  /* --------------------------------------------------------- Rechnungen */
+  {
+    id: "rechnung-positionen",
+    bereich: "Rechnungen",
+    titel: "Positionen der Rechnung",
+    bloecke: [
+      { p: "Eine Rechnung aus einem Auftrag übernimmt beim Anlegen die relevanten Positionen des Auftrags. Danach lassen sich die Positionen wie gewohnt bearbeiten." },
+      { ul: [
+        "**Alle löschen** entfernt (nach Rückfrage) alle Positionen der Rechnung.",
+        "**Aus Auftrag neu einlesen** ersetzt alle Positionen der Rechnung durch die aktuellen relevanten Positionen des Auftrags – praktisch, wenn der Auftrag nachträglich geändert wurde.",
+        "Ist die Rechnung **beim Steuerbüro gebucht**, sind die Positionen gesperrt. Korrekturen dann nur über Gutschrift + neue Rechnung.",
+      ] },
+    ],
+  },
+  {
+    id: "rechnung-adhoc",
+    bereich: "Rechnungen",
+    titel: "Rechnung ohne Auftrag (Kleinteile, Ersatzteile)",
+    bloecke: [
+      { p: "Unter **Rechnungen → „Neue Rechnung ohne Auftrag“** lässt sich direkt eine Rechnung erstellen: Kunde suchen, **„Rechnung anlegen“** klicken. Die Rechnung öffnet sich im Tab Positionen; dort die Artikel über „Neue Position“ hinzufügen." },
+      { ul: [
+        "Gedacht für **Nicht-Gitarren-Artikel**: Kleinteile, Ersatzteile, Zubehör usw.",
+        "**Modell-Artikel (Gitarren)** können hier nicht hinzugefügt werden – Gitarren werden immer über einen Auftrag abgerechnet.",
+        "Kundendaten (Adresse, Währung, Vertriebsweg, Steuer) werden beim Anlegen vom Kunden übernommen.",
       ] },
     ],
   },

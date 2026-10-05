@@ -169,6 +169,97 @@ export async function createRechnungFromAuftrag(auftragId: string): Promise<stri
   return id;
 }
 
+/* ------------------------------------------------- Ad-hoc-Rechnung (ohne Auftrag) */
+
+/**
+ * Rechnung direkt für einen Kunden anlegen — ohne Auftrag, für Kleinteile/Ersatzteile.
+ * Positionen werden danach manuell erfasst (keine Modell-Artikel, siehe `assertPositionArtikel`).
+ */
+export async function createRechnungOhneAuftrag(kundeId: string): Promise<string> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const snap = await kdSnapshot(kundeId);
+  const nummer = await allocateNummer("RECHNUNG", new Date().getFullYear());
+  const [neu] = await db
+    .insert(rechnung)
+    .values({
+      nummer,
+      belegart: "RECHNUNG",
+      status: "OFFEN",
+      rechnungsdatum: new Date().toISOString().slice(0, 10),
+      ...snap,
+      createdBy: user.id,
+      updatedBy: user.id,
+    })
+    .returning({ id: rechnung.id });
+  return neu.id;
+}
+
+/* ------------------------------------------------------- Positionen-Guards */
+
+/** Positionen dürfen nur geändert werden, solange die Rechnung nicht beim Steuerbüro gebucht ist. */
+export async function assertRechnungEditierbar(id: string) {
+  const [r] = await db
+    .select({ gebucht: rechnung.gebuchtBeimSteuerbuero, auftragId: rechnung.auftragId })
+    .from(rechnung)
+    .where(eq(rechnung.id, id));
+  if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
+  if (r.gebucht) {
+    throw new DomainError("STATE", "Beim Steuerbüro gebucht — Positionen sind gesperrt.");
+  }
+  return r;
+}
+
+/** Ad-hoc-Rechnungen (ohne Auftrag) sind für Nicht-Gitarren-Artikel: keine Modell-Artikel. */
+export async function assertPositionArtikel(rechnungId: string, artikelId: string | null) {
+  const r = await assertRechnungEditierbar(rechnungId);
+  if (r.auftragId || !artikelId) return;
+  const [a] = await db.select({ gruppe: artikel.artikelgruppe }).from(artikel).where(eq(artikel.id, artikelId));
+  if (a?.gruppe === "MODEL") {
+    throw new DomainError(
+      "VALIDATION",
+      "Rechnungen ohne Auftrag sind für Kleinteile/Ersatzteile — Gitarren (Modell-Artikel) bitte über einen Auftrag abrechnen.",
+    );
+  }
+}
+
+/** Alle Positionen der Rechnung durch die RE-relevanten Positionen des Auftrags ersetzen. */
+export async function positionenAusAuftrag(id: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const r = await assertRechnungEditierbar(id);
+  if (!r.auftragId) throw new DomainError("STATE", "Diese Rechnung hat keinen Auftrag.");
+
+  const positionen = await db
+    .select()
+    .from(belegPosition)
+    .where(and(eq(belegPosition.auftragId, r.auftragId), eq(belegPosition.reRelevant, true)));
+  if (positionen.length === 0) throw new DomainError("STATE", "Der Auftrag hat keine relevanten Positionen.");
+
+  await db.transaction(async (tx) => {
+    await tx.delete(belegPosition).where(eq(belegPosition.rechnungId, id));
+    await tx.insert(belegPosition).values(
+      positionen.map((p) => ({
+        rechnungId: id,
+        posNr: p.posNr,
+        artikelId: p.artikelId,
+        artikelName: p.artikelName,
+        artikelBeschreibung: p.artikelBeschreibung,
+        anzahl: p.anzahl,
+        einzelpreis: p.einzelpreis,
+        rabattProzent: p.rabattProzent,
+        reRelevant: p.reRelevant,
+        vkRetailWert: p.vkRetailWert,
+        herkunftSlotKey: p.herkunftSlotKey,
+        createdBy: user.id,
+        updatedBy: user.id,
+      })),
+    );
+  });
+  await recomputeSummen("rechnung", id);
+  return positionen.length;
+}
+
 /* --------------------------------------------------- Storno / Gutschrift (7cc) */
 
 async function negierteKopie(

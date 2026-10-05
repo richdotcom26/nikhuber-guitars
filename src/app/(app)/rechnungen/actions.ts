@@ -6,12 +6,27 @@ import {
   type ActionState, fail, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  addPosition, deletePosition, getArtikelForPosition, positionMargen, tierPreis, updatePosition,
+  addPosition, deleteAllePositionen, deletePosition, getArtikelForPosition, positionMargen,
+  tierPreis, updatePosition,
 } from "@/lib/domain/belege";
 import {
-  anzahlungSchema, gutschrift, recordZahlung, rechnungKopfSchema, setAnzahlung,
+  anzahlungSchema, assertPositionArtikel, assertRechnungEditierbar, createRechnungOhneAuftrag,
+  gutschrift, positionenAusAuftrag, recordZahlung, rechnungKopfSchema, setAnzahlung,
   stornoRechnung, teilGutschrift, updateRechnungKopf, zahlungSchema,
 } from "@/lib/domain/rechnung";
+
+export async function createRechnungOhneAuftragAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let id: string | null = null;
+  const res = await runAction(async () => {
+    const kundeId = String(fd.get("kundeId") ?? "");
+    if (!kundeId) return fail("Kein Kunde gewählt.");
+    id = await createRechnungOhneAuftrag(kundeId);
+    revalidatePath("/rechnungen");
+    return ok("Rechnung angelegt.");
+  });
+  if (id) redirect(`/rechnungen/${id}?tab=positionen`);
+  return res;
+}
 
 function rev(id: string) {
   revalidatePath(`/rechnungen/${id}`);
@@ -79,6 +94,7 @@ export async function addPositionAction(_p: ActionState, fd: FormData): Promise<
     let name = freitext || null;
     let beschreibung: string | null = null;
     let einzelpreis: number | null = einzelpreisRaw ? Number(einzelpreisRaw) : null;
+    await assertPositionArtikel(id, artikelId);
     if (artikelId) {
       const a = await getArtikelForPosition(artikelId);
       if (a) {
@@ -115,7 +131,9 @@ export async function updatePositionAction(_p: ActionState, fd: FormData): Promi
       patch.einzelpreis = s === "" ? null : Number(s);
     }
     if (g("rabattProzent") != null) patch.rabattProzent = Number(g("rabattProzent")!.replace(",", ".")) || 0;
-    if (fd.has("reRelevant")) patch.reRelevant = fd.get("reRelevant") === "on" || fd.get("reRelevant") === "true";
+    // Zeilenformular enthält die Checkbox immer; nicht angehakt = wird nicht mitgesendet
+    patch.reRelevant = fd.get("reRelevant") === "on" || fd.get("reRelevant") === "true";
+    await assertRechnungEditierbar(id);
     await updatePosition("rechnung", id, posId, patch);
     rev(id);
     return ok("Position gespeichert.");
@@ -125,13 +143,28 @@ export async function updatePositionAction(_p: ActionState, fd: FormData): Promi
 export async function deletePositionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async () => {
     const id = String(fd.get("id") ?? "");
+    await assertRechnungEditierbar(id);
     await deletePosition("rechnung", id, String(fd.get("posId") ?? ""));
     rev(id);
     return ok("Position gelöscht.");
   });
 }
 
-export async function noGenerateAction(...args: [ActionState, FormData]): Promise<ActionState> {
-  void args;
-  return fail("Rechnungspositionen werden aus dem Auftrag übernommen, nicht generiert.");
+export async function deleteAllePositionenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await assertRechnungEditierbar(id);
+    await deleteAllePositionen("rechnung", id);
+    rev(id);
+    return ok("Alle Positionen gelöscht.");
+  });
+}
+
+export async function positionenAusAuftragAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const n = await positionenAusAuftrag(id);
+    rev(id);
+    return ok(`${n} Positionen aus dem Auftrag übernommen.`);
+  });
 }
