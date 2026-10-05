@@ -127,16 +127,12 @@ export async function benutzerRecoveryLink(id: string): Promise<string> {
 }
 
 async function recoveryLinkFuer(email: string): Promise<string> {
-  const redirectTo = process.env.NEXT_PUBLIC_APP_URL
-    ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/auth/reset`
-    : undefined;
-  const { data, error } = await supabaseAdmin().auth.admin.generateLink({
-    type: "recovery",
-    email,
-    options: redirectTo ? { redirectTo } : undefined,
-  });
-  if (error || !data.properties?.action_link) {
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  const { data, error } = await supabaseAdmin().auth.admin.generateLink({ type: "recovery", email });
+  const hash = data?.properties?.hashed_token;
+  if (error || !hash) {
     throw new DomainError("STATE", error?.message ?? "Recovery-Link konnte nicht erzeugt werden.");
   }
-  return data.properties.action_link;
+  // Link direkt auf die App (token_hash-Flow) — unabhängig von der Supabase-Redirect-Konfiguration.
+  return `${base}/auth/reset?token_hash=${hash}&type=recovery`;
 }

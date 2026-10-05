@@ -19,6 +19,20 @@ export default function ResetPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    // Direkter Link mit token_hash (unabhängig von Supabase Site-/Redirect-URL-Konfiguration)
+    const qs = new URLSearchParams(window.location.search);
+    const tokenHash = qs.get("token_hash");
+    if (tokenHash && qs.get("type") === "recovery") {
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" }).then(({ error }) => {
+        if (error) {
+          setMeldung("Link ungültig oder abgelaufen. Bitte neuen Link anfordern.");
+          setPhase("fehler");
+        } else {
+          setPhase("bereit");
+        }
+      });
+      return;
+    }
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setPhase("bereit");
     });
