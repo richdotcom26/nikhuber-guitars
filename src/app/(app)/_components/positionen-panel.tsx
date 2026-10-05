@@ -67,7 +67,7 @@ export function PositionenPanel({
   };
 }) {
   const cur = waehrung === "USD" ? "USD" : "EUR";
-  const [onlyRelevant, setOnlyRelevant] = useState(false);
+  const [onlyRelevant, setOnlyRelevant] = useState(true);
   const shown = onlyRelevant ? rows.filter((r) => r.reRelevant) : rows;
 
   const [genState, genAction] = useActionState(actions.generate, IDLE);
@@ -210,7 +210,7 @@ function PortoButton({ belegId, act }: { belegId: string; act: Act }) {
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={belegId} />
-      <SubmitButton size="sm" variant="outline" pendingText="…">Porto hinzufügen</SubmitButton>
+      <SubmitButton size="sm" pendingText="…">Porto hinzufügen</SubmitButton>
       <span className="text-xs text-muted">Gitarren- oder Teile-Porto je nach Staat des Kunden</span>
       {state ? <FormMessage state={state} className="w-full" /> : null}
     </form>
