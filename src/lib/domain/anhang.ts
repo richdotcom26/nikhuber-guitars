@@ -22,6 +22,18 @@ function spalte(traeger: string): string {
   return ANHANG_SPALTE[traeger as AnhangTraeger];
 }
 
+/** Drizzle-Feldname (camelCase) je Träger — für insert/where über das Schema-Objekt. */
+const ANHANG_FELD = {
+  auftrag: "auftragId",
+  angebot: "angebotId",
+  rechnung: "rechnungId",
+  artikel: "artikelId",
+  holzInventar: "holzInventarId",
+  todo: "todoId",
+  mailversand: "mailversandId",
+  ticket: "ticketId",
+} as const satisfies Record<AnhangTraeger, keyof typeof anhang.$inferInsert>;
+
 /* --------------------------------------------------------------------- liste */
 
 export interface AnhangRow {
@@ -56,9 +68,7 @@ export async function anhangAnzahl(traeger: AnhangTraeger, ids: string[]): Promi
   const out = new Map<string, number>();
   if (ids.length === 0) return out;
   await requireUser();
-  const col = anhang[traeger === "holzInventar" ? "holzInventarId"
-    : traeger === "mailversand" ? "mailversandId"
-    : (`${traeger}Id` as "auftragId")];
+  const col = anhang[ANHANG_FELD[traeger]];
   const rows = await db
     .select({ tid: col, n: sql<number>`count(*)::int` })
     .from(anhang)
@@ -109,7 +119,7 @@ export async function uploadAnhang(form: FormData): Promise<string> {
   }
   if (file.size > MAX_BYTES) throw new DomainError("VALIDATION", "Datei größer als 50 MB.");
 
-  const col = spalte(parsed.traeger);
+  const feld = ANHANG_FELD[parsed.traeger];
   const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 120);
   const key = `${parsed.traeger}/${parsed.id}/${randomUUID()}-${safeName}`;
   const bytes = Buffer.from(await file.arrayBuffer());
@@ -122,7 +132,7 @@ export async function uploadAnhang(form: FormData): Promise<string> {
   const [row] = await db
     .insert(anhang)
     .values({
-      [col]: parsed.id,
+      [feld]: parsed.id,
       art: parsed.art ?? (file.type.startsWith("image/") ? "BILD" : "SONSTIGES"),
       dateiname: file.name,
       pfad: key,
@@ -130,7 +140,7 @@ export async function uploadAnhang(form: FormData): Promise<string> {
       mime: file.type || null,
       createdBy: user.id,
       updatedBy: user.id,
-    } as typeof anhang.$inferInsert)
+    })
     .returning({ id: anhang.id });
   return row.id;
 }
