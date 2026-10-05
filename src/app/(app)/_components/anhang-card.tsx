@@ -22,7 +22,7 @@ export async function AnhangCard({
     rows.map(async (r) => ({
       ...r,
       createdAt: r.createdAt.toISOString(),
-      previewUrl: r.mime?.startsWith("image/")
+      previewUrl: r.mime?.startsWith("image/") || r.mime === "application/pdf"
         ? await anhangUrl(r.id, false).catch(() => null)
         : null,
     })),

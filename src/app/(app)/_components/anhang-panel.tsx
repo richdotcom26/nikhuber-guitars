@@ -21,7 +21,7 @@ export interface AnhangItem {
   groesse: number | null;
   mime: string | null;
   createdAt: string | Date;
-  /** Signierte Inline-URL für Bild-Vorschau (nur bei image/*). */
+  /** Signierte Inline-URL für die Vorschau (nur bei image/* und PDF). */
   previewUrl?: string | null;
 }
 
@@ -70,6 +70,29 @@ export function AnhangPanel({
     return () => document.removeEventListener("paste", onPaste);
   }, [paste, traeger, id, revalidate, upAction]);
 
+  // Vorschau (Lightbox) für Bilder/PDFs
+  const vorschaubar = rows.filter((r) => r.previewUrl);
+  const [viewIdx, setViewIdx] = useState<number | null>(null);
+  const view = viewIdx != null ? vorschaubar[viewIdx] : null;
+
+  useEffect(() => {
+    if (viewIdx == null) return;
+    const n = vorschaubar.length;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setViewIdx(null);
+      else if (e.key === "ArrowRight") setViewIdx((i) => (i == null ? i : (i + 1) % n));
+      else if (e.key === "ArrowLeft") setViewIdx((i) => (i == null ? i : (i - 1 + n) % n));
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [viewIdx, vorschaubar.length]);
+
+  function anzeigen(a: AnhangItem) {
+    const i = vorschaubar.findIndex((r) => r.id === a.id);
+    if (i >= 0) setViewIdx(i);
+    else oeffnen(a.id);
+  }
+
   function oeffnen(anhangId: string) {
     setOpenId(anhangId);
     startTransition(async () => {
@@ -93,18 +116,25 @@ export function AnhangPanel({
           {rows.map((a) => (
             <li key={a.id} className="flex items-center gap-2 px-2 py-1.5">
               {a.previewUrl ? (
-                <a href={a.previewUrl} target="_blank" rel="noopener" className="shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={a.previewUrl}
-                    alt={a.dateiname ?? "Screenshot"}
-                    className="h-12 w-12 rounded border border-line object-cover"
-                  />
-                </a>
+                <button type="button" onClick={() => anzeigen(a)} className="shrink-0" title="Vorschau">
+                  {isPdf(a) ? (
+                    <span className="grid h-14 w-14 place-items-center rounded border border-line bg-red-50 text-xs font-semibold text-red-700">
+                      PDF
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={a.previewUrl}
+                      alt={a.dateiname ?? "Bild"}
+                      loading="lazy"
+                      className="h-14 w-14 rounded border border-line object-cover transition-opacity hover:opacity-80"
+                    />
+                  )}
+                </button>
               ) : null}
               <button
                 type="button"
-                onClick={() => oeffnen(a.id)}
+                onClick={() => anzeigen(a)}
                 disabled={pending && openId === a.id}
                 className="flex-1 truncate text-left text-blue-700 hover:underline"
                 title={a.dateiname ?? ""}
@@ -152,6 +182,79 @@ export function AnhangPanel({
         <SubmitButton size="sm" variant="outline" pendingText="lädt …">Hochladen</SubmitButton>
         {upState ? <FormMessage state={upState} className="w-full" /> : null}
       </form>
+
+      {view && viewIdx != null ? (
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-black/85"
+          onClick={() => setViewIdx(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex items-center gap-3 px-4 py-2 text-sm text-white" onClick={(e) => e.stopPropagation()}>
+            <span className="flex-1 truncate">{view.dateiname ?? "(ohne Namen)"}</span>
+            {vorschaubar.length > 1 ? (
+              <span className="text-xs text-white/60">{viewIdx + 1} / {vorschaubar.length}</span>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => oeffnen(view.id)}
+              className="rounded border border-white/30 px-2 py-1 text-xs hover:bg-white/10"
+            >
+              Herunterladen
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewIdx(null)}
+              className="rounded px-2 py-1 text-lg leading-none hover:bg-white/10"
+              aria-label="Schließen"
+            >
+              ×
+            </button>
+          </div>
+          <div className="relative flex min-h-0 flex-1 items-center justify-center px-12 pb-6">
+            {isPdf(view) ? (
+              <iframe
+                src={view.previewUrl!}
+                title={view.dateiname ?? "PDF"}
+                className="h-full w-full max-w-5xl rounded bg-white"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={view.previewUrl!}
+                alt={view.dateiname ?? "Bild"}
+                className="max-h-full max-w-full rounded object-contain shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            {vorschaubar.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Vorheriges"
+                  onClick={(e) => { e.stopPropagation(); setViewIdx((viewIdx - 1 + vorschaubar.length) % vorschaubar.length); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-2xl text-white hover:bg-white/20"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  aria-label="Nächstes"
+                  onClick={(e) => { e.stopPropagation(); setViewIdx((viewIdx + 1) % vorschaubar.length); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-2xl text-white hover:bg-white/20"
+                >
+                  ›
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function isPdf(a: AnhangItem) {
+  return a.mime === "application/pdf";
 }
