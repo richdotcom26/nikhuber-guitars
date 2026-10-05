@@ -492,22 +492,34 @@ export async function addPorto(traeger: SpecBelegTraeger, traegerId: string): Pr
 
 /* --------------------------------------------------------------------- Summen */
 
+/**
+ * Summe der RE-relevanten Positionen + Basis für den Gesamtrabatt. Nicht rabattierfähige
+ * Artikel (u. a. alle Porto-Artikel) sind von der Rabatt-Basis ausgenommen; Freitext-
+ * Positionen ohne Artikel zählen als rabattierfähig.
+ */
+async function positionsSummen(traeger: PosTraeger, traegerId: string) {
+  const [r] = await db
+    .select({
+      summe: sql<string>`coalesce(sum(${belegPosition.gesamtpreis}) filter (where ${belegPosition.reRelevant}), 0)`,
+      basis: sql<string>`coalesce(sum(${belegPosition.gesamtpreis}) filter (
+        where ${belegPosition.reRelevant} and coalesce(${artikel.nichtRabattierfaehig}, false) = false
+      ), 0)`,
+    })
+    .from(belegPosition)
+    .leftJoin(artikel, eq(artikel.id, belegPosition.artikelId))
+    .where(eq(POS_COL[traeger], traegerId));
+  return { summePositionen: Number(r.summe), rabattBasis: Number(r.basis) };
+}
+
 export async function recomputeSummen(traeger: PosTraeger, traegerId: string) {
   const head = HEAD[traeger];
   const [h] = await db.select().from(head).where(eq(head.id, traegerId));
   if (!h) return;
 
-  const [{ summe }] = await db
-    .select({
-      summe: sql<string>`coalesce(sum(${belegPosition.gesamtpreis}) filter (where ${belegPosition.reRelevant}), 0)`,
-    })
-    .from(belegPosition)
-    .where(eq(POS_COL[traeger], traegerId));
-
-  const summePositionen = Number(summe);
+  const { summePositionen, rabattBasis } = await positionsSummen(traeger, traegerId);
   const rabattProzent = Number(h.gesamtrabattProzent ?? 0);
   const gesamtrabattWert = h.gesamtrabattAktiv
-    ? Math.round(summePositionen * (rabattProzent / 100) * 100) / 100
+    ? Math.round(rabattBasis * (rabattProzent / 100) * 100) / 100
     : 0;
   const summeNetto = Math.round((summePositionen - gesamtrabattWert) * 100) / 100;
 
@@ -541,11 +553,11 @@ export async function setGesamtrabatt(
   const head = HEAD[traeger];
   const [h] = await db.select().from(head).where(eq(head.id, traegerId));
   if (!h) throw new DomainError("NOT_FOUND", "Beleg nicht gefunden.");
-  const summePositionen = Number(h.summePositionen ?? 0);
+  const { rabattBasis } = await positionsSummen(traeger, traegerId);
 
   let prozent = Number(h.gesamtrabattProzent ?? 0);
   if (input.prozent != null) prozent = input.prozent;
-  else if (input.wert != null && summePositionen > 0) prozent = Math.round((input.wert * 100 / summePositionen) * 1000) / 1000;
+  else if (input.wert != null && rabattBasis > 0) prozent = Math.round((input.wert * 100 / rabattBasis) * 1000) / 1000;
 
   await db
     .update(head)
