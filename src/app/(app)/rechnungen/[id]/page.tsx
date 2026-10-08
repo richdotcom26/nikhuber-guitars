@@ -9,6 +9,7 @@ import {
   RG_BELEGART_LABEL, RG_STATUS_LABEL, RG_STATUS_TONE, type RgBelegart, type RgStatus,
 } from "@/lib/rechnung-shared";
 import { isDomainError } from "@/lib/domain/errors";
+import { listAbzuege } from "@/lib/domain/anzahlung";
 import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
@@ -17,6 +18,7 @@ import {
   addPositionAction, setVersandAction, deleteAllePositionenAction, deletePositionAction, positionenAusAuftragAction,
   updatePositionAction,
 } from "../actions";
+import { Abzuege } from "../abzuege";
 import { BuchenButtons } from "../erstellen-buttons";
 import {
   AnzahlungForm, KopfForm, KorrekturButtons, ZahlungForm,
@@ -51,8 +53,11 @@ export default async function RechnungDetailPage({
   const cur = r.kdWaehrung === "USD" ? "USD" : "EUR";
   const entwurf = r.status === "ENTWURF";
   const art = RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart;
-  const korrigierbar = r.belegart === "RECHNUNG" && (r.status === "GEBUCHT" || r.status === "BEZAHLT");
+  const korrigierbar = (r.belegart === "RECHNUNG" || r.belegart === "ANZAHLUNGSRECHNUNG")
+    && (r.status === "GEBUCHT" || r.status === "BEZAHLT");
 
+  const abzuege = await listAbzuege(id);
+  const istEndrechnung = r.belegart === "RECHNUNG" && !!r.auftragId;
   const rabattZeile = r.gesamtrabattAktiv && Number(r.gesamtrabattWert);
   const versandZeile = Number(r.versandkosten);
   const summen = (
@@ -84,8 +89,14 @@ export default async function RechnungDetailPage({
           <dd className="text-right tabular-nums">{formatMoney(r.summeMwst, cur)}</dd>
           <dt className="font-semibold">Brutto</dt>
           <dd className="text-right font-semibold tabular-nums">{formatMoney(r.summeBrutto, cur)}</dd>
-          <dt className="text-neutral-500">Rechnungsbetrag</dt>
-          <dd className="text-right tabular-nums">{formatMoney(r.rechnungsbetrag, cur)}</dd>
+          {abzuege.map((a) => (
+            <div key={a.id} className="contents">
+              <dt className="text-neutral-500">abzgl. Anzahlung {a.nummer}</dt>
+              <dd className="text-right tabular-nums">− {formatMoney(a.brutto, cur)}</dd>
+            </div>
+          ))}
+          <dt className={abzuege.length ? "font-semibold" : "text-neutral-500"}>{abzuege.length ? "Noch zu zahlen" : "Rechnungsbetrag"}</dt>
+          <dd className={"text-right tabular-nums" + (abzuege.length ? " font-semibold" : "")}>{formatMoney(r.rechnungsbetrag, cur)}</dd>
         </dl>
       </CardContent>
     </Card>
@@ -116,6 +127,11 @@ export default async function RechnungDetailPage({
             {r.erechnungAssetId ? (
               <>
                 <a href={`/rechnungen/${id}/dokument`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="Archivierte E-Rechnung (ZUGFeRD)">PDF</a>
+                {r.zahlbetrag && r.zahlungsdatum ? (
+                  <a href={`/rechnungen/${id}/quittung`} target="_blank" rel="noreferrer" className={buttonClasses("outline")} title="Zahlungsbestätigung (Quittung) als PDF">
+                    Zahlungsbestätigung
+                  </a>
+                ) : null}
                 <Link href={`/rechnungen/${id}/mail`} className={buttonClasses()}>Per E-Mail versenden</Link>
               </>
             ) : (
@@ -150,7 +166,7 @@ export default async function RechnungDetailPage({
             {r.gebuchtAm ? <> am {formatDateTime(r.gebuchtAm)}</> : " (Altbestand aus Ninox)"} — der Beleg ist gesperrt.
             {r.belegart === "RECHNUNG" ? " Korrekturen nur über Storno oder Rechnungskorrektur." : null}
           </div>
-          {korrigierbar ? <KorrekturButtons id={id} /> : null}
+          {korrigierbar ? <KorrekturButtons id={id} nurStorno={r.belegart === "ANZAHLUNGSRECHNUNG"} /> : null}
         </div>
       )}
 
@@ -221,18 +237,28 @@ export default async function RechnungDetailPage({
                 ) : null}
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader><CardTitle>Anzahlung</CardTitle></CardHeader>
-              <CardContent>
-                <AnzahlungForm
-                  id={id}
-                  beruecksichtigen={r.anzahlungBeruecksichtigen}
-                  brutto={r.anzahlungBrutto}
-                  datum={r.anzahlungDatum}
-                  gesperrt={!entwurf}
-                />
-              </CardContent>
-            </Card>
+            {istEndrechnung || abzuege.length ? (
+              <Card>
+                <CardHeader><CardTitle>Anzahlungen ({abzuege.length})</CardTitle></CardHeader>
+                <CardContent>
+                  <Abzuege rechnungId={id} rows={abzuege} entwurf={entwurf} cur={cur} />
+                </CardContent>
+              </Card>
+            ) : null}
+            {r.anzahlungBeruecksichtigen ? (
+              <Card>
+                <CardHeader><CardTitle>Anzahlung (Altbestand, manuell)</CardTitle></CardHeader>
+                <CardContent>
+                  <AnzahlungForm
+                    id={id}
+                    beruecksichtigen={r.anzahlungBeruecksichtigen}
+                    brutto={r.anzahlungBrutto}
+                    datum={r.anzahlungDatum}
+                    gesperrt={!entwurf}
+                  />
+                </CardContent>
+              </Card>
+            ) : null}
             {summen}
           </div>
         </div>

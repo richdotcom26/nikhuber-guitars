@@ -18,6 +18,7 @@ import { getAuftragSeriennummer } from "@/lib/domain/seriennummer";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { abrechnungsStand } from "@/lib/domain/abrechnung";
+import { getFirmaSetting } from "@/lib/domain/stammdaten";
 import { rechnungenZuAuftrag } from "@/lib/domain/rechnung";
 import {
   RG_BELEGART_LABEL, RG_STATUS_LABEL, RG_STATUS_TONE, type RgBelegart, type RgStatus,
@@ -32,6 +33,7 @@ import {
   generatePositionenAction, setGesamtrabattAction, updatePositionAction,
 } from "../actions";
 import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
+import { AnzahlungForm } from "../anzahlung-form";
 import { CreateRechnungButton } from "../create-rechnung-button";
 import { KopfForm } from "../kopf-form";
 import { SetKundeButton } from "../set-kunde-form";
@@ -242,7 +244,14 @@ export default async function AuftragDetailPage({
         />
       ) : null}
 
-      {active === "rechnung" ? <RechnungTab auftragId={id} /> : null}
+      {active === "rechnung" ? (
+        <RechnungTab
+          auftragId={id}
+          auftragBrutto={a.summeBrutto == null ? null : Number(a.summeBrutto)}
+          waehrung={a.kdWaehrung === "USD" ? "USD" : "EUR"}
+          steuerpflichtig={!!a.kdSteuerpflichtig}
+        />
+      ) : null}
     </div>
   );
 }
@@ -339,8 +348,17 @@ async function SeriennummerCard({
 }
 
 /** Rechnungs-Tab: Abrechnungsstand + Rechnungen (Entwürfe, gebuchte Belege, Storno/Korrektur). */
-async function RechnungTab({ auftragId }: { auftragId: string }) {
-  const [stand, rechnungen] = await Promise.all([abrechnungsStand(auftragId), rechnungenZuAuftrag(auftragId)]);
+async function RechnungTab({
+  auftragId, auftragBrutto, waehrung, steuerpflichtig,
+}: {
+  auftragId: string;
+  auftragBrutto: number | null;
+  waehrung: "EUR" | "USD";
+  steuerpflichtig: boolean;
+}) {
+  const [stand, rechnungen, fs] = await Promise.all([
+    abrechnungsStand(auftragId), rechnungenZuAuftrag(auftragId), getFirmaSetting(),
+  ]);
   const offen = stand.positionen.filter((p) => p.offen > 0).length;
   const hatEntwurf = rechnungen.some((r) => r.status === "ENTWURF" && r.belegart === "RECHNUNG");
   return (
@@ -356,6 +374,14 @@ async function RechnungTab({ auftragId }: { auftragId: string }) {
         </p>
         {!stand.vollstaendig ? (
           <CreateRechnungButton auftragId={auftragId} label={hatEntwurf ? "Rechnungsentwurf öffnen" : "Rechnungsentwurf erstellen"} />
+        ) : null}
+        {!stand.vollstaendig ? (
+          <AnzahlungForm
+            auftragId={auftragId}
+            auftragBrutto={auftragBrutto}
+            waehrung={waehrung}
+            mwstSatz={steuerpflichtig ? Number(fs.mwstSatz) : 0}
+          />
         ) : null}
         {rechnungen.length === 0 ? (
           <p className="text-neutral-400">Noch keine Rechnung.</p>

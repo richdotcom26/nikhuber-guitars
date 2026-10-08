@@ -2,8 +2,11 @@ import "server-only";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  angebot, auftrag, belegPosition, rechnung, staat,
+  angebot, auftrag, belegPosition, rechnung, rechnungAnzahlung, staat,
 } from "@/lib/db/schema";
+
+const azRechnung = alias(rechnung, "az_rechnung");
+import { alias } from "drizzle-orm/pg-core";
 import { berechneBriefkopf } from "@/lib/adressen-shared";
 import { requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -67,6 +70,9 @@ export interface BelegRenderData {
   steuerHinweis: string | null;
   zahlungsbedingung: string | null;
   anzahlung: { brutto: string | null; datum: string | null; rechnungsbetrag: string | null } | null;
+  /** Abgezogene Anzahlungsrechnungen (Endrechnung) + verbleibender Zahlbetrag. */
+  abzuege: { nummer: string | null; datum: string | null; netto: string; mwst: string; brutto: string }[];
+  zahlbetrag: string | null;
 }
 
 /** Freitext-Land grob auf ISO-2 abbilden (Firmensitz). Default DE. */
@@ -94,6 +100,7 @@ function titelFor(art: BelegArt, belegart: string | null, sprache: "DE" | "EN"):
   if (art === "auftrag") return de ? "Auftragsbestätigung" : "Order Confirmation";
   if (belegart === "STORNORECHNUNG") return de ? "Stornorechnung" : "Cancellation Invoice";
   if (belegart === "RECHNUNGSKORREKTUR") return de ? "Rechnungskorrektur" : "Invoice Correction";
+  if (belegart === "ANZAHLUNGSRECHNUNG") return de ? "Anzahlungsrechnung" : "Down Payment Invoice";
   return de ? "Rechnung" : "Invoice";
 }
 
@@ -253,6 +260,18 @@ export async function renderBelegData(
     steuerpflichtig: !!h.kdSteuerpflichtig,
     steuerHinweis: steuerHinweis(!!h.kdSteuerpflichtig, h.kdRegion, sprache),
     zahlungsbedingung: zbText,
+    abzuege: rr
+      ? (await db
+        .select({
+          nummer: azRechnung.nummer, datum: azRechnung.rechnungsdatum,
+          netto: rechnungAnzahlung.netto, mwst: rechnungAnzahlung.mwst, brutto: rechnungAnzahlung.brutto,
+        })
+        .from(rechnungAnzahlung)
+        .innerJoin(azRechnung, eq(azRechnung.id, rechnungAnzahlung.anzahlungRechnungId))
+        .where(eq(rechnungAnzahlung.rechnungId, id))
+        .orderBy(asc(azRechnung.rechnungsdatum)))
+      : [],
+    zahlbetrag: rr?.rechnungsbetrag ?? null,
     anzahlung:
       rr && rr.anzahlungBeruecksichtigen
         ? { brutto: rr.anzahlungBrutto, datum: rr.anzahlungDatum, rechnungsbetrag: rr.rechnungsbetrag }

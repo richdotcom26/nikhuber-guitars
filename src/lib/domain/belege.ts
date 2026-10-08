@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  angebot, artikel, auftrag, belegPosition, kunde, rechnung, specBelegung, staat, zaehler,
+  angebot, artikel, auftrag, belegPosition, kunde, rechnung, rechnungAnzahlung, specBelegung, staat, zaehler,
 } from "@/lib/db/schema";
 import { SPEC_SLOT_BY_KEY } from "@/lib/specs/slots";
 import { berechneBriefkopf } from "@/lib/adressen-shared";
@@ -590,6 +590,19 @@ export async function recomputeSummen(traeger: PosTraeger, traegerId: string) {
       summeBrutto: String(summeBrutto),
     })
     .where(eq(head.id, traegerId));
+
+  // Rechnung: Zahlbetrag = Brutto − abgezogene Anzahlungsrechnungen − (Altbestand) manuelle Anzahlung
+  if (traeger === "rechnung") {
+    const r = h as typeof rechnung.$inferSelect;
+    const [{ abzug }] = await db
+      .select({ abzug: sql<string>`coalesce(sum(${rechnungAnzahlung.brutto}), 0)` })
+      .from(rechnungAnzahlung)
+      .where(eq(rechnungAnzahlung.rechnungId, traegerId));
+    const alt = r.anzahlungBeruecksichtigen ? Number(r.anzahlungBrutto ?? 0) : 0;
+    await db.update(rechnung)
+      .set({ rechnungsbetrag: String(Math.round((summeBrutto - Number(abzug) - alt) * 100) / 100) })
+      .where(eq(rechnung.id, traegerId));
+  }
 }
 
 /** Gesamtrabatt setzen (Prozent ODER Wert; das jeweils andere wird berechnet). */

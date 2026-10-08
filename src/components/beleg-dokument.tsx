@@ -5,7 +5,7 @@ const T = {
   DE: {
     von: "Von", an: "An", datum: "Datum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
     pos: "Pos", bez: "Bezeichnung", menge: "Menge", einzel: "Einzelpreis", rabatt: "Rabatt", gesamt: "Gesamt",
-    summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", netto: "Summe netto", mwst: "MwSt",
+    summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", abzug: "abzgl. Anzahlung", vom: "vom", nettoKurz: "netto", nochZuZahlen: "Noch zu zahlen", netto: "Summe netto", mwst: "MwSt",
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
     zahlung: "Zahlungsbedingung", ustId: "USt-IdNr.", steuerNr: "Steuernummer", bank: "Bankverbindung",
     seite: "Seite", erstellt: "Erstellt am",
@@ -13,7 +13,7 @@ const T = {
   EN: {
     von: "From", an: "To", datum: "Date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
     pos: "Item", bez: "Description", menge: "Qty", einzel: "Unit price", rabatt: "Discount", gesamt: "Total",
-    summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", netto: "Net total", mwst: "VAT",
+    summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", abzug: "less down payment", vom: "of", nettoKurz: "net", nochZuZahlen: "Amount due", netto: "Net total", mwst: "VAT",
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
     zahlung: "Payment terms", ustId: "VAT ID", steuerNr: "Tax number", bank: "Bank details",
     seite: "Page", erstellt: "Created",
@@ -124,6 +124,20 @@ export function BelegDokument({ data }: { data: BelegRenderData }) {
             <tr style={{ fontWeight: 700, borderTop: "2px solid #333" }}>
               <td>{t.brutto}</td><td className="r">{money(data.summen.brutto)}</td>
             </tr>
+            {data.abzuege.map((a, i) => (
+              <tr key={i}>
+                <td>
+                  {t.abzug} {a.nummer}{a.datum ? ` ${t.vom} ${formatDate(a.datum)}` : ""}
+                  <div className="muted" style={{ fontSize: 9 }}>({t.nettoKurz} {money(a.netto)} + {t.mwst} {money(a.mwst)})</div>
+                </td>
+                <td className="r">− {money(a.brutto)}</td>
+              </tr>
+            ))}
+            {data.abzuege.length ? (
+              <tr style={{ fontWeight: 700, borderTop: "2px solid #333" }}>
+                <td>{t.nochZuZahlen}</td><td className="r">{money(data.zahlbetrag)}</td>
+              </tr>
+            ) : null}
             {data.anzahlung ? (
               <>
                 <tr>

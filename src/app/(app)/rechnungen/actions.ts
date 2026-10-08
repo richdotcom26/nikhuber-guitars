@@ -16,6 +16,7 @@ import {
 } from "@/lib/domain/rechnung";
 import { rechnungMailSchema, sendeRechnungMail } from "@/lib/domain/rechnung-mail";
 import { dezimal } from "@/lib/utils";
+import { anzahlungenUebernehmen, entferneAbzug } from "@/lib/domain/anzahlung";
 
 /** Entwurf buchen: Nummer, Datum, Sperre, E-Rechnung — in einer Transaktion. */
 export async function buchenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -230,5 +231,25 @@ export async function setVersandAction(_p: ActionState, fd: FormData): Promise<A
     await setVersand("rechnung", id, { betrag, bezeichnung: String(fd.get("bezeichnung") ?? "") || null });
     rev(id);
     return ok(betrag ? "Versand gespeichert." : "Versand entfernt.");
+  });
+}
+
+/** Entwurf: freie Anzahlungsrechnungen des Auftrags als Abzug übernehmen. */
+export async function anzahlungenUebernehmenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const n = await anzahlungenUebernehmen(id);
+    rev(id);
+    return ok(n ? `${n} Anzahlung(en) übernommen.` : "Keine weiteren gebuchten Anzahlungen zu diesem Auftrag.");
+  });
+}
+
+/** Entwurf: einen Anzahlungsabzug entfernen. */
+export async function entferneAbzugAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await entferneAbzug(id, String(fd.get("abzugId") ?? ""));
+    rev(id);
+    return ok("Abzug entfernt.");
   });
 }

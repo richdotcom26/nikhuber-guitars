@@ -64,6 +64,13 @@
       "when": 1791495974180,
       "tag": "0008_versand_im_kopf",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791497790449,
+      "tag": "0009_anzahlungsrechnung",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,7 @@ const T = {
   DE: {
     datum: "Datum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
     pos: "Pos", bez: "Bezeichnung", menge: "Menge", einzel: "Einzelpreis", rabatt: "Rabatt", gesamt: "Gesamt",
-    summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", netto: "Summe netto", mwst: "MwSt",
+    summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", abzug: "abzgl. Anzahlung", vom: "vom", nettoKurz: "netto", nochZuZahlen: "Noch zu zahlen", netto: "Summe netto", mwst: "MwSt",
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
     zahlung: "Zahlungsbedingung", ustId: "USt-IdNr.", steuerNr: "Steuernummer", bank: "Bankverbindung",
     seite: "Seite von",
@@ -22,7 +22,7 @@ const T = {
   EN: {
     datum: "Date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
     pos: "Item", bez: "Description", menge: "Qty", einzel: "Unit price", rabatt: "Discount", gesamt: "Total",
-    summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", netto: "Net total", mwst: "VAT",
+    summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", abzug: "less down payment", vom: "of", nettoKurz: "net", nochZuZahlen: "Amount due", netto: "Net total", mwst: "VAT",
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
     zahlung: "Payment terms", ustId: "VAT ID", steuerNr: "Tax number", bank: "Bank details",
     seite: "Page of",
@@ -145,6 +145,24 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
           <View style={[s.sumRow, s.sumStrong]}>
             <Text>{t.brutto}</Text><Text>{money(data.summen.brutto)}</Text>
           </View>
+          {data.abzuege.length ? (
+            <>
+              {data.abzuege.map((a, i) => (
+                <View key={i} style={{ paddingVertical: 1.5 }}>
+                  <View style={s.sumRow}>
+                    <Text>{t.abzug} {a.nummer}{a.datum ? ` ${t.vom} ${formatDate(a.datum)}` : ""}</Text>
+                    <Text>− {money(a.brutto)}</Text>
+                  </View>
+                  <Text style={[s.muted, { fontSize: 7.5 }]}>
+                    ({t.nettoKurz} {money(a.netto)} + {t.mwst} {money(a.mwst)})
+                  </Text>
+                </View>
+              ))}
+              <View style={[s.sumRow, s.sumStrong]}>
+                <Text>{t.nochZuZahlen}</Text><Text>{money(data.zahlbetrag)}</Text>
+              </View>
+            </>
+          ) : null}
           {data.anzahlung ? (
             <>
               <View style={s.sumRow}>

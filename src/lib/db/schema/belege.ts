@@ -218,3 +218,21 @@ export const belegPosition = pgTable("beleg_position", {
     sql`((${t.angebotId} IS NOT NULL)::int + (${t.auftragId} IS NOT NULL)::int + (${t.rechnungId} IS NOT NULL)::int) = 1`,
   ),
 }));
+
+// ---------------------------------------------------------- RECHNUNG_ANZAHLUNG
+/**
+ * Abzug erhaltener Anzahlungen in der (End-)Rechnung (§ 14 Abs. 5 S. 2 UStG): Verweis auf die
+ * Anzahlungsrechnung + eingefrorene Beträge (netto/MwSt/brutto). Stornorechnungen tragen negierte Zeilen.
+ */
+export const rechnungAnzahlung = pgTable("rechnung_anzahlung", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  rechnungId: uuid("rechnung_id").notNull().references(() => rechnung.id, { onDelete: "cascade" }),
+  anzahlungRechnungId: uuid("anzahlung_rechnung_id").notNull().references(() => rechnung.id),
+  netto: numeric("netto", { precision: 12, scale: 2 }).notNull(),
+  mwst: numeric("mwst", { precision: 12, scale: 2 }).notNull(),
+  brutto: numeric("brutto", { precision: 12, scale: 2 }).notNull(),
+  ...auditCols,
+}, (t) => ({
+  rechnungIdx: index("rechnung_anzahlung_rechnung_idx").on(t.rechnungId),
+  anzahlungIdx: index("rechnung_anzahlung_az_idx").on(t.anzahlungRechnungId),
+}));

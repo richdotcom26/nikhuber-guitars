@@ -24,6 +24,7 @@ import {
   loescheSeriennummer, vergebeSeriennummerAuto, vergebeSeriennummerManuell,
 } from "@/lib/domain/seriennummer";
 import { dezimal } from "@/lib/utils";
+import { createAnzahlungsrechnung } from "@/lib/domain/anzahlung";
 
 function rev(id: string) {
   revalidatePath(`/auftraege/${id}`);
@@ -299,4 +300,20 @@ export async function setVersandAction(_p: ActionState, fd: FormData): Promise<A
     rev(id);
     return ok(betrag ? "Versand gespeichert." : "Versand entfernt.");
   });
+}
+
+/** Anzahlungsrechnung (Entwurf) zum Auftrag — Betrag (brutto) oder Prozent vom Auftrags-Brutto. */
+export async function createAnzahlungsrechnungAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let neuId: string | null = null;
+  const res = await runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const modus = fd.get("modus") === "prozent" ? "prozent" : "betrag";
+    const wert = Number(dezimal(String(fd.get("wert") ?? "")));
+    neuId = await createAnzahlungsrechnung(id, modus, wert);
+    rev(id);
+    revalidatePath("/rechnungen");
+    return ok("Anzahlungsrechnung angelegt.");
+  });
+  if (neuId) redirect(`/rechnungen/${neuId}`);
+  return res;
 }

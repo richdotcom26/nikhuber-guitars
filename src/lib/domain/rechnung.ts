@@ -6,13 +6,14 @@ import { embedZugferd } from "@/lib/pdf/zugferd";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import {
-  anhang, artikel, auftrag, belegPosition, kunde, rechnung, seriennummer, zahlungsbedingung,
+  anhang, artikel, auftrag, belegPosition, kunde, rechnung, rechnungAnzahlung, seriennummer, zahlungsbedingung,
 } from "@/lib/db/schema";
 import { ANHANG_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import {
   RG_BELEGART_VALUES, RG_STATUS_VALUES, type RgBelegart, type RgStatus, abzugBerechnen,
 } from "@/lib/rechnung-shared";
 import { abrechnungsStand, versandBerechnet } from "./abrechnung";
+import { abgezogenIn, anzahlungenUebernehmen } from "./anzahlung";
 import { speichereAnhang } from "./anhang";
 import { renderBelegData } from "./beleg-render";
 import { allocateNummer, kdSnapshot, recomputeSummen, renumberPositionen } from "./belege";
@@ -242,6 +243,7 @@ export async function createEntwurfAusAuftrag(auftragId: string): Promise<string
 
   await renumberPositionen("rechnung", id);
   await recomputeSummen("rechnung", id);
+  await anzahlungenUebernehmen(id);
   return id;
 }
 
@@ -335,7 +337,7 @@ async function snapshotVorBuchen(id: string, userId: string) {
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
 
   const set: Partial<typeof rechnung.$inferInsert> = { updatedAt: new Date(), updatedBy: userId };
-  if (r.belegart === "RECHNUNG") {
+  if (r.belegart === "RECHNUNG" || r.belegart === "ANZAHLUNGSRECHNUNG") {
     set.mwstSatz = String((await getFirmaSetting()).mwstSatz);
     if (r.kundeId) {
       const s = await kdSnapshot(r.kundeId);
@@ -357,12 +359,6 @@ async function snapshotVorBuchen(id: string, userId: string) {
   await db.update(belegPosition).set({ mwstSatz: satz }).where(eq(belegPosition.rechnungId, id));
   await recomputeSummen("rechnung", id);
 
-  const [n] = await db.select().from(rechnung).where(eq(rechnung.id, id));
-  const brutto = Number(n.summeBrutto ?? 0);
-  const anz = n.anzahlungBeruecksichtigen ? Number(n.anzahlungBrutto ?? 0) : 0;
-  await db.update(rechnung)
-    .set({ rechnungsbetrag: String(Math.round((brutto - anz) * 100) / 100) })
-    .where(eq(rechnung.id, id));
 }
 
 /**
@@ -387,7 +383,7 @@ export async function buchen(id: string): Promise<{ nummer: string; anhangId: st
 
   const datum = heuteBerlin();
   const jahr = Number(datum.slice(0, 4));
-  const prefix = r0.belegart === "RECHNUNG" ? "RG" : "ST";
+  const prefix = r0.belegart === "RECHNUNG" || r0.belegart === "ANZAHLUNGSRECHNUNG" ? "RG" : "ST";
   let hochgeladen: string | null = null;
 
   try {
@@ -448,7 +444,15 @@ async function negierterEntwurf(originalId: string, belegart: "STORNORECHNUNG" |
   assertRolle(user, "ADMIN", "BUERO");
   const [o] = await db.select().from(rechnung).where(eq(rechnung.id, originalId));
   if (!o) throw new DomainError("NOT_FOUND", "Original-Rechnung nicht gefunden.");
-  if (o.belegart !== "RECHNUNG") throw new DomainError("STATE", "Nur zu einer Rechnung möglich.");
+  if (o.belegart !== "RECHNUNG" && !(o.belegart === "ANZAHLUNGSRECHNUNG" && belegart === "STORNORECHNUNG")) {
+    throw new DomainError("STATE", "Nur zu einer Rechnung möglich (Anzahlungsrechnungen nur stornieren).");
+  }
+  if (o.belegart === "ANZAHLUNGSRECHNUNG") {
+    const inRg = await abgezogenIn(o.id);
+    if (inRg) {
+      throw new DomainError("STATE", `Diese Anzahlung ist bereits in Rechnung ${inRg.nummer ?? "(Entwurf)"} abgezogen — dort zuerst den Abzug entfernen bzw. die Rechnung stornieren.`);
+    }
+  }
   if (o.status !== "GEBUCHT" && o.status !== "BEZAHLT") {
     throw new DomainError("STATE", o.status === "STORNIERT" ? "Die Rechnung ist bereits storniert." : "Die Rechnung ist noch nicht gebucht.");
   }
@@ -512,6 +516,21 @@ async function negierterEntwurf(originalId: string, belegart: "STORNORECHNUNG" |
         createdBy: user.id,
         updatedBy: user.id,
       })));
+    }
+    // Storno einer Endrechnung: Anzahlungsabzüge negiert mitnehmen (Original wird STORNIERT → Anzahlung wieder frei)
+    if (belegart === "STORNORECHNUNG") {
+      const abz = await tx.select().from(rechnungAnzahlung).where(eq(rechnungAnzahlung.rechnungId, originalId));
+      if (abz.length) {
+        await tx.insert(rechnungAnzahlung).values(abz.map((x) => ({
+          rechnungId: neu.id,
+          anzahlungRechnungId: x.anzahlungRechnungId,
+          netto: String(-Number(x.netto)),
+          mwst: String(-Number(x.mwst)),
+          brutto: String(-Number(x.brutto)),
+          createdBy: user.id,
+          updatedBy: user.id,
+        })));
+      }
     }
     return neu.id;
   });
@@ -612,7 +631,7 @@ export async function recordZahlung(id: string, input: ZahlungInput) {
 
   const brutto = Number(r.summeBrutto ?? 0);
   const anzahlung = r.anzahlungBeruecksichtigen ? Number(r.anzahlungBrutto ?? 0) : 0;
-  const rechnungsbetrag = Math.round((brutto - anzahlung) * 100) / 100;
+  const rechnungsbetrag = r.rechnungsbetrag != null ? Number(r.rechnungsbetrag) : Math.round((brutto - anzahlung) * 100) / 100;
   const zahlbetrag = input.zahlbetrag == null ? null : Number(input.zahlbetrag);
   // Abzug % und Differenz immer aus dem Zahlbetrag (Bankauszug) ableiten — nicht aus der Eingabe.
   const { differenz, prozent } = abzugBerechnen(rechnungsbetrag, zahlbetrag);
@@ -657,6 +676,7 @@ export async function setAnzahlung(id: string, input: AnzahlungInput) {
       updatedBy: user.id,
     })
     .where(eq(rechnung.id, id));
+  await recomputeSummen("rechnung", id); // inkl. Abzug von Anzahlungsrechnungen
 }
 
 /** Positionen einer Rechnung (für Panel). */

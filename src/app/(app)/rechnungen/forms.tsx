@@ -172,7 +172,7 @@ export function AnzahlungForm({
 /* ---------------------------------------------------- Storno / Rechnungskorrektur */
 
 /** Für gebuchte Rechnungen: Storno (sofort gebucht) oder Rechnungskorrektur (Entwurf). */
-export function KorrekturButtons({ id }: { id: string }) {
+export function KorrekturButtons({ id, nurStorno = false }: { id: string; nurStorno?: boolean }) {
   const [frage, setFrage] = useState<null | "storno" | "korrektur">(null);
   const [stState, stAction] = useActionState(stornoAction, IDLE);
   const [koState, koAction] = useActionState(korrekturAction, IDLE);
@@ -181,7 +181,7 @@ export function KorrekturButtons({ id }: { id: string }) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setFrage("storno")}>Stornieren</Button>
-        <Button variant="outline" size="sm" onClick={() => setFrage("korrektur")}>Rechnungskorrektur</Button>
+        {nurStorno ? null : <Button variant="outline" size="sm" onClick={() => setFrage("korrektur")}>Rechnungskorrektur</Button>}
       </div>
     );
   }

@@ -302,6 +302,87 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "anzahlung-hintergrund",
+    bereich: "Anzahlungen",
+    titel: "Anzahlungen – warum eine Anzahlungsrechnung? (Hintergrund)",
+    bloecke: [
+      { p: "Bei Auftragserteilung lassen wir uns manchmal eine **Anzahlung** zahlen. Steuerlich gilt dafür Folgendes (vereinfacht dargestellt, ohne Gewähr – im Zweifel mit dem Steuerbüro abstimmen):" },
+      { ul: [
+        "**Die Umsatzsteuer entsteht schon mit dem Geldeingang.** Bei Anzahlungen schuldet man die USt in dem Monat, in dem das Geld eingeht – unabhängig davon, ob schon eine Rechnung geschrieben wurde („Mindest-Ist-Versteuerung“, § 13 Abs. 1 Nr. 1a Satz 4 UStG).",
+        "**Über die Anzahlung wird eine Rechnung mit ausgewiesener USt gestellt** – die **Anzahlungsrechnung** (§ 14 Abs. 5 UStG). Gewerbliche Kunden (z. B. Händler) brauchen sie, um die Vorsteuer aus der Anzahlung abziehen zu können.",
+        "**Eine Quittung allein reicht dafür nicht.** Eine Quittung bzw. Zahlungsbestätigung bestätigt nur den Geldeingang; sie ist kein Steuerbeleg. Sie ist aber für Privatkunden oft angenehm – deshalb gibt es in der App beides.",
+        "**Die Endrechnung weist die gesamte Leistung aus** (alle Positionen, volle Summe) und zieht davon die **erhaltenen Anzahlungen mit der darauf entfallenden USt** ab (§ 14 Abs. 5 Satz 2 UStG). Nur so stimmt die Umsatzsteuer am Ende: Sie wird insgesamt genau einmal abgeführt – zum Teil mit der Anzahlung, der Rest mit der Endrechnung.",
+      ] },
+      { p: "So war es früher in Ninox: Die Anzahlung wurde als normale Rechnung mit einer Position „Anzahlung / down payment“ gestellt, ohne Verbindung zur späteren Endrechnung; in der Endrechnung gab es nur ein manuelles Feld „Anzahlung brutto“ ohne MwSt-Aufteilung. Das ist jetzt sauber gelöst – siehe die folgenden Artikel." },
+    ],
+  },
+  {
+    id: "anzahlung-erstellen",
+    bereich: "Anzahlungen",
+    titel: "Anzahlungsrechnung erstellen",
+    bloecke: [
+      { p: "Im **Auftrag → Tab Rechnung** gibt es den Kasten **„Anzahlungsrechnung erstellen“**:" },
+      { ul: [
+        "**Betrag (brutto)** – z. B. 5.000,00 € – **oder Prozent vom Auftrag** – z. B. 30 % vom Auftrags-Brutto. Prozent geht nur, wenn der Auftrag schon eine Summe hat.",
+        "Der eingegebene Betrag ist immer der **Brutto-Zahlbetrag**; die MwSt wird automatisch **herausgerechnet** und cent-genau aufgeteilt (Beispiel: 5.000,00 € brutto = 4.201,68 € netto + 798,32 € MwSt). Die Vorschau unter dem Feld zeigt die Aufteilung sofort.",
+        "Bei **steuerfreien Kunden** (EU mit USt-IdNr., Export) gibt es keine MwSt – die Anzahlungsrechnung trägt dann wie jede Rechnung den passenden Steuerhinweis.",
+        "**„Entwurf anlegen“** erzeugt einen **Entwurf** vom Typ „Anzahlungsrechnung“ mit einer Position „Anzahlung gemäß Auftrag A-…“ (englisch: „Down payment for order …“) und dem Modell als Beschreibung. Der Entwurf kann noch geändert oder gelöscht werden.",
+        "Danach wie jede Rechnung **buchen** (RG-Nummer aus dem gemeinsamen Nummernkreis, Rechnungsdatum = heute, E-Rechnung wird erzeugt und archiviert) und **per E-Mail versenden**.",
+        "In der E-Rechnung ist die Anzahlungsrechnung als solche gekennzeichnet (Rechnungsart 386 „Anzahlungsrechnung“).",
+        "Mehrere Anzahlungen zu einem Auftrag sind möglich (z. B. 30 % bei Auftrag, 30 % bei Fertigungsbeginn).",
+      ] },
+      { p: "Sobald das Geld da ist: in der Anzahlungsrechnung im Tab **Zahlung** Zahlbetrag, Datum und Bank eintragen und Zahlungsstatus „BEZAHLT“ setzen." },
+    ],
+  },
+  {
+    id: "anzahlung-endrechnung",
+    bereich: "Anzahlungen",
+    titel: "Anzahlung in der Endrechnung abziehen",
+    bloecke: [
+      { p: "Wird später im Auftrag der **Rechnungsentwurf erstellt**, übernimmt die App **automatisch alle gebuchten Anzahlungsrechnungen** dieses Auftrags als Abzug. Die Endrechnung zeigt die volle Leistung und darunter die Abzüge:" },
+      { ul: [
+        "Summe Positionen 13.002,89 € · Versandkosten 25,63 € · **Summe netto 13.028,52 €** · MwSt 19 % 2.475,42 € · **Gesamtbetrag brutto 15.503,94 €**",
+        "**abzgl. Anzahlung RG-2026-3715 vom 19.08.2026** (netto 4.201,68 € + MwSt 798,32 €) **− 5.000,00 €**",
+        "**Noch zu zahlen: 10.503,94 €**",
+      ] },
+      { p: "Weitere Regeln:" },
+      { ul: [
+        "Im Kasten **„Anzahlungen“** der Rechnung stehen alle Abzüge mit Status. Ist eine Anzahlung **noch nicht bezahlt**, erscheint ein gelber Hinweis – abgezogen werden sollten nur tatsächlich erhaltene Anzahlungen. Im Entwurf kann ein Abzug mit **×** entfernt und mit **„Anzahlungen des Auftrags übernehmen“** wieder geholt werden (z. B. wenn eine Anzahlung erst nach dem Entwurf gebucht wurde).",
+        "Die Beträge des Abzugs werden in der Endrechnung **eingefroren**; nach dem Buchen ändert sich nichts mehr.",
+        "Jede Anzahlung wird **nur einmal** abgezogen – auch bei mehreren Teilrechnungen. Sie landet in der ersten Rechnung, die sie übernimmt.",
+        "In der **E-Rechnung** der Endrechnung stehen Gesamtbetrag, „bereits gezahlt“ (Summe der Anzahlungen) und der verbleibende Zahlbetrag.",
+        "Im Tab **Zahlung** der Endrechnung ist der Rechnungsbetrag bereits um die Anzahlungen gemindert – eingetragen wird nur noch der Restbetrag laut Bankauszug.",
+      ] },
+    ],
+  },
+  {
+    id: "anzahlung-sonderfaelle",
+    bereich: "Anzahlungen",
+    titel: "Sonderfälle: Storno, Auftrag abgesagt, Altbestand",
+    bloecke: [
+      { ul: [
+        "**Anzahlungsrechnung falsch?** Gebuchte Anzahlungsrechnungen werden **storniert** (Button „Stornieren“, ST-Nummer) und bei Bedarf neu erstellt. Eine Rechnungskorrektur gibt es bei Anzahlungen nicht.",
+        "**Anzahlung schon in einer Endrechnung abgezogen?** Dann kann sie nicht storniert werden – zuerst im Entwurf den Abzug entfernen bzw. die gebuchte Endrechnung stornieren.",
+        "**Endrechnung storniert?** Die Stornorechnung übernimmt die Abzüge mit umgekehrtem Vorzeichen; die Anzahlungen sind danach wieder frei und werden in der neuen Endrechnung abgezogen.",
+        "**Auftrag abgesagt:** Anzahlungsrechnung stornieren und die Rückzahlung an den Kunden über die Bank abwickeln.",
+        "**Altbestand:** Ältere Rechnungen mit dem früheren manuellen Feld „Anzahlung brutto“ zeigen es weiter im Kasten „Anzahlung (Altbestand, manuell)“. Für neue Rechnungen wird es nicht mehr verwendet.",
+      ] },
+    ],
+  },
+  {
+    id: "zahlungsbestaetigung",
+    bereich: "Anzahlungen",
+    titel: "Zahlungsbestätigung (Quittung)",
+    bloecke: [
+      { p: "Zu jeder gebuchten Rechnung oder Anzahlungsrechnung kann eine **Zahlungsbestätigung** als PDF erzeugt werden – z. B. für Privatkunden, die eine Quittung über ihre Anzahlung möchten." },
+      { ul: [
+        "Voraussetzung: Im Tab **Zahlung** sind **Zahlbetrag und Zahlungsdatum** eingetragen. Dann erscheint oben der Button **„Zahlungsbestätigung“**.",
+        "Inhalt: Firma, Kunde, „Hiermit bestätigen wir den Eingang von … am …“, Bezug auf Rechnung/Anzahlungsrechnung und Auftrag, Bank, Betrag – in der Sprache des Kunden (DE/EN).",
+        "Hinweis auf dem Dokument: Die Bestätigung **ersetzt keine Rechnung**; die Umsatzsteuer steht in der Rechnung.",
+      ] },
+    ],
+  },
+  {
     id: "rechnung-adhoc",
     bereich: "Rechnungen",
     titel: "Rechnung ohne Auftrag (Kleinteile, Ersatzteile)",

@@ -35,6 +35,7 @@ function steuerKategorie(data: BelegRenderData): {
 }
 
 function typeCode(belegart: string | null): string {
+  if (belegart === "ANZAHLUNGSRECHNUNG") return "386";
   if (belegart === "RECHNUNGSKORREKTUR" || belegart === "STORNORECHNUNG") return "381";
   return "380";
 }
@@ -47,7 +48,9 @@ export function belegZuZugferd(data: BelegRenderData) {
   const netto = n2(data.summen.netto);
   const mwst = n2(data.summen.mwst);
   const brutto = n2(data.summen.brutto);
-  const faellig = data.anzahlung?.rechnungsbetrag != null ? n2(data.anzahlung.rechnungsbetrag) : brutto;
+  // Bereits gezahlt (BT-113): abgezogene Anzahlungsrechnungen + ggf. manuelle Alt-Anzahlung
+  const vorausbezahlt = data.abzuege.reduce((s, a) => s + Number(a.brutto), 0) + Number(data.anzahlung?.brutto ?? 0);
+  const faellig = vorausbezahlt ? n2(Number(data.summen.brutto ?? 0) - vorausbezahlt) : brutto;
   const issue = data.datum ? new Date(`${data.datum}T00:00:00Z`) : new Date();
 
   // Belegebene: Gesamtrabatt = Nachlass (BG-20, Code 95), Versand = Zuschlag (BG-21, Code FC).
@@ -141,7 +144,7 @@ export function belegZuZugferd(data: BelegRenderData) {
           taxTotal: { amount: mwst, currencyCode: cur },
           grandTotalAmount: brutto,
           duePayableAmount: faellig,
-          ...(data.anzahlung?.brutto ? { prepaidAmount: n2(data.anzahlung.brutto) } : {}),
+          ...(vorausbezahlt ? { paidAmount: n2(vorausbezahlt) } : {}),
         },
       },
     },

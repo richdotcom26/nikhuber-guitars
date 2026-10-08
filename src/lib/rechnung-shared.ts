@@ -1,12 +1,13 @@
 /** Client-sichere Rechnungs-Konstanten (kein DB-Zugriff). */
 
 /** Belegtyp. „Gutschrift" heißt jetzt Rechnungskorrektur (umsatzsteuerlich sauberer, § 14 Abs. 2 UStG). */
-export const RG_BELEGART_VALUES = ["RECHNUNG", "STORNORECHNUNG", "RECHNUNGSKORREKTUR"] as const;
+export const RG_BELEGART_VALUES = ["RECHNUNG", "STORNORECHNUNG", "RECHNUNGSKORREKTUR", "ANZAHLUNGSRECHNUNG"] as const;
 export type RgBelegart = (typeof RG_BELEGART_VALUES)[number];
 export const RG_BELEGART_LABEL: Record<RgBelegart, string> = {
   RECHNUNG: "Rechnung",
   STORNORECHNUNG: "Stornorechnung",
   RECHNUNGSKORREKTUR: "Rechnungskorrektur",
+  ANZAHLUNGSRECHNUNG: "Anzahlungsrechnung",
 };
 
 /** Aktive Status: ENTWURF (frei editierbar, ohne Nummer) → GEBUCHT (gesperrt) → BEZAHLT / STORNIERT. */
