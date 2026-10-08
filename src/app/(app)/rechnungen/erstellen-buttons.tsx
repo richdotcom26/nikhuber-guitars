@@ -28,7 +28,12 @@ export function BuchenButtons({ id }: { id: string }) {
         setFehler(res?.message ?? "Fehler beim Buchen.");
         return;
       }
-      if (mitMail || confirm(`${res.message ?? "Gebucht."}\n\nJetzt per E-Mail versenden?`)) {
+      if (mitMail || confirm(
+        `${res.message ?? "Gebucht."}\n\nJetzt per E-Mail versenden?\n\n` +
+        "Mit OK öffnet sich das E-Mail-Fenster: Dort Empfänger, Text und Anhänge prüfen — " +
+        "verschickt wird erst mit „E-Mail senden“. Mit Abbrechen bleibst du auf der Rechnung " +
+        "(Versand später über „Per E-Mail versenden“ möglich).",
+      )) {
         router.push(`/rechnungen/${id}/mail`);
       } else {
         router.refresh();
