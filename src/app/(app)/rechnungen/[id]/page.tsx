@@ -53,6 +53,24 @@ export default async function RechnungDetailPage({
   const art = RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart;
   const korrigierbar = r.belegart === "RECHNUNG" && (r.status === "GEBUCHT" || r.status === "BEZAHLT");
 
+  const summen = (
+    <Card>
+      <CardHeader><CardTitle>Summen</CardTitle></CardHeader>
+      <CardContent>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          <dt className="text-neutral-500">Netto</dt>
+          <dd className="text-right tabular-nums">{formatMoney(r.summeNetto, cur)}</dd>
+          <dt className="text-neutral-500">MwSt{r.mwstSatz ? ` (${Number(r.mwstSatz)} %)` : ""}</dt>
+          <dd className="text-right tabular-nums">{formatMoney(r.summeMwst, cur)}</dd>
+          <dt className="font-semibold">Brutto</dt>
+          <dd className="text-right font-semibold tabular-nums">{formatMoney(r.summeBrutto, cur)}</dd>
+          <dt className="text-neutral-500">Rechnungsbetrag</dt>
+          <dd className="text-right tabular-nums">{formatMoney(r.rechnungsbetrag, cur)}</dd>
+        </dl>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -195,27 +213,14 @@ export default async function RechnungDetailPage({
                 />
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader><CardTitle>Summen</CardTitle></CardHeader>
-              <CardContent>
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                  <dt className="text-neutral-500">Netto</dt>
-                  <dd className="text-right tabular-nums">{formatMoney(r.summeNetto, cur)}</dd>
-                  <dt className="text-neutral-500">MwSt{r.mwstSatz ? ` (${Number(r.mwstSatz)} %)` : ""}</dt>
-                  <dd className="text-right tabular-nums">{formatMoney(r.summeMwst, cur)}</dd>
-                  <dt className="font-semibold">Brutto</dt>
-                  <dd className="text-right font-semibold tabular-nums">{formatMoney(r.summeBrutto, cur)}</dd>
-                  <dt className="text-neutral-500">Rechnungsbetrag</dt>
-                  <dd className="text-right tabular-nums">{formatMoney(r.rechnungsbetrag, cur)}</dd>
-                </dl>
-              </CardContent>
-            </Card>
+            {summen}
           </div>
         </div>
       ) : null}
 
       {active === "positionen" ? (
-        !entwurf ? (
+        <div className="space-y-5">
+        {!entwurf ? (
           <Card><CardContent className="space-y-2 py-4 text-sm">
             <p className="text-muted">Positionen gesperrt (gebucht).</p>
             <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
@@ -261,7 +266,9 @@ export default async function RechnungDetailPage({
               remove: deletePositionAction,
             }}
           />
-        )
+        )}
+        <div className="ml-auto max-w-md">{summen}</div>
+        </div>
       ) : null}
 
       {active === "zahlung" ? (
