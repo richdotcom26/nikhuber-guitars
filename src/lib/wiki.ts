@@ -384,6 +384,20 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "arbeitszeit",
+    bereich: "Einstellungen",
+    titel: "Arbeitszeit-Protokoll der App-Entwicklung (nur Admin)",
+    bloecke: [
+      { p: "Unter **Einstellungen → Arbeitszeit** steht, wie lange an Entwurf, Aufbau und Weiterentwicklung dieser App gearbeitet wurde – ein Eintrag je Arbeitstag mit Beginn, Ende, Stunden und kurzer Beschreibung." },
+      { ul: [
+        "Ein Arbeitstag endet um **4:00 Uhr** morgens, nicht um Mitternacht.",
+        "Die Zeit wird aus den Claude-Code-Sitzungsprotokollen und den Git-Commits berechnet; **Pausen über 30 Minuten** zählen nicht. „Git (geschätzt)“ heißt: Sitzungsprotokoll nicht mehr vorhanden, Zeit aus den Commits geschätzt.",
+        "Die Tabelle aktualisiert sich **automatisch nach jeder Claude-Antwort**.",
+        "**Bearbeiten**: Beschreibung anpassen und **manuelle Zeit** nachtragen (z. B. Tests, Einrichtung ohne Claude, als 1:30 oder 1,5). Mit **Tag nachtragen** lassen sich Tage ganz ohne Claude erfassen.",
+      ] },
+    ],
+  },
+  {
     id: "staaten",
     bereich: "Einstellungen",
     titel: "Staaten und Porto-Zuordnung",

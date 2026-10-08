@@ -15,6 +15,7 @@ import {
 import {
   aktiviereTheme, dupliziereTheme, loescheTheme, saveTheme, themeSchema,
 } from "@/lib/domain/theme";
+import { arbeitstagSchema, deleteArbeitstag, saveArbeitstag } from "@/lib/domain/arbeitszeit";
 
 const BASE = "/einstellungen";
 
@@ -218,5 +219,23 @@ export async function loescheThemeAction(_prev: ActionState, formData: FormData)
     await loescheTheme(String(formData.get("id") ?? ""));
     revTheme();
     return ok("Theme gelöscht.");
+  });
+}
+
+/* ---- Arbeitszeit ---- */
+
+export async function saveArbeitstagAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await saveArbeitstag(parseForm(arbeitstagSchema, formData));
+    revalidatePath(BASE);
+    return ok("Gespeichert.");
+  });
+}
+
+export async function deleteArbeitstagAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await deleteArbeitstag(String(formData.get("tag") ?? ""));
+    revalidatePath(BASE);
+    return ok("Gelöscht.");
   });
 }

@@ -7,7 +7,9 @@ import { listBenutzer } from "@/lib/domain/benutzer";
 import {
   getFirmaSetting, listPortoArtikel, listStaaten, listZaehler, listZahlungsbedingungen,
 } from "@/lib/domain/stammdaten";
+import { listArbeitstage } from "@/lib/domain/arbeitszeit";
 import { ArbeitsschrittePanel } from "./arbeitsschritte-panel";
+import { ArbeitszeitPanel } from "./arbeitszeit-panel";
 import { BenutzerPanel } from "./benutzer-panel";
 import { FirmaForm } from "./firma-form";
 import { ModellgruppenPanel } from "./modellgruppen-panel";
@@ -40,7 +42,7 @@ export default async function EinstellungenPage({
   const { tab } = await searchParams;
   const user = await requireUser();
   const TABS: readonly TabItem[] = user.rolle === "ADMIN"
-    ? [...BASE_TABS, { key: "benutzer", label: "Benutzer" }]
+    ? [...BASE_TABS, { key: "benutzer", label: "Benutzer" }, { key: "arbeitszeit", label: "Arbeitszeit" }]
     : BASE_TABS;
   const active = TABS.some((t) => t.key === tab) ? tab! : "firma";
 
@@ -72,6 +74,16 @@ export default async function EinstellungenPage({
         />
       )}
       {active === "wiki" && <WikiPanel />}
+      {active === "arbeitszeit" && user.rolle === "ADMIN" && (
+        <ArbeitszeitPanel
+          rows={(await listArbeitstage()).map((r) => ({
+            ...r,
+            beginn: r.beginn?.toISOString() ?? null,
+            ende: r.ende?.toISOString() ?? null,
+            updatedAt: r.updatedAt.toISOString(),
+          }))}
+        />
+      )}
       {active === "benutzer" && user.rolle === "ADMIN" && (
         <BenutzerPanel
           rows={(await listBenutzer()).map((r) => ({ ...r, updatedAt: r.updatedAt.toISOString() }))}
