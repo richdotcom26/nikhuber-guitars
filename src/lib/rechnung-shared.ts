@@ -28,3 +28,19 @@ export const RG_STATUS_TONE: Record<RgStatus, "neutral" | "blue" | "green" | "am
 
 export const ZAHLUNGSSTATUS_VALUES = ["ANGEZAHLT", "TEILZAHLUNG", "BEZAHLT", "ANGEMAHNT"] as const;
 export const BANK_VALUES = ["VVB", "CHASE", "PAYPAL"] as const;
+
+/**
+ * Abzug aus Zahlungseingang: Differenz = Zahlbetrag − Rechnungsbetrag (negativ = weniger gezahlt),
+ * Abzug % = (Rechnungsbetrag − Zahlbetrag) / Rechnungsbetrag · 100, auf 2 Stellen.
+ * Bsp. 100 → 80 gezahlt = −20 Differenz, 20 % Abzug. Überzahlung ergibt einen negativen Abzug.
+ */
+export function abzugBerechnen(rechnungsbetrag: number | null, zahlbetrag: number | null) {
+  if (rechnungsbetrag == null || zahlbetrag == null || !Number.isFinite(rechnungsbetrag) || !Number.isFinite(zahlbetrag)) {
+    return { differenz: null, prozent: null };
+  }
+  const differenz = Math.round((zahlbetrag - rechnungsbetrag) * 100) / 100;
+  const prozent = rechnungsbetrag === 0
+    ? null
+    : Math.round(((rechnungsbetrag - zahlbetrag) / rechnungsbetrag) * 100 * 100) / 100;
+  return { differenz, prozent };
+}

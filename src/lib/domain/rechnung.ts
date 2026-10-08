@@ -10,7 +10,7 @@ import {
 } from "@/lib/db/schema";
 import { ANHANG_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import {
-  RG_BELEGART_VALUES, RG_STATUS_VALUES, type RgBelegart, type RgStatus,
+  RG_BELEGART_VALUES, RG_STATUS_VALUES, type RgBelegart, type RgStatus, abzugBerechnen,
 } from "@/lib/rechnung-shared";
 import { abrechnungsStand } from "./abrechnung";
 import { speichereAnhang } from "./anhang";
@@ -606,7 +606,8 @@ export async function recordZahlung(id: string, input: ZahlungInput) {
   const anzahlung = r.anzahlungBeruecksichtigen ? Number(r.anzahlungBrutto ?? 0) : 0;
   const rechnungsbetrag = Math.round((brutto - anzahlung) * 100) / 100;
   const zahlbetrag = input.zahlbetrag == null ? null : Number(input.zahlbetrag);
-  const differenz = zahlbetrag == null ? null : Math.round((zahlbetrag - rechnungsbetrag) * 100) / 100;
+  // Abzug % und Differenz immer aus dem Zahlbetrag (Bankauszug) ableiten — nicht aus der Eingabe.
+  const { differenz, prozent } = abzugBerechnen(rechnungsbetrag, zahlbetrag);
   const status: RgStatus = r.status === "STORNIERT"
     ? "STORNIERT"
     : input.zahlungsstatus === "BEZAHLT" ? "BEZAHLT" : "GEBUCHT";
@@ -617,6 +618,7 @@ export async function recordZahlung(id: string, input: ZahlungInput) {
       ...input,
       rechnungsbetrag: String(rechnungsbetrag),
       differenzZahlung: differenz == null ? null : String(differenz),
+      abzugProzent: prozent == null ? null : String(prozent),
       status,
       updatedAt: new Date(),
       updatedBy: user.id,

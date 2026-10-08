@@ -284,9 +284,7 @@ export default async function RechnungDetailPage({
                 zahlbetrag={r.zahlbetrag}
                 zahlungAnBank={r.zahlungAnBank}
                 zahlungsstatus={r.zahlungsstatus}
-                abzugProzent={r.abzugProzent}
                 rechnungsbetrag={r.rechnungsbetrag}
-                differenzZahlung={r.differenzZahlung}
                 waehrung={cur}
               />
             </CardContent>

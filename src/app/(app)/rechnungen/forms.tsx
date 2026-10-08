@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select, Textarea } from "@/components/ui/input";
-import { BANK_VALUES, ZAHLUNGSSTATUS_VALUES } from "@/lib/rechnung-shared";
+import { BANK_VALUES, ZAHLUNGSSTATUS_VALUES, abzugBerechnen } from "@/lib/rechnung-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import {
   korrekturAction, saveAnzahlungAction, saveKopfAction, saveZahlungAction, stornoAction,
 } from "./actions";
-import { formatBetrag, formatMoney } from "@/lib/utils";
+import { dezimal, formatBetrag, formatMoney } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- Kopf */
 
@@ -61,38 +61,62 @@ export function KopfForm({
 
 /* ------------------------------------------------------------------- Zahlung */
 
+/**
+ * Zahlung aus dem Bankauszug erfassen. Abzug % und Differenz werden aus dem Zahlbetrag
+ * live berechnet (Bsp. 100 → 80 gezahlt = 20 % Abzug); der Server rechnet beim Speichern nach.
+ */
 export function ZahlungForm({
-  id, zahlungsdatum, zahlbetrag, zahlungAnBank, zahlungsstatus, abzugProzent,
-  rechnungsbetrag, differenzZahlung, waehrung = "EUR",
+  id, zahlungsdatum, zahlbetrag, zahlungAnBank, zahlungsstatus,
+  rechnungsbetrag, waehrung = "EUR",
 }: {
   id: string;
   zahlungsdatum: string | null;
   zahlbetrag: string | null;
   zahlungAnBank: string | null;
   zahlungsstatus: string | null;
-  abzugProzent: string | null;
   rechnungsbetrag: string | null;
-  differenzZahlung: string | null;
   waehrung?: "EUR" | "USD";
 }) {
   const [state, action] = useActionState(saveZahlungAction, IDLE);
+  const [betrag, setBetrag] = useState(formatBetrag(zahlbetrag));
+  const zahl = betrag.trim() === "" ? null : Number(dezimal(betrag));
+  const { differenz, prozent } = abzugBerechnen(rechnungsbetrag == null ? null : Number(rechnungsbetrag), zahl);
+  const pct = (n: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(n);
+
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="id" value={id} />
       {state ? <FormMessage state={state} /> : null}
       <p className="text-xs text-neutral-500">
         Rechnungsbetrag (Brutto − Anzahlung): <b>{formatMoney(rechnungsbetrag, waehrung)}</b>
-        {differenzZahlung != null ? <> · Differenz Zahlung: <b>{formatMoney(differenzZahlung, waehrung)}</b></> : null}
+        {differenz != null ? (
+          <> · Differenz Zahlung: <b className={differenz < 0 ? "text-red-600" : differenz > 0 ? "text-amber-700" : "text-green-700"}>
+            {formatMoney(differenz, waehrung)}
+          </b></>
+        ) : null}
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Field label="Zahlungsdatum" htmlFor="zahlungsdatum">
           <Input id="zahlungsdatum" name="zahlungsdatum" type="date" defaultValue={zahlungsdatum ?? ""} />
         </Field>
-        <Field label="Tatsächl. Zahlbetrag" htmlFor="zahlbetrag">
-          <Input id="zahlbetrag" name="zahlbetrag" inputMode="decimal" defaultValue={formatBetrag(zahlbetrag)} />
+        <Field label="Tatsächl. Zahlbetrag (laut Bankauszug)" htmlFor="zahlbetrag">
+          <Input
+            id="zahlbetrag" name="zahlbetrag" inputMode="decimal" value={betrag}
+            onChange={(e) => setBetrag(e.target.value)}
+            onBlur={() => { if (zahl != null && Number.isFinite(zahl)) setBetrag(formatBetrag(zahl)); }}
+          />
         </Field>
-        <Field label="Abzug %" htmlFor="abzugProzent">
-          <Input id="abzugProzent" name="abzugProzent" inputMode="decimal" defaultValue={abzugProzent ?? ""} />
+        <Field
+          label="Abzug %"
+          hint={prozent == null ? "wird aus dem Zahlbetrag berechnet"
+            : prozent < 0 ? "Überzahlung" : prozent === 0 ? "vollständig bezahlt" : undefined}
+        >
+          <Input
+            value={prozent == null ? "" : `${pct(prozent)} %`}
+            readOnly
+            tabIndex={-1}
+            className={prozent != null && prozent !== 0 ? "font-medium text-amber-700" : undefined}
+          />
         </Field>
         <Field label="Zahlung an Bank" htmlFor="zahlungAnBank">
           <Select id="zahlungAnBank" name="zahlungAnBank" defaultValue={zahlungAnBank ?? ""}>
