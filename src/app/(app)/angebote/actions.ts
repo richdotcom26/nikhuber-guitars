@@ -10,7 +10,7 @@ import {
 } from "@/lib/domain/angebot";
 import {
   addPorto, addPosition, angebotToAuftrag, applyModellvorlage, deleteAllePositionen,
-  deletePosition, generatePositionen, getArtikelForPosition, positionMargen, tierPreis, updatePosition,
+  deletePosition, generatePositionen, getArtikelForPosition, positionMargen, tierPreis, updatePosition, setVersand,
 } from "@/lib/domain/belege";
 import { dezimal } from "@/lib/utils";
 
@@ -171,4 +171,16 @@ export async function angebotToAuftragAction(_p: ActionState, fd: FormData): Pro
   });
   if (auftragId) redirect(`/auftraege/${auftragId}`);
   return res;
+}
+
+/** Versandkosten im Summenblock setzen (0 = entfernen). */
+export async function setVersandAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const betrag = Number(dezimal(String(fd.get("betrag") ?? "0")) || 0);
+    if (!Number.isFinite(betrag)) return fail("Ungültiger Betrag.");
+    await setVersand("angebot", id, { betrag, bezeichnung: String(fd.get("bezeichnung") ?? "") || null });
+    rev(id);
+    return ok(betrag ? "Versand gespeichert." : "Versand entfernt.");
+  });
 }

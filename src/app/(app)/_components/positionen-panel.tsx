@@ -30,6 +30,11 @@ export interface Summen {
   summeNetto: string | null;
   summeMwst: string | null;
   summeBrutto: string | null;
+  gesamtrabattAktiv?: boolean;
+  gesamtrabattProzent?: string | null;
+  gesamtrabattWert?: string | null;
+  versandkosten?: string | null;
+  versandBezeichnung?: string | null;
 }
 
 type Act = (prev: ActionState, fd: FormData) => Promise<ActionState>;
@@ -43,8 +48,10 @@ export interface PositionenActions {
   add: Act;
   update: Act;
   remove: Act;
-  /** „Porto hinzufügen" (nur Angebot/Auftrag). */
+  /** „Porto nach Staat" (nur Angebot/Auftrag). */
   porto?: Act;
+  /** Versandkosten setzen/entfernen (Summenblock). */
+  versand?: Act;
 }
 
 export function PositionenPanel({
@@ -144,35 +151,57 @@ export function PositionenPanel({
           </TBody>
         </Table>
 
-        {actions.porto ? <PortoButton belegId={belegId} act={actions.porto} /> : null}
-
         <NewPosition belegId={belegId} waehrung={waehrung} vertriebsweg={vertriebsweg} addAct={actions.add} />
 
-        {gesamtrabatt ? (
-          <form action={grAction} className="ml-auto flex max-w-sm items-end gap-2">
-            <input type="hidden" name="id" value={belegId} />
-            <label className="flex items-center gap-1 text-xs text-neutral-500">
-              <input type="checkbox" name="aktiv" defaultChecked={gesamtrabatt.aktiv} />
-              Gesamtrabatt
-            </label>
-            <Input name="prozent" defaultValue={gesamtrabatt.prozent ?? ""} inputMode="decimal"
-              placeholder="%" className="h-7 w-20 text-right" />
-            <span className="text-xs text-neutral-400">= {formatMoney(gesamtrabatt.wert, cur)}</span>
-            <SubmitButton size="sm" variant="outline" pendingText="…">OK</SubmitButton>
-            {grState && !grState.ok ? <span className="text-xs text-red-600">{grState.message}</span> : null}
-          </form>
-        ) : null}
+        {/* Summenblock: Positionen − Gesamtrabatt + Versand = netto. Versand ist nie rabattiert. */}
+        <div className="ml-auto w-full max-w-xl space-y-1.5 rounded-lg border border-line bg-surface p-3 text-sm">
+          <SumZeile label="Summe Positionen" wert={formatMoney(summen.summePositionen, cur)} />
 
-        <dl className="ml-auto grid max-w-xs grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <dt className="text-neutral-500">Summe Positionen</dt>
-          <dd className="text-right tabular-nums">{formatMoney(summen.summePositionen, cur)}</dd>
-          <dt className="text-neutral-500">Summe netto</dt>
-          <dd className="text-right tabular-nums">{formatMoney(summen.summeNetto, cur)}</dd>
-          <dt className="text-neutral-500">Summe MwSt</dt>
-          <dd className="text-right tabular-nums">{formatMoney(summen.summeMwst, cur)}</dd>
-          <dt className="font-semibold text-neutral-700">Summe brutto</dt>
-          <dd className="text-right font-semibold tabular-nums">{formatMoney(summen.summeBrutto, cur)}</dd>
-        </dl>
+          {gesamtrabatt ? (
+            <form action={grAction} className="flex flex-wrap items-center gap-2">
+              <input type="hidden" name="id" value={belegId} />
+              <label className="flex items-center gap-1 text-neutral-500">
+                <input type="checkbox" name="aktiv" defaultChecked={gesamtrabatt.aktiv} />
+                Gesamtrabatt
+              </label>
+              <Input name="prozent" defaultValue={gesamtrabatt.prozent ?? ""} inputMode="decimal"
+                placeholder="%" className="h-7 w-16 text-right" />
+              <span className="text-xs text-muted">%</span>
+              <SubmitButton size="sm" variant="outline" pendingText="…">OK</SubmitButton>
+              <span className="ml-auto tabular-nums">
+                {gesamtrabatt.aktiv && Number(gesamtrabatt.wert) ? `− ${formatMoney(gesamtrabatt.wert, cur)}` : "–"}
+              </span>
+              {grState && !grState.ok ? <span className="w-full text-xs text-red-600">{grState.message}</span> : null}
+            </form>
+          ) : summen.gesamtrabattAktiv && Number(summen.gesamtrabattWert) ? (
+            <SumZeile
+              label={`Gesamtrabatt (${Number(summen.gesamtrabattProzent)} %)`}
+              wert={`− ${formatMoney(summen.gesamtrabattWert, cur)}`}
+            />
+          ) : null}
+
+          {actions.versand ? (
+            <VersandZeile
+              belegId={belegId}
+              cur={cur}
+              betrag={summen.versandkosten ?? null}
+              bezeichnung={summen.versandBezeichnung ?? null}
+              act={actions.versand}
+              porto={actions.porto}
+            />
+          ) : Number(summen.versandkosten) ? (
+            <SumZeile
+              label={`Versandkosten${summen.versandBezeichnung ? ` (${summen.versandBezeichnung})` : ""}`}
+              wert={formatMoney(summen.versandkosten, cur)}
+            />
+          ) : null}
+
+          <div className="border-t border-line pt-1.5">
+            <SumZeile label="Summe netto" wert={formatMoney(summen.summeNetto, cur)} />
+            <SumZeile label="Summe MwSt" wert={formatMoney(summen.summeMwst, cur)} />
+            <SumZeile label="Summe brutto" wert={formatMoney(summen.summeBrutto, cur)} stark />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -225,15 +254,61 @@ function PosRow({
   );
 }
 
-function PortoButton({ belegId, act }: { belegId: string; act: Act }) {
-  const [state, action] = useActionState(act, IDLE);
+function SumZeile({ label, wert, stark = false }: { label: string; wert: string; stark?: boolean }) {
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
-      <input type="hidden" name="id" value={belegId} />
-      <SubmitButton size="sm" pendingText="…">Porto hinzufügen</SubmitButton>
-      <span className="text-xs text-muted">Gitarren- oder Teile-Porto je nach Staat des Kunden</span>
-      {state ? <FormMessage state={state} className="w-full" /> : null}
-    </form>
+    <div className={"flex justify-between gap-4 " + (stark ? "font-semibold text-ink" : "")}>
+      <span className={stark ? "" : "text-neutral-500"}>{label}</span>
+      <span className="tabular-nums">{wert}</span>
+    </div>
+  );
+}
+
+/** Versandkosten: Betrag setzen/entfernen + „Porto nach Staat" (Gitarre/Teile je Kundenstaat). */
+function VersandZeile({
+  belegId, cur, betrag, bezeichnung, act, porto,
+}: {
+  belegId: string;
+  cur: "EUR" | "USD";
+  betrag: string | null;
+  bezeichnung: string | null;
+  act: Act;
+  porto?: Act;
+}) {
+  const [state, action] = useActionState(act, IDLE);
+  const [pState, pAction] = useActionState(porto ?? NOOP, IDLE);
+  const hat = !!Number(betrag);
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-neutral-500">Versandkosten</span>
+        <form action={action} className="flex items-center gap-1" key={`${betrag}`}>
+          <input type="hidden" name="id" value={belegId} />
+          <input type="hidden" name="bezeichnung" value={bezeichnung ?? ""} />
+          <Input name="betrag" defaultValue={formatBetrag(betrag)} inputMode="decimal" placeholder="0,00"
+            className="h-7 w-24 text-right" />
+          <SubmitButton size="sm" variant="outline" pendingText="…">OK</SubmitButton>
+        </form>
+        {hat ? (
+          <form action={action}>
+            <input type="hidden" name="id" value={belegId} />
+            <input type="hidden" name="betrag" value="0" />
+            <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…" title="Versand entfernen">×</SubmitButton>
+          </form>
+        ) : null}
+        {porto ? (
+          <form action={pAction}>
+            <input type="hidden" name="id" value={belegId} />
+            <SubmitButton size="sm" pendingText="…" title="Gitarren- oder Teile-Porto je nach Staat des Kunden">
+              Porto nach Staat
+            </SubmitButton>
+          </form>
+        ) : null}
+        <span className="ml-auto tabular-nums">{hat ? formatMoney(betrag, cur) : "–"}</span>
+      </div>
+      {bezeichnung && hat ? <div className="text-xs text-muted">{bezeichnung} · nicht rabattierfähig</div> : null}
+      {state && !state.ok ? <FormMessage state={state} /> : null}
+      {pState ? <FormMessage state={pState} /> : null}
+    </div>
   );
 }
 

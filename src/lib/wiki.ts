@@ -162,15 +162,17 @@ export const WIKI: WikiArtikel[] = [
   {
     id: "porto",
     bereich: "Angebot & Auftrag",
-    titel: "Porto hinzufügen",
+    titel: "Versandkosten (Porto) im Summenblock",
     bloecke: [
-      { p: "Unter der Positionsliste (nur Angebot und Auftrag) gibt es den Button **„Porto hinzufügen“**. Er setzt automatisch das passende Porto nach dem **Staat des Kunden** ein." },
+      { p: "Versandkosten sind **keine Position** mehr, sondern stehen – wie bei den meisten Unternehmen – im **Summenblock** unter den Positionen. So ist klar: Versand wird **nie rabattiert**." },
       { ul: [
-        "Enthält der Beleg einen **Modell-Artikel (Gitarre)**, wird das **Gitarren-Porto** des Staats genommen, sonst das **Teile-Porto**.",
-        "Ist schon eine Porto-Position da, wird sie **ersetzt** – es gibt nie doppeltes Porto.",
-        "Der Preis richtet sich nach Vertriebsweg und Währung. Der Sonderrabatt des Kunden gilt **nicht** fürs Porto.",
-        "Ist für den Staat kein Porto hinterlegt, erscheint ein Hinweis. Dann unter **Einstellungen → Staaten** ein Porto zuordnen.",
+        "Reihenfolge im Summenblock (Bildschirm, PDF, E-Rechnung): **Summe Positionen − Gesamtrabatt + Versandkosten = Summe netto**, dann MwSt und Brutto.",
+        "**„Porto nach Staat“** setzt das passende Porto automatisch nach dem **Staat des Kunden**: mit **Modell-Artikel (Gitarre)** das Gitarren-Porto, sonst das Teile-Porto. Der Preis richtet sich nach Vertriebsweg und Währung (ohne Sonderrabatt).",
+        "Den Betrag kann man auch **von Hand** eintragen (OK) oder mit **×** entfernen.",
+        "Der Versand geht vom Angebot in den Auftrag und weiter in die Rechnung. Bei **Teilrechnungen** wird er nur **einmal** berechnet (in der ersten Rechnung); ein Storno gibt ihn wieder frei.",
+        "Ist für den Staat kein Porto hinterlegt, erscheint ein Hinweis – dann unter **Einstellungen → Staaten** ein Porto zuordnen.",
       ] },
+      { hinweis: "Bereits gebuchte Rechnungen und abgeschlossene Aufträge aus der Zeit davor zeigen das Porto weiterhin als Position – sie werden nicht verändert." },
     ],
   },
   {
@@ -195,6 +197,7 @@ export const WIKI: WikiArtikel[] = [
     bloecke: [
       { p: "Im Auftrag (und in der Rechnung) kann unter den Positionen ein **Gesamtrabatt** in Prozent gewährt werden (Haken „Gesamtrabatt“ + Prozent + OK)." },
       { ul: [
+        "Der Gesamtrabatt steht als **eigene Zeile im Summenblock** (z. B. „Gesamtrabatt (10 %) − 300,00 €“) – auf dem Bildschirm, im PDF und in der E-Rechnung.",
         "Der Gesamtrabatt rechnet **nur auf rabattierfähige Positionen**. Artikel mit „nicht rabattierfähig“ – darunter **alle Porto-Artikel** – sind ausgenommen.",
         "Freitext-Positionen ohne Artikel gelten als rabattierfähig.",
         "Beispiel: 3.000 € Gitarre + 250 € Porto, 10 % → Rabatt 300 € (nicht 325 €), netto 2.950 €.",

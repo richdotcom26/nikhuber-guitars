@@ -56,6 +56,8 @@ export interface BelegRenderData {
     gesamtrabattProzent: string;
     gesamtrabattWert: string;
     gesamtrabattAktiv: boolean;
+    versand: string | null;          // Versandkosten (netto), Summenblock — nicht rabattiert
+    versandBezeichnung: string | null;
     netto: string | null;
     mwstSatz: string;
     mwst: string | null;
@@ -241,6 +243,8 @@ export async function renderBelegData(
       gesamtrabattProzent: h.gesamtrabattProzent,
       gesamtrabattWert: h.gesamtrabattWert,
       gesamtrabattAktiv: h.gesamtrabattAktiv,
+      versand: Number(h.versandkosten ?? 0) ? h.versandkosten : null,
+      versandBezeichnung: h.versandBezeichnung,
       netto: h.summeNetto,
       mwstSatz: rr?.mwstSatz ?? fs.mwstSatz,
       mwst: h.summeMwst,

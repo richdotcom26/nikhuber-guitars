@@ -16,7 +16,7 @@ import {
 } from "@/lib/domain/auftrag";
 import {
   addPorto, addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
-  getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition,
+  getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition, setVersand,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
 import { createEntwurfAusAuftrag } from "@/lib/domain/rechnung";
@@ -286,5 +286,17 @@ export async function addComplianceSchrittAction(_p: ActionState, fd: FormData):
     await _addSchritt(auftragId, nr || VORRAT_NR.REPARATUR, user.id);
     rev(auftragId);
     return ok("Schritt hinzugefügt.");
+  });
+}
+
+/** Versandkosten im Summenblock setzen (0 = entfernen). */
+export async function setVersandAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const betrag = Number(dezimal(String(fd.get("betrag") ?? "0")) || 0);
+    if (!Number.isFinite(betrag)) return fail("Ungültiger Betrag.");
+    await setVersand("auftrag", id, { betrag, bezeichnung: String(fd.get("bezeichnung") ?? "") || null });
+    rev(id);
+    return ok(betrag ? "Versand gespeichert." : "Versand entfernt.");
   });
 }

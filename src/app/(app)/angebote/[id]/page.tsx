@@ -18,7 +18,7 @@ import { formatDate } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
-  addPortoAction, addPositionAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
+  addPortoAction, addPositionAction, setVersandAction, applyVorlageAction, deleteAllePositionenAction, deletePositionAction,
   generatePositionenAction, updatePositionAction,
 } from "../actions";
 import { KopfForm } from "../kopf-form";
@@ -158,6 +158,11 @@ export default async function AngebotDetailPage({
             summeNetto: a.summeNetto,
             summeMwst: a.summeMwst,
             summeBrutto: a.summeBrutto,
+            gesamtrabattAktiv: a.gesamtrabattAktiv,
+            gesamtrabattProzent: a.gesamtrabattProzent,
+            gesamtrabattWert: a.gesamtrabattWert,
+            versandkosten: a.versandkosten,
+            versandBezeichnung: a.versandBezeichnung,
           }}
           waehrung={a.kdWaehrung}
           vertriebsweg={a.kdVertriebsweg}
@@ -169,6 +174,7 @@ export default async function AngebotDetailPage({
             update: updatePositionAction,
             remove: deletePositionAction,
             porto: addPortoAction,
+            versand: setVersandAction,
           }}
         />
       ) : null}

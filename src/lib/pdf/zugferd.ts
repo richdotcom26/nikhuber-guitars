@@ -50,6 +50,25 @@ export function belegZuZugferd(data: BelegRenderData) {
   const faellig = data.anzahlung?.rechnungsbetrag != null ? n2(data.anzahlung.rechnungsbetrag) : brutto;
   const issue = data.datum ? new Date(`${data.datum}T00:00:00Z`) : new Date();
 
+  // Belegebene: Gesamtrabatt = Nachlass (BG-20, Code 95), Versand = Zuschlag (BG-21, Code FC).
+  // EN 16931: Steuerbasis = Summe Positionen − Nachlässe + Zuschläge.
+  const steuer = { typeCode: "VAT", categoryCode, vatRate: rate };
+  const rabatt = data.summen.gesamtrabattAktiv ? Number(data.summen.gesamtrabattWert ?? 0) : 0;
+  const versand = Number(data.summen.versand ?? 0);
+  const allowances = rabatt ? [{
+    actualAmount: n2(rabatt),
+    calculationPercent: String(Number(data.summen.gesamtrabattProzent)),
+    reasonCode: "95",
+    reason: data.sprache === "EN" ? "Overall discount" : "Gesamtrabatt",
+    categoryTradeTax: steuer,
+  }] : [];
+  const charges = versand ? [{
+    actualAmount: n2(versand),
+    reasonCode: "FC",
+    reason: data.summen.versandBezeichnung ?? (data.sprache === "EN" ? "Shipping" : "Versandkosten"),
+    categoryTradeTax: steuer,
+  }] : [];
+
   const line = data.positionen.map((p, i) => {
     const lineTotal = n2(p.gesamt ?? Number(p.einzelpreis ?? 0) * Number(p.anzahl ?? 0));
     return {
@@ -104,6 +123,8 @@ export function belegZuZugferd(data: BelegRenderData) {
           ? { paymentMeans: [{ typeCode: "58", payeeAccount: { iban: data.firma.iban, ...(data.firma.bic ? { bic: data.firma.bic } : {}) } }] }
           : {}),
         ...(data.zahlungsbedingung ? { paymentTerms: { description: data.zahlungsbedingung } } : {}),
+        ...(allowances.length ? { allowances } : {}),
+        ...(charges.length ? { charges } : {}),
         vatBreakdown: [{
           calculatedAmount: mwst,
           typeCode: "VAT",
@@ -114,6 +135,8 @@ export function belegZuZugferd(data: BelegRenderData) {
         }],
         monetarySummation: {
           lineTotalAmount: n2(data.summen.positionen ?? netto),
+          ...(charges.length ? { chargeTotalAmount: n2(versand) } : {}),
+          ...(allowances.length ? { allowanceTotalAmount: n2(rabatt) } : {}),
           taxBasisTotalAmount: netto,
           taxTotal: { amount: mwst, currencyCode: cur },
           grandTotalAmount: brutto,

@@ -14,7 +14,7 @@ import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
-  addPositionAction, deleteAllePositionenAction, deletePositionAction, positionenAusAuftragAction,
+  addPositionAction, setVersandAction, deleteAllePositionenAction, deletePositionAction, positionenAusAuftragAction,
   updatePositionAction,
 } from "../actions";
 import { BuchenButtons } from "../erstellen-buttons";
@@ -53,11 +53,31 @@ export default async function RechnungDetailPage({
   const art = RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart;
   const korrigierbar = r.belegart === "RECHNUNG" && (r.status === "GEBUCHT" || r.status === "BEZAHLT");
 
+  const rabattZeile = r.gesamtrabattAktiv && Number(r.gesamtrabattWert);
+  const versandZeile = Number(r.versandkosten);
   const summen = (
     <Card>
       <CardHeader><CardTitle>Summen</CardTitle></CardHeader>
       <CardContent>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          {rabattZeile || versandZeile ? (
+            <>
+              <dt className="text-neutral-500">Summe Positionen</dt>
+              <dd className="text-right tabular-nums">{formatMoney(r.summePositionen, cur)}</dd>
+            </>
+          ) : null}
+          {rabattZeile ? (
+            <>
+              <dt className="text-neutral-500">Gesamtrabatt ({Number(r.gesamtrabattProzent)} %)</dt>
+              <dd className="text-right tabular-nums">− {formatMoney(r.gesamtrabattWert, cur)}</dd>
+            </>
+          ) : null}
+          {versandZeile ? (
+            <>
+              <dt className="text-neutral-500">Versandkosten{r.versandBezeichnung ? ` (${r.versandBezeichnung})` : ""}</dt>
+              <dd className="text-right tabular-nums">{formatMoney(r.versandkosten, cur)}</dd>
+            </>
+          ) : null}
           <dt className="text-neutral-500">Netto</dt>
           <dd className="text-right tabular-nums">{formatMoney(r.summeNetto, cur)}</dd>
           <dt className="text-neutral-500">MwSt{r.mwstSatz ? ` (${Number(r.mwstSatz)} %)` : ""}</dt>
@@ -252,6 +272,11 @@ export default async function RechnungDetailPage({
               summeNetto: r.summeNetto,
               summeMwst: r.summeMwst,
               summeBrutto: r.summeBrutto,
+              gesamtrabattAktiv: r.gesamtrabattAktiv,
+              gesamtrabattProzent: r.gesamtrabattProzent,
+              gesamtrabattWert: r.gesamtrabattWert,
+              versandkosten: r.versandkosten,
+              versandBezeichnung: r.versandBezeichnung,
             }}
             waehrung={r.kdWaehrung}
             vertriebsweg={r.kdVertriebsweg}
@@ -264,6 +289,7 @@ export default async function RechnungDetailPage({
               add: addPositionAction,
               update: updatePositionAction,
               remove: deletePositionAction,
+              versand: setVersandAction,
             }}
           />
         )}

@@ -12,7 +12,7 @@ import { ANHANG_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import {
   RG_BELEGART_VALUES, RG_STATUS_VALUES, type RgBelegart, type RgStatus, abzugBerechnen,
 } from "@/lib/rechnung-shared";
-import { abrechnungsStand } from "./abrechnung";
+import { abrechnungsStand, versandBerechnet } from "./abrechnung";
 import { speichereAnhang } from "./anhang";
 import { renderBelegData } from "./beleg-render";
 import { allocateNummer, kdSnapshot, recomputeSummen, renumberPositionen } from "./belege";
@@ -214,6 +214,10 @@ export async function createEntwurfAusAuftrag(auftragId: string): Promise<string
     throw new DomainError("STATE", "Der Auftrag ist vollständig berechnet — keine offenen Positionen.");
   }
   const snap = a.kundeId ? await kdSnapshot(a.kundeId) : {};
+  // Versand nur einmal berechnen (Teilrechnungen): übernehmen, solange noch nicht gebucht.
+  const versand = await versandBerechnet(auftragId)
+    ? {}
+    : { versandkosten: a.versandkosten, versandBezeichnung: a.versandBezeichnung, versandArtikelId: a.versandArtikelId };
 
   const id = await db.transaction(async (tx) => {
     const [neu] = await tx
@@ -227,6 +231,7 @@ export async function createEntwurfAusAuftrag(auftragId: string): Promise<string
         modellArtikelId: a.modellArtikelId,
         gesamtrabattProzent: a.gesamtrabattProzent,
         gesamtrabattAktiv: a.gesamtrabattAktiv,
+        ...versand,
         createdBy: user.id,
         updatedBy: user.id,
       })
@@ -481,6 +486,9 @@ async function negierterEntwurf(originalId: string, belegart: "STORNORECHNUNG" |
         zahlungsbedingungText: o.zahlungsbedingungText,
         gesamtrabattProzent: o.gesamtrabattProzent,
         gesamtrabattAktiv: o.gesamtrabattAktiv,
+        versandkosten: String(-Number(o.versandkosten ?? 0)),
+        versandBezeichnung: o.versandBezeichnung,
+        versandArtikelId: o.versandArtikelId,
         bemerkungRechnung: `${belegart === "STORNORECHNUNG" ? "Storno" : "Korrektur"} zu Rechnung ${o.nummer}`,
         createdBy: user.id,
         updatedBy: user.id,

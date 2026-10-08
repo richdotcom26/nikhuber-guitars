@@ -6,7 +6,7 @@ import {
 } from "@/lib/db/schema";
 import { SPEC_SLOT_BY_KEY } from "@/lib/specs/slots";
 import { berechneBriefkopf } from "@/lib/adressen-shared";
-import { abrechnungsStand, assertAuftragPositionenAenderbar } from "./abrechnung";
+import { abrechnungsStand, assertAuftragPositionenAenderbar, versandBerechnet } from "./abrechnung";
 import { computeTiers } from "./artikel";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -493,34 +493,49 @@ export async function addPorto(traeger: SpecBelegTraeger, traegerId: string): Pr
   const [a] = await db.select().from(artikel).where(eq(artikel.id, portoId));
   if (!a) throw new DomainError("NOT_FOUND", "Porto-Artikel nicht gefunden.");
 
-  const preis = tierPreis(a, h.kdVertriebsweg, h.kdWaehrung, null, await positionMargen());
+  const preis = tierPreis(a, h.kdVertriebsweg, h.kdWaehrung, null, await positionMargen()) ?? 0;
+  // Alt: Porto als Position → beim Umstellen entfernen (nur wenn noch nicht berechnet)
   const alte = pos.filter((p) => p.gruppe === "VERSAND").map((p) => p.id);
   if (traeger === "auftrag") {
-    await assertAuftragPositionenAenderbar(traegerId, { art: "neu" });
     for (const posId of alte) await assertAuftragPositionenAenderbar(traegerId, { art: "loeschen", posId });
   }
+  const name = a.nameBelege ?? a.nameLang ?? a.nameKurz ?? "Versand";
 
-  await db.transaction(async (tx) => {
-    if (alte.length) await tx.delete(belegPosition).where(inArray(belegPosition.id, alte));
-    await tx.insert(belegPosition).values({
-      [POS_KEY[traeger]]: traegerId,
-      artikelId: a.id,
-      artikelName: a.nameBelege ?? a.nameLang ?? a.nameKurz,
-      artikelBeschreibung: a.beschreibung,
-      anzahl: "1",
-      einzelpreis: preis == null ? null : String(preis),
-      rabattProzent: "0",
-      reRelevant: true,
-      herkunftSlotKey: "porto",
-      createdBy: user.id,
+  if (alte.length) {
+    await db.delete(belegPosition).where(inArray(belegPosition.id, alte));
+    await renumberPositionen(traeger, traegerId);
+  }
+  await setVersand(traeger, traegerId, { betrag: preis, bezeichnung: name, artikelId: a.id });
+  return h.versandkosten && Number(h.versandkosten) !== 0 ? `Versand ersetzt: ${name}` : `Versand gesetzt: ${name}`;
+}
+
+/**
+ * Versandkosten im Summenblock setzen (Betrag 0 = entfernen). Nicht rabattierfähig, nicht Teil der Positionen.
+ * Rechnung: Aufrufer prüft, dass es ein Entwurf ist. Auftrag: gesperrt, sobald der Versand berechnet ist.
+ */
+export async function setVersand(
+  traeger: PosTraeger,
+  traegerId: string,
+  v: { betrag: number; bezeichnung?: string | null; artikelId?: string | null },
+) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  if (traeger === "auftrag" && (await versandBerechnet(traegerId))) {
+    throw new DomainError("STATE", "Der Versand dieses Auftrags ist bereits berechnet und kann nicht mehr geändert werden.");
+  }
+  const head = HEAD[traeger];
+  const leer = !v.betrag;
+  await db
+    .update(head)
+    .set({
+      versandkosten: String(Math.round(v.betrag * 100) / 100),
+      versandBezeichnung: leer ? null : (v.bezeichnung?.trim() || "Versandkosten"),
+      versandArtikelId: leer ? null : (v.artikelId ?? null),
+      updatedAt: new Date(),
       updatedBy: user.id,
-    });
-  });
-  await renumberPositionen(traeger, traegerId);
+    })
+    .where(eq(head.id, traegerId));
   await recomputeSummen(traeger, traegerId);
-
-  const name = a.nameBelege ?? a.nameKurz ?? "Porto";
-  return alte.length ? `Porto ersetzt: ${name}` : `Porto hinzugefügt: ${name}`;
 }
 
 /* --------------------------------------------------------------------- Summen */
@@ -554,7 +569,8 @@ export async function recomputeSummen(traeger: PosTraeger, traegerId: string) {
   const gesamtrabattWert = h.gesamtrabattAktiv
     ? Math.round(rabattBasis * (rabattProzent / 100) * 100) / 100
     : 0;
-  const summeNetto = Math.round((summePositionen - gesamtrabattWert) * 100) / 100;
+  const versand = Number(h.versandkosten ?? 0);
+  const summeNetto = Math.round((summePositionen - gesamtrabattWert + versand) * 100) / 100;
 
   // Rechnung: MwSt-Satz aus dem Snapshot (beim Buchen eingefroren), sonst aktueller Satz
   const snapSatz = "mwstSatz" in h ? h.mwstSatz : null;
@@ -642,6 +658,8 @@ export async function angebotToAuftrag(angebotId: string): Promise<string> {
         kdVertriebsweg: a.kdVertriebsweg, kdSonderrabattProzent: a.kdSonderrabattProzent,
         kdBriefkopf: a.kdBriefkopf,
         modellArtikelId: a.modellArtikelId,
+        versandkosten: a.versandkosten, versandBezeichnung: a.versandBezeichnung, versandArtikelId: a.versandArtikelId,
+        gesamtrabattAktiv: a.gesamtrabattAktiv, gesamtrabattProzent: a.gesamtrabattProzent,
         freitextBody: a.freitextBody, freitextColour: a.freitextColour,
         freitextNeck: a.freitextNeck, freitextAssembly: a.freitextAssembly,
         positionenAnzeigen: true,

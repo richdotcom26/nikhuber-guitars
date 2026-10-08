@@ -7,7 +7,7 @@ import {
 } from "@/lib/domain/action-state";
 import {
   addPosition, deleteAllePositionen, deletePosition, getArtikelForPosition, positionMargen,
-  tierPreis, updatePosition,
+  tierPreis, updatePosition, setVersand,
 } from "@/lib/domain/belege";
 import {
   anzahlungSchema, assertPositionArtikel, assertRechnungEditierbar, buchen, createRechnungOhneAuftrag,
@@ -217,5 +217,18 @@ export async function positionenAusAuftragAction(_p: ActionState, fd: FormData):
     const n = await positionenAusAuftrag(id);
     rev(id);
     return ok(`${n} Positionen aus dem Auftrag übernommen.`);
+  });
+}
+
+/** Versandkosten im Summenblock setzen (0 = entfernen). */
+export async function setVersandAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const betrag = Number(dezimal(String(fd.get("betrag") ?? "0")) || 0);
+    if (!Number.isFinite(betrag)) return fail("Ungültiger Betrag.");
+    await assertRechnungEditierbar(id);
+    await setVersand("rechnung", id, { betrag, bezeichnung: String(fd.get("bezeichnung") ?? "") || null });
+    rev(id);
+    return ok(betrag ? "Versand gespeichert." : "Versand entfernt.");
   });
 }

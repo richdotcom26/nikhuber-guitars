@@ -88,3 +88,18 @@ export async function assertAuftragPositionenAenderbar(
     }
   }
 }
+
+/**
+ * Wurde der Versand des Auftrags schon berechnet? Summe der Versandkosten aller gebuchten
+ * Belege (Storno/Korrektur tragen negative Versandkosten → heben sich auf).
+ */
+export async function versandBerechnet(auftragId: string): Promise<boolean> {
+  const [r] = await db
+    .select({ summe: sql<string>`coalesce(sum(${rechnung.versandkosten}), 0)` })
+    .from(rechnung)
+    .where(and(
+      eq(rechnung.auftragId, auftragId),
+      inArray(rechnung.status, ["GEBUCHT", "BEZAHLT", "STORNIERT"]),
+    ));
+  return Number(r.summe) > 0;
+}

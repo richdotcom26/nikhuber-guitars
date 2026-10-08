@@ -5,7 +5,7 @@ const T = {
   DE: {
     von: "Von", an: "An", datum: "Datum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
     pos: "Pos", bez: "Bezeichnung", menge: "Menge", einzel: "Einzelpreis", rabatt: "Rabatt", gesamt: "Gesamt",
-    summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", netto: "Summe netto", mwst: "MwSt",
+    summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", netto: "Summe netto", mwst: "MwSt",
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
     zahlung: "Zahlungsbedingung", ustId: "USt-IdNr.", steuerNr: "Steuernummer", bank: "Bankverbindung",
     seite: "Seite", erstellt: "Erstellt am",
@@ -13,7 +13,7 @@ const T = {
   EN: {
     von: "From", an: "To", datum: "Date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
     pos: "Item", bez: "Description", menge: "Qty", einzel: "Unit price", rabatt: "Discount", gesamt: "Total",
-    summePos: "Subtotal", gesamtrabatt: "Overall discount", netto: "Net total", mwst: "VAT",
+    summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", netto: "Net total", mwst: "VAT",
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
     zahlung: "Payment terms", ustId: "VAT ID", steuerNr: "Tax number", bank: "Bank details",
     seite: "Page", erstellt: "Created",
@@ -108,6 +108,12 @@ export function BelegDokument({ data }: { data: BelegRenderData }) {
               <tr>
                 <td>{t.gesamtrabatt} ({Number(data.summen.gesamtrabattProzent)} %)</td>
                 <td className="r">− {money(data.summen.gesamtrabattWert)}</td>
+              </tr>
+            ) : null}
+            {data.summen.versand ? (
+              <tr>
+                <td>{t.versand}{data.summen.versandBezeichnung ? ` (${data.summen.versandBezeichnung})` : ""}</td>
+                <td className="r">{money(data.summen.versand)}</td>
               </tr>
             ) : null}
             <tr><td>{t.netto}</td><td className="r">{money(data.summen.netto)}</td></tr>

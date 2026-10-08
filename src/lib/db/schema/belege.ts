@@ -57,6 +57,11 @@ const kopf = () => ({
   gesamtrabattProzent: numeric("gesamtrabatt_prozent", { precision: 6, scale: 3 }).default("0").notNull(),
   gesamtrabattWert: numeric("gesamtrabatt_wert", { precision: 12, scale: 2 }).default("0").notNull(),
   gesamtrabattAktiv: boolean("gesamtrabatt_aktiv").default(false).notNull(),
+  // Versandkosten im Summenblock (nicht als Position, nie rabattiert):
+  // summe_netto = summe_positionen − gesamtrabatt_wert + versandkosten
+  versandkosten: numeric("versandkosten", { precision: 12, scale: 2 }).default("0").notNull(),
+  versandBezeichnung: text("versand_bezeichnung"),
+  versandArtikelId: uuid("versand_artikel_id").references(() => artikel.id),
   summeNetto: numeric("summe_netto", { precision: 12, scale: 2 }),
   summeMwst: numeric("summe_mwst", { precision: 12, scale: 2 }),
   summeBrutto: numeric("summe_brutto", { precision: 12, scale: 2 }),

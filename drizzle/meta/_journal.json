@@ -57,6 +57,13 @@
       "when": 1791494827571,
       "tag": "0007_arbeitszeit",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791495974180,
+      "tag": "0008_versand_im_kopf",
+      "breakpoints": true
     }
   ]
 }
