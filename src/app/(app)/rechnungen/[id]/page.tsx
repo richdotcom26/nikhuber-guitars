@@ -215,12 +215,6 @@ export default async function RechnungDetailPage({
           </div>
           <div className="space-y-5">
             <Card>
-              <CardHeader><CardTitle>Verlauf</CardTitle></CardHeader>
-              <CardContent>
-                <Verlauf ereignisse={await rechnungVerlauf(id)} />
-              </CardContent>
-            </Card>
-            <Card>
               <CardHeader><CardTitle>Bezug</CardTitle></CardHeader>
               <CardContent className="space-y-1 text-sm">
                 {data.auftragInfo ? (
@@ -268,6 +262,12 @@ export default async function RechnungDetailPage({
               </Card>
             ) : null}
             {summen}
+            <Card>
+              <CardHeader><CardTitle>Verlauf</CardTitle></CardHeader>
+              <CardContent>
+                <Verlauf ereignisse={await rechnungVerlauf(id)} />
+              </CardContent>
+            </Card>
           </div>
         </div>
       ) : null}
