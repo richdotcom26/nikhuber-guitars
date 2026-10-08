@@ -40,6 +40,7 @@ export const KUNDE_SORT: Record<string, unknown> = {
 export {
   anzeigename, berechneBriefkopf, KONTAKTARTEN, KONTAKTART_VALUES, kundeKurz,
 } from "@/lib/adressen-shared";
+import { dezimal } from "@/lib/utils";
 export type { KontaktartValue } from "@/lib/adressen-shared";
 
 const REGIONEN = REGION_VALUES;
@@ -62,7 +63,7 @@ const triBool = z.preprocess(
 const decimalOrNull = z.preprocess(
   (v) => {
     if (v == null || (typeof v === "string" && v.trim() === "")) return null;
-    return typeof v === "string" ? v.replace(",", ".").trim() : v;
+    return typeof v === "string" ? dezimal(v).trim() : v;
   },
   z.coerce.number().min(0).max(100).transform((n) => n.toString()).nullable(),
 );

@@ -8,6 +8,7 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { BM_KATEGORIE, EINHEIT } from "@/lib/betriebsmittel-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import { createBetriebsmittelAction, updateBetriebsmittelAction } from "./actions";
+import { formatBetrag } from "@/lib/utils";
 
 export interface BetriebsmittelFormValues {
   id?: string;
@@ -72,7 +73,7 @@ export function BetriebsmittelForm({
             </Select>
           </Field>
           <Field label="Einkaufspreis (€)" htmlFor="einkaufspreis" errors={err.einkaufspreis}>
-            <Input id="einkaufspreis" name="einkaufspreis" inputMode="decimal" defaultValue={v(values.einkaufspreis)} />
+            <Input id="einkaufspreis" name="einkaufspreis" inputMode="decimal" defaultValue={formatBetrag(values.einkaufspreis)} />
           </Field>
           <Field label="Anmerkungen" htmlFor="anmerkungen" className="sm:col-span-2">
             <Textarea id="anmerkungen" name="anmerkungen" defaultValue={v(values.anmerkungen)} rows={2} />

@@ -8,6 +8,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { IDLE } from "@/lib/domain/action-state";
 import { saveStaatAction } from "./actions";
+import { formatMoney } from "@/lib/utils";
 
 interface StaatRow {
   id: string;
@@ -29,8 +30,8 @@ const COLS = 8;
 
 function portoLabel(p: PortoRow): string {
   const preise = [
-    Number(p.vkEur) ? `${Number(p.vkEur).toFixed(2)} €` : null,
-    Number(p.vkUs) ? `${Number(p.vkUs).toFixed(2)} $` : null,
+    Number(p.vkEur) ? formatMoney(p.vkEur, "EUR") : null,
+    Number(p.vkUs) ? formatMoney(p.vkUs, "USD") : null,
   ].filter(Boolean).join(" / ");
   return `${p.name ?? "–"}${preise ? ` (${preise})` : ""}`;
 }

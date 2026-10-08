@@ -15,6 +15,7 @@ import {
   stornieren, updateRechnungKopf, zahlungSchema,
 } from "@/lib/domain/rechnung";
 import { rechnungMailSchema, sendeRechnungMail } from "@/lib/domain/rechnung-mail";
+import { dezimal } from "@/lib/utils";
 
 /** Entwurf buchen: Nummer, Datum, Sperre, E-Rechnung — in einer Transaktion. */
 export async function buchenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -139,8 +140,8 @@ export async function addPositionAction(_p: ActionState, fd: FormData): Promise<
     const id = String(fd.get("id") ?? "");
     const artikelId = String(fd.get("artikelId") ?? "") || null;
     const freitext = String(fd.get("freitext") ?? "").trim();
-    const anzahl = Number(String(fd.get("anzahl") ?? "1").replace(",", ".")) || 1;
-    const einzelpreisRaw = String(fd.get("einzelpreis") ?? "").replace(",", ".").trim();
+    const anzahl = Number(dezimal(String(fd.get("anzahl") ?? "1"))) || 1;
+    const einzelpreisRaw = dezimal(String(fd.get("einzelpreis") ?? "")).trim();
     let name = freitext || null;
     let beschreibung: string | null = null;
     let einzelpreis: number | null = einzelpreisRaw ? Number(einzelpreisRaw) : null;
@@ -175,12 +176,12 @@ export async function updatePositionAction(_p: ActionState, fd: FormData): Promi
     const posId = String(fd.get("posId") ?? "");
     const patch: Record<string, unknown> = {};
     const g = (k: string) => { const v = fd.get(k); return typeof v === "string" ? v : null; };
-    if (g("anzahl") != null) patch.anzahl = Number(g("anzahl")!.replace(",", ".")) || 0;
+    if (g("anzahl") != null) patch.anzahl = Number(dezimal(g("anzahl")!)) || 0;
     if (g("einzelpreis") != null) {
-      const s = g("einzelpreis")!.replace(",", ".").trim();
+      const s = dezimal(g("einzelpreis")!).trim();
       patch.einzelpreis = s === "" ? null : Number(s);
     }
-    if (g("rabattProzent") != null) patch.rabattProzent = Number(g("rabattProzent")!.replace(",", ".")) || 0;
+    if (g("rabattProzent") != null) patch.rabattProzent = Number(dezimal(g("rabattProzent")!)) || 0;
     // Zeilenformular enthält die Checkbox immer; nicht angehakt = wird nicht mitgesendet
     patch.reRelevant = fd.get("reRelevant") === "on" || fd.get("reRelevant") === "true";
     await assertRechnungEditierbar(id);

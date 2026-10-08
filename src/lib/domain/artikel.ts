@@ -9,6 +9,7 @@ import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
 import { getFirmaSetting } from "./stammdaten";
+import { dezimal } from "@/lib/utils";
 
 const ARTIKEL_NAME_SQL = sql`lower(coalesce(${artikel.nameBelege}, ${artikel.nameLang}, ${artikel.nameKurz}, ''))`;
 
@@ -89,7 +90,7 @@ const nullableText = z.preprocess(
 const decimalOrNull = z.preprocess(
   (v) => {
     if (v == null || (typeof v === "string" && v.trim() === "")) return null;
-    return typeof v === "string" ? v.replace(",", ".").trim() : v;
+    return typeof v === "string" ? dezimal(v).trim() : v;
   },
   z.coerce.number().transform((n) => n.toString()).nullable(),
 );

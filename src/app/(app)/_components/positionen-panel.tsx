@@ -7,7 +7,7 @@ import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { type ActionState, IDLE } from "@/lib/domain/action-state";
-import { formatMoney } from "@/lib/utils";
+import { formatBetrag, formatMoney } from "@/lib/utils";
 import { type ArtikelHit, searchArtikelAction } from "./artikel-search-action";
 
 export interface PositionRow {
@@ -205,7 +205,7 @@ function PosRow({
           <input type="hidden" name="id" value={belegId} />
           <input type="hidden" name="posId" value={row.id} />
           <Input name="anzahl" defaultValue={row.anzahl} inputMode="decimal" className="h-7 w-16 text-right" />
-          <Input name="einzelpreis" defaultValue={row.einzelpreis ?? ""} inputMode="decimal" className="h-7 w-24 text-right" />
+          <Input name="einzelpreis" defaultValue={formatBetrag(row.einzelpreis)} inputMode="decimal" className="h-7 w-24 text-right" />
           <Input name="rabattProzent" defaultValue={row.rabattProzent} inputMode="decimal" className="h-7 w-16 text-right" />
           <span className="w-24 text-right tabular-nums">{formatMoney(row.gesamtpreis, cur)}</span>
           <label className="flex items-center"><input type="checkbox" name="reRelevant" defaultChecked={row.reRelevant} /></label>

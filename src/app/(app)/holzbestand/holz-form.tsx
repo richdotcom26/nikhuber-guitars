@@ -10,6 +10,7 @@ import {
 } from "@/lib/holz-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import { createHolzAction, updateHolzAction } from "./actions";
+import { formatBetrag } from "@/lib/utils";
 
 interface Opt { id: string; label: string }
 interface HolzartOpt { id: string; label: string; grob: string | null }
@@ -170,9 +171,9 @@ export function HolzForm({
               {holzhaendler.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
             </Select>
           </Field>
-          <Field label="Einkaufspreis" htmlFor="einkaufspreis"><Input id="einkaufspreis" name="einkaufspreis" inputMode="decimal" defaultValue={v(values.einkaufspreis)} /></Field>
+          <Field label="Einkaufspreis" htmlFor="einkaufspreis"><Input id="einkaufspreis" name="einkaufspreis" inputMode="decimal" defaultValue={formatBetrag(values.einkaufspreis)} /></Field>
           <Field label="Profit Margin" htmlFor="profitMargin"><Input id="profitMargin" name="profitMargin" inputMode="decimal" defaultValue={v(values.profitMargin)} /></Field>
-          <Field label="Verkaufspreis" htmlFor="verkaufspreis"><Input id="verkaufspreis" name="verkaufspreis" inputMode="decimal" defaultValue={v(values.verkaufspreis)} /></Field>
+          <Field label="Verkaufspreis" htmlFor="verkaufspreis"><Input id="verkaufspreis" name="verkaufspreis" inputMode="decimal" defaultValue={formatBetrag(values.verkaufspreis)} /></Field>
         </CardContent>
       </Card>
 

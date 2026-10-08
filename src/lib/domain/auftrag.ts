@@ -22,6 +22,7 @@ import { DomainError } from "./errors";
 export {
   AUFTRAG_STATUS, AUFTRAG_STATUS_LABEL, AUFTRAGSART, AUFTRAGSART_LABEL,
 } from "@/lib/auftrag-shared";
+import { dezimal } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- liste */
 
@@ -289,7 +290,7 @@ const dateOrNull = z.preprocess(
 const decimalOrNull = z.preprocess(
   (v) => {
     if (v == null || (typeof v === "string" && v.trim() === "")) return null;
-    return typeof v === "string" ? v.replace(",", ".").trim() : v;
+    return typeof v === "string" ? dezimal(v).trim() : v;
   },
   z.coerce.number().transform((n) => n.toString()).nullable(),
 );

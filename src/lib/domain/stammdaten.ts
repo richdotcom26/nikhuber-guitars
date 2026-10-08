@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { dezimal } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -19,7 +20,7 @@ const nullableText = z.preprocess(
 /** Dezimalzahl aus Formular (akzeptiert Komma), als String für `numeric`-Spalten. */
 const decimal = (opts?: { min?: number; max?: number }) =>
   z.preprocess(
-    (v) => (typeof v === "string" ? v.replace(",", ".").trim() : v),
+    (v) => (typeof v === "string" ? dezimal(v).trim() : v),
     z.coerce
       .number({ error: "Zahl erwartet" })
       .min(opts?.min ?? -1_000_000_000)
@@ -30,7 +31,7 @@ const decimal = (opts?: { min?: number; max?: number }) =>
 const optionalDecimal = z.preprocess(
   (v) => {
     if (v == null) return null;
-    if (typeof v === "string") return v.trim() === "" ? null : v.replace(",", ".").trim();
+    if (typeof v === "string") return v.trim() === "" ? null : dezimal(v).trim();
     return v;
   },
   z.coerce.number().transform((n) => n.toString()).nullable(),

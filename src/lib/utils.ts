@@ -17,6 +17,26 @@ export function formatMoney(
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: waehrung }).format(n);
 }
 
+/** Betrag ohne Währungszeichen im deutschen Format „1.234,56" (für Eingabefelder). Leer bei null. */
+export function formatBetrag(value: number | string | null | undefined): string {
+  if (value == null || value === "") return "";
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+
+/**
+ * Eingabe → Dezimalstring mit Punkt (für Number()/numeric). Versteht „1.234,56", „1234,56",
+ * „1234.56" und „1 234,56 €": Mit Komma → Punkte sind Tausendertrenner; ohne Komma und mit
+ * mehreren Punkten → ebenfalls Tausendertrenner; sonst ist ein einzelner Punkt das Dezimalzeichen.
+ */
+export function dezimal(s: string): string {
+  let t = s.trim().replace(/[\s €$]/g, "");
+  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  else if ((t.match(/\./g) ?? []).length > 1) t = t.replace(/\./g, "");
+  return t;
+}
+
 /** Lesbare Textfarbe (schwarz/weiß) für einen Hex-Hintergrund. */
 export function kontrastText(hex: string | null | undefined): string {
   if (!hex) return "#111111";

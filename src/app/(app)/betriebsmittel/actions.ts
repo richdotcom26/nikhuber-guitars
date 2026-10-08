@@ -8,6 +8,7 @@ import {
 import {
   betriebsmittelSchema, deleteBetriebsmittel, saveBetriebsmittel, setBetriebsmittelMenge,
 } from "@/lib/domain/betriebsmittel";
+import { dezimal } from "@/lib/utils";
 
 const BASE = "/betriebsmittel";
 
@@ -34,7 +35,7 @@ export async function updateBetriebsmittelAction(_p: ActionState, fd: FormData):
 export async function setMengeAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async () => {
     const id = String(fd.get("id") ?? "");
-    const menge = Number(String(fd.get("menge") ?? "").replace(",", "."));
+    const menge = Number(dezimal(String(fd.get("menge") ?? "")));
     await setBetriebsmittelMenge(id, menge);
     revalidatePath(BASE);
     return ok("Menge aktualisiert.");

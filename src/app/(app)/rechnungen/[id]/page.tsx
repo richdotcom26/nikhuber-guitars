@@ -287,6 +287,7 @@ export default async function RechnungDetailPage({
                 abzugProzent={r.abzugProzent}
                 rechnungsbetrag={r.rechnungsbetrag}
                 differenzZahlung={r.differenzZahlung}
+                waehrung={cur}
               />
             </CardContent>
           </Card>

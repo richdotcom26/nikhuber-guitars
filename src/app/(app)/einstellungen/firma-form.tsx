@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import type { getFirmaSetting } from "@/lib/domain/stammdaten";
 import { saveFirmaSettingAction } from "./actions";
+import { formatBetrag } from "@/lib/utils";
 
 type Setting = Awaited<ReturnType<typeof getFirmaSetting>>;
 
@@ -119,7 +120,7 @@ export function FirmaForm({ setting }: { setting: Setting }) {
         <CardHeader><CardTitle>Kalkulation</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Kostensatz je Stunde (€)" htmlFor="kostensatzStunde" errors={err.kostensatzStunde}>
-            <Input id="kostensatzStunde" name="kostensatzStunde" inputMode="decimal" defaultValue={v(setting.kostensatzStunde)} />
+            <Input id="kostensatzStunde" name="kostensatzStunde" inputMode="decimal" defaultValue={formatBetrag(setting.kostensatzStunde)} />
           </Field>
         </CardContent>
       </Card>

@@ -8,6 +8,7 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import { ARTIKELGRUPPE_VALUES, gruppeLabel } from "@/lib/artikel-shared";
 import { createArtikelAction, updateArtikelAction } from "./actions";
+import { formatBetrag } from "@/lib/utils";
 
 interface LieferantOpt { id: string; label: string }
 
@@ -123,10 +124,10 @@ export function ArtikelForm({
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field label="VK EUR (brutto)" htmlFor="vkEur" errors={err.vkEur}>
-              <Input id="vkEur" name="vkEur" inputMode="decimal" defaultValue={v(values.vkEur)} />
+              <Input id="vkEur" name="vkEur" inputMode="decimal" defaultValue={formatBetrag(values.vkEur)} />
             </Field>
             <Field label="VK US" htmlFor="vkUs" errors={err.vkUs}>
-              <Input id="vkUs" name="vkUs" inputMode="decimal" defaultValue={v(values.vkUs)} />
+              <Input id="vkUs" name="vkUs" inputMode="decimal" defaultValue={formatBetrag(values.vkUs)} />
             </Field>
             <div />
             <label className="flex items-center gap-2 text-sm">
@@ -164,10 +165,10 @@ export function ArtikelForm({
           </Field>
           <div />
           <Field label="EK netto EUR" htmlFor="ekNettoEur" errors={err.ekNettoEur}>
-            <Input id="ekNettoEur" name="ekNettoEur" inputMode="decimal" defaultValue={v(values.ekNettoEur)} />
+            <Input id="ekNettoEur" name="ekNettoEur" inputMode="decimal" defaultValue={formatBetrag(values.ekNettoEur)} />
           </Field>
           <Field label="EK netto USD" htmlFor="ekNettoUsd" errors={err.ekNettoUsd}>
-            <Input id="ekNettoUsd" name="ekNettoUsd" inputMode="decimal" defaultValue={v(values.ekNettoUsd)} />
+            <Input id="ekNettoUsd" name="ekNettoUsd" inputMode="decimal" defaultValue={formatBetrag(values.ekNettoUsd)} />
           </Field>
           <Field label="Bestand min" htmlFor="bestandMin" errors={err.bestandMin}>
             <Input id="bestandMin" name="bestandMin" inputMode="decimal" defaultValue={v(values.bestandMin)} />

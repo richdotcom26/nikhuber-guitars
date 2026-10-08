@@ -10,6 +10,7 @@ import { HOLZ_STATUS_VALUES, neueInventarId } from "@/lib/holz-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
+import { dezimal } from "@/lib/utils";
 
 export const HOLZ_SORT: Record<string, unknown> = {
   inventarId: holzInventar.inventarId,
@@ -41,7 +42,7 @@ const intOrNull = z.preprocess(
 const decimalOrNull = z.preprocess(
   (v) => {
     if (v == null || (typeof v === "string" && v.trim() === "")) return null;
-    return typeof v === "string" ? v.replace(",", ".").trim() : v;
+    return typeof v === "string" ? dezimal(v).trim() : v;
   },
   z.coerce.number().transform((n) => n.toString()).nullable(),
 );

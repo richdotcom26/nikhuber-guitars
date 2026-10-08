@@ -24,6 +24,7 @@ import { orderByFor } from "./_sort";
 export {
   RG_BELEGART_LABEL, RG_STATUS, RG_STATUS_LABEL,
 } from "@/lib/rechnung-shared";
+import { dezimal } from "@/lib/utils";
 
 /*
  * Rechnungs-Lebenszyklus (GoBD / § 14 UStG):
@@ -576,7 +577,7 @@ export async function updateRechnungKopf(id: string, input: RechnungKopfInput) {
 const decimalOrNull = z.preprocess(
   (v) => {
     if (v == null || (typeof v === "string" && v.trim() === "")) return null;
-    return typeof v === "string" ? v.replace(",", ".").trim() : v;
+    return typeof v === "string" ? dezimal(v).trim() : v;
   },
   z.coerce.number().transform((n) => n.toString()).nullable(),
 );

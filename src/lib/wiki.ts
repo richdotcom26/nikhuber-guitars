@@ -25,6 +25,18 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "betraege",
+    bereich: "Allgemein",
+    titel: "Beträge eingeben und anzeigen",
+    bloecke: [
+      { p: "Geldbeträge werden überall im deutschen Format angezeigt: **1.234,56 €** – auch in Eingabefeldern (ohne €-Zeichen)." },
+      { ul: [
+        "Eingeben kann man wahlweise **1.234,56**, **1234,56** oder **1234.56** – alles wird richtig verstanden.",
+        "Achtung: **1.234** ohne Komma gilt als 1.234 (Punkt als Dezimalzeichen) – für Tausender daher mit Komma schreiben (1.234,00) oder ohne Punkt (1234).",
+      ] },
+    ],
+  },
+  {
     id: "listen",
     bereich: "Allgemein",
     titel: "Listen, Sortierung und Anzahl",

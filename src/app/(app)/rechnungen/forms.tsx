@@ -10,6 +10,7 @@ import { IDLE } from "@/lib/domain/action-state";
 import {
   korrekturAction, saveAnzahlungAction, saveKopfAction, saveZahlungAction, stornoAction,
 } from "./actions";
+import { formatBetrag, formatMoney } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- Kopf */
 
@@ -62,7 +63,7 @@ export function KopfForm({
 
 export function ZahlungForm({
   id, zahlungsdatum, zahlbetrag, zahlungAnBank, zahlungsstatus, abzugProzent,
-  rechnungsbetrag, differenzZahlung,
+  rechnungsbetrag, differenzZahlung, waehrung = "EUR",
 }: {
   id: string;
   zahlungsdatum: string | null;
@@ -72,6 +73,7 @@ export function ZahlungForm({
   abzugProzent: string | null;
   rechnungsbetrag: string | null;
   differenzZahlung: string | null;
+  waehrung?: "EUR" | "USD";
 }) {
   const [state, action] = useActionState(saveZahlungAction, IDLE);
   return (
@@ -79,15 +81,15 @@ export function ZahlungForm({
       <input type="hidden" name="id" value={id} />
       {state ? <FormMessage state={state} /> : null}
       <p className="text-xs text-neutral-500">
-        Rechnungsbetrag (Brutto − Anzahlung): <b>{rechnungsbetrag ?? "–"}</b>
-        {differenzZahlung != null ? <> · Differenz Zahlung: <b>{differenzZahlung}</b></> : null}
+        Rechnungsbetrag (Brutto − Anzahlung): <b>{formatMoney(rechnungsbetrag, waehrung)}</b>
+        {differenzZahlung != null ? <> · Differenz Zahlung: <b>{formatMoney(differenzZahlung, waehrung)}</b></> : null}
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Field label="Zahlungsdatum" htmlFor="zahlungsdatum">
           <Input id="zahlungsdatum" name="zahlungsdatum" type="date" defaultValue={zahlungsdatum ?? ""} />
         </Field>
         <Field label="Tatsächl. Zahlbetrag" htmlFor="zahlbetrag">
-          <Input id="zahlbetrag" name="zahlbetrag" inputMode="decimal" defaultValue={zahlbetrag ?? ""} />
+          <Input id="zahlbetrag" name="zahlbetrag" inputMode="decimal" defaultValue={formatBetrag(zahlbetrag)} />
         </Field>
         <Field label="Abzug %" htmlFor="abzugProzent">
           <Input id="abzugProzent" name="abzugProzent" inputMode="decimal" defaultValue={abzugProzent ?? ""} />
@@ -131,7 +133,7 @@ export function AnzahlungForm({
         Anzahlung berücksichtigen
       </label>
       <Field label="Anzahlung brutto" htmlFor="anzahlungBrutto">
-        <Input id="anzahlungBrutto" name="anzahlungBrutto" inputMode="decimal" defaultValue={brutto ?? ""} className="h-8 w-28" />
+        <Input id="anzahlungBrutto" name="anzahlungBrutto" inputMode="decimal" defaultValue={formatBetrag(brutto)} className="h-8 w-28" />
       </Field>
       <Field label="Datum" htmlFor="anzahlungDatum">
         <Input id="anzahlungDatum" name="anzahlungDatum" type="date" defaultValue={datum ?? ""} className="h-8 w-40" />

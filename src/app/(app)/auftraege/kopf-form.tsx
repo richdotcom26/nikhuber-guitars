@@ -7,6 +7,7 @@ import { Input, Select } from "@/components/ui/input";
 import { AUFTRAGSART, PRODUKTIONSORT_VALUES } from "@/lib/auftrag-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import { saveKopfAction } from "./actions";
+import { formatBetrag } from "@/lib/utils";
 
 function monthOptions(): { value: string; label: string }[] {
   const now = new Date();
@@ -90,10 +91,10 @@ export function KopfForm({ v }: { v: KopfValues }) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Umsatzerwartung (EUR-normiert)" htmlFor="umsatzerwartung">
-          <Input id="umsatzerwartung" name="umsatzerwartung" inputMode="decimal" defaultValue={v.umsatzerwartung ?? ""} />
+          <Input id="umsatzerwartung" name="umsatzerwartung" inputMode="decimal" defaultValue={formatBetrag(v.umsatzerwartung)} />
         </Field>
         <Field label="Anzahlung" htmlFor="anzahlung">
-          <Input id="anzahlung" name="anzahlung" inputMode="decimal" defaultValue={v.anzahlung ?? ""} />
+          <Input id="anzahlung" name="anzahlung" inputMode="decimal" defaultValue={formatBetrag(v.anzahlung)} />
         </Field>
         <Field label="Besonderes" htmlFor="besonderes">
           <Input id="besonderes" name="besonderes" defaultValue={v.besonderes ?? ""} />
