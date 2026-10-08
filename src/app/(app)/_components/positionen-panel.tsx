@@ -249,7 +249,16 @@ function NewPosition({
   const [hits, setHits] = useState<ArtikelHit[]>([]);
   const [picked, setPicked] = useState<ArtikelHit | null>(null);
   const [pending, startTransition] = useTransition();
-  const [addState, addAction] = useActionState(addAct, IDLE);
+  // Nach erfolgreichem Hinzufügen Artikelsuche leeren (die übrigen Felder setzt das Formular selbst zurück).
+  const [addState, addAction] = useActionState(async (prev: ActionState, fd: FormData) => {
+    const res = await addAct(prev, fd);
+    if (res?.ok) {
+      setPicked(null);
+      setQ("");
+      setHits([]);
+    }
+    return res;
+  }, IDLE);
 
   useEffect(() => {
     if (!q.trim() || picked) return;
