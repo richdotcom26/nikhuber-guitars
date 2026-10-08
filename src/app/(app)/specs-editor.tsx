@@ -178,9 +178,11 @@ function FreitextLine({
   value: string;
   readOnly?: boolean;
 }) {
-  const [state, action] = useActionState(setFreitextAction, IDLE);
+  const [state, action, pending] = useActionState(setFreitextAction, IDLE);
   // Befüllte Freitexte fallen gelb auf; leere bleiben weiß.
   const [gefuellt, setGefuellt] = useState(() => value.trim().length > 0);
+  // Automatisch speichern beim Verlassen des Feldes — nur wenn sich der Text geändert hat.
+  const [gespeichert, setGespeichert] = useState(value);
   return (
     <form action={action} className="mt-2 space-y-1 border-t border-neutral-100 pt-2">
       <input type="hidden" name="traeger" value={traeger} />
@@ -193,21 +195,22 @@ function FreitextLine({
         rows={2}
         disabled={readOnly}
         onInput={(e) => setGefuellt(e.currentTarget.value.trim().length > 0)}
+        onBlur={(e) => {
+          const text = e.currentTarget.value;
+          if (readOnly || text === gespeichert) return;
+          setGespeichert(text);
+          e.currentTarget.form?.requestSubmit();
+        }}
         className={
           gefuellt
             ? "bg-amber-100! border-amber-300! hover:border-amber-400!"
             : "bg-white!"
         }
       />
-      {!readOnly ? (
-        <div className="flex items-center gap-2">
-          <SubmitButton size="sm" variant="outline">Freitext speichern</SubmitButton>
-          {state ? (
-            <span className={"text-xs " + (state.ok ? "text-green-700" : "text-red-600")}>
-              {state.ok ? (state.message ?? "Gespeichert.") : state.message}
-            </span>
-          ) : null}
-        </div>
+      {!readOnly && (pending || state) ? (
+        <span className={"text-xs " + (pending ? "text-muted" : state?.ok ? "text-green-700" : "text-red-600")}>
+          {pending ? "speichert …" : state?.ok ? "✓ gespeichert" : state?.message}
+        </span>
       ) : null}
     </form>
   );

@@ -19,7 +19,7 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Allgemein",
     titel: "Speichern von Änderungen",
     bloecke: [
-      { p: "Es gibt **kein automatisches Speichern**. Jeder Block (z. B. Kopf, Kunde, Specs, eine Positionszeile) hat seinen eigenen Button („Speichern“, „OK“ …). Erst der Klick übernimmt die Änderungen dieses Blocks." },
+      { p: "Es gibt grundsätzlich **kein automatisches Speichern** (Ausnahme: Freitext-Felder in den Specs). Jeder Block (z. B. Kopf, Kunde, Specs, eine Positionszeile) hat seinen eigenen Button („Speichern“, „OK“ …). Erst der Klick übernimmt die Änderungen dieses Blocks." },
       { p: "Nach dem Speichern erscheint eine grüne Meldung, bei Fehlern eine rote mit Hinweis, was fehlt." },
       { hinweis: "Wer mehrere Blöcke ändert, muss jeden einzeln speichern. Beim Verlassen der Seite gehen ungespeicherte Eingaben verloren." },
     ],
@@ -140,7 +140,8 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Angebot & Auftrag",
     titel: "Freitext-Felder (gelb)",
     bloecke: [
-      { p: "Freitext-Felder in den Specs werden **gelb hinterlegt, sobald etwas drinsteht**. So fallen individuelle Kundenwünsche sofort auf. Leere Freitext-Felder bleiben neutral." },
+      { p: "Freitext-Felder in den Specs werden **gelb hinterlegt, sobald etwas drinsteht**. So fallen individuelle Kundenwünsche sofort auf. Leere Freitext-Felder bleiben weiß." },
+      { p: "Freitexte werden **automatisch gespeichert**, sobald man das Feld verlässt (Klick daneben oder Tab-Taste) – es gibt keinen eigenen Speichern-Button. Unter dem Feld erscheint kurz „✓ gespeichert“." },
     ],
   },
   {
