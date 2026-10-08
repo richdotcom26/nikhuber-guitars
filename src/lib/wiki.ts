@@ -448,7 +448,7 @@ export const WIKI: WikiArtikel[] = [
       { p: "Unter **Tickets** meldet jeder Benutzer Fehler oder Wünsche zur App. Typen: **Bug, Wunsch, Frage, Sonstiges**; dazu Titel, Beschreibung, Priorität (niedrig / mittel / hoch) und Screenshots." },
       { ul: [
         "Status: Neu → In Arbeit → Rückfrage → Erledigt (oder Abgelehnt).",
-        "Beim Ticket wird der **Aufwand** (Umsetzungszeit) festgehalten.",
+        "Der **Aufwand** (Umsetzungszeit in Minuten) wird beim Bearbeiten des Tickets eingetragen – beim Anlegen gibt es das Feld noch nicht.",
         "Wird ein Ticket auf **Erledigt** gesetzt, bekommt der Ersteller eine **E-Mail**.",
         "Ein Kommentar als **Rückfrage** setzt das Ticket auf „Rückfrage“ und schickt der jeweils anderen Seite eine E-Mail.",
         "Offene Tickets stehen oben, erledigte/abgelehnte unten.",

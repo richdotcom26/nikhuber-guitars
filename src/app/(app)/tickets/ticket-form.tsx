@@ -71,11 +71,14 @@ export function TicketForm({
               {benutzer.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </Select>
           </Field>
-          <Field label="Aufwand (Minuten)" htmlFor="aufwandMinuten" errors={err.aufwandMinuten}
-            hint="Zeit, die die Umsetzung gekostet hat">
-            <Input id="aufwandMinuten" name="aufwandMinuten" inputMode="numeric"
-              defaultValue={v(values.aufwandMinuten)} placeholder="z. B. 90" />
-          </Field>
+          {/* Aufwand erst beim Bearbeiten — beim Anlegen ist noch nichts umgesetzt */}
+          {mode === "neu" ? null : (
+            <Field label="Aufwand (Minuten)" htmlFor="aufwandMinuten" errors={err.aufwandMinuten}
+              hint="Zeit, die die Umsetzung gekostet hat">
+              <Input id="aufwandMinuten" name="aufwandMinuten" inputMode="numeric"
+                defaultValue={v(values.aufwandMinuten)} placeholder="z. B. 90" />
+            </Field>
+          )}
         </CardContent>
       </Card>
 
