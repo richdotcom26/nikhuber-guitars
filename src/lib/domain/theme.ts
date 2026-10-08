@@ -1,4 +1,5 @@
 import "server-only";
+import { connection } from "next/server";
 import { cache } from "react";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -11,8 +12,11 @@ import { DomainError } from "./errors";
 /**
  * CSS des aktiven Themes für das Root-Layout (auch Login-Seite → ohne Anmeldung lesbar;
  * liefert nur Farbwerte). Fehler → leerer String (Standardfarben aus globals.css).
+ * `connection()`: nie beim Build vorrendern — sonst wäre das Theme auf statischen Seiten
+ * (Login, Passwort setzen) bis zum nächsten Deploy eingefroren.
  */
 export const aktivesThemeCss = cache(async (): Promise<string> => {
+  await connection();
   try {
     const [t] = await db.select({ farben: theme.farben }).from(theme).where(eq(theme.aktiv, true));
     return t ? themeCss(t.farben) : "";
