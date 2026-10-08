@@ -10,6 +10,7 @@ import {
 } from "@/lib/rechnung-shared";
 import { isDomainError } from "@/lib/domain/errors";
 import { listAbzuege } from "@/lib/domain/anzahlung";
+import { rechnungVerlauf } from "@/lib/domain/rechnung-verlauf";
 import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
@@ -19,6 +20,7 @@ import {
   updatePositionAction,
 } from "../actions";
 import { Abzuege } from "../abzuege";
+import { Verlauf } from "../verlauf";
 import { BuchenButtons } from "../erstellen-buttons";
 import {
   AnzahlungForm, KopfForm, KorrekturButtons, ZahlungForm,
@@ -212,6 +214,12 @@ export default async function RechnungDetailPage({
             </Card>
           </div>
           <div className="space-y-5">
+            <Card>
+              <CardHeader><CardTitle>Verlauf</CardTitle></CardHeader>
+              <CardContent>
+                <Verlauf ereignisse={await rechnungVerlauf(id)} />
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader><CardTitle>Bezug</CardTitle></CardHeader>
               <CardContent className="space-y-1 text-sm">

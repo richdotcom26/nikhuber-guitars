@@ -289,6 +289,22 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "rechnung-verlauf",
+    bereich: "Rechnungen",
+    titel: "Verlauf einer Rechnung",
+    bloecke: [
+      { p: "Auf der Startseite jeder Rechnung (Tab **Rechnung**, rechts oben) zeigt der Kasten **„Verlauf“** chronologisch, was wann passiert ist – mit Datum, Uhrzeit, Benutzer und Links zu den jeweiligen Belegen:" },
+      { ul: [
+        "**Auftrag angelegt** (mit Link zum Auftrag).",
+        "**Entwurf angelegt**, **gebucht** (mit Nummer), **per E-Mail versendet** (mit Link zum Mail-Protokoll; auch fehlgeschlagene Versuche), **Zahlung eingegangen** (Betrag, Bank).",
+        "**Storniert durch** Stornorechnung ST-… bzw. Rechnungskorrekturen.",
+        "**Anzahlungen**: in der Endrechnung „als Abzug übernommen“, in der Anzahlungsrechnung „abgezogen in Rechnung RG-…“.",
+        "Ereignisse **anderer Belege desselben Auftrags** (z. B. Anzahlungsrechnung, frühere Teilrechnung) erscheinen grau mit Link – so sieht man die ganze Abrechnungsgeschichte des Auftrags.",
+        "Belege aus **Ninox** haben keinen genauen Zeitpunkt; dort steht das Rechnungsdatum mit dem Hinweis „aus Ninox übernommen“.",
+      ] },
+    ],
+  },
+  {
     id: "rechnung-zahlung",
     bereich: "Rechnungen",
     titel: "Zahlung erfassen (Abzug %)",
