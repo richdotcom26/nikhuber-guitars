@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/schema";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { heuteBerlin } from "@/lib/utils";
 
 /** vorrat.nr Konstanten (7f/7g/7s). */
 export const VORRAT_NR = {
@@ -125,7 +126,7 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
       .set({
         status: "WERKSTATT",
         produktionsort: a.produktionsort ?? "RODGAU",
-        werkstattbeginn: a.werkstattbeginn ?? new Date().toISOString().slice(0, 10),
+        werkstattbeginn: a.werkstattbeginn ?? heuteBerlin(),
         updatedAt: new Date(),
         updatedBy: user.id,
       })
@@ -138,7 +139,7 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
       .update(auftrag)
       .set({
         status: "PROD_FERTIG",
-        endmontagedatum: new Date().toISOString().slice(0, 10),
+        endmontagedatum: heuteBerlin(),
         updatedAt: new Date(),
         updatedBy: user.id,
       })
@@ -157,7 +158,7 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
       .update(auftrag)
       .set({
         status: "ABGESCHLOSSEN",
-        versanddatum: new Date().toISOString().slice(0, 10),
+        versanddatum: heuteBerlin(),
         updatedAt: new Date(),
         updatedBy: user.id,
       })

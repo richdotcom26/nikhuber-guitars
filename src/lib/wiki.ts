@@ -37,6 +37,14 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "zeitzone",
+    bereich: "Allgemein",
+    titel: "Datum und Uhrzeit",
+    bloecke: [
+      { p: "Alle Uhrzeiten und Tagesdaten in der App gelten in **deutscher Zeit** (inkl. Sommer-/Winterzeit) – auch wenn der Server woanders steht. „Heute“ (z. B. Auftragsdatum, Rechnungsdatum beim Buchen) und das Jahr in Belegnummern wechseln um Mitternacht deutscher Zeit." },
+    ],
+  },
+  {
     id: "listen",
     bereich: "Allgemein",
     titel: "Listen, Sortierung und Anzahl",

@@ -50,20 +50,39 @@ export function kontrastText(hex: string | null | undefined): string {
   return (r * 299 + g * 587 + b * 114) / 1000 >= 150 ? "#111111" : "#ffffff";
 }
 
-/** Datum (Date | ISO | 'YYYY-MM-DD') als de-DE `TT.MM.JJJJ`. */
-export function formatDate(value: Date | string | null | undefined): string {
-  if (!value) return "–";
-  const d = value instanceof Date ? value : new Date(value.length <= 10 ? value + "T00:00:00Z" : value);
-  if (Number.isNaN(d.getTime())) return "–";
-  return new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+/** Alle Datums-/Zeitangaben der App beziehen sich auf deutsche Zeit (Server läuft in UTC). */
+export const ZEITZONE = "Europe/Berlin";
+
+/** Heutiges Datum in deutscher Zeit als `YYYY-MM-DD` (für Datumsfelder wie Auftragsdatum). */
+export function heuteBerlin(jetzt: Date = new Date()): string {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: ZEITZONE }).format(jetzt);
 }
 
-/** Zeitstempel (Date | ISO) als de-DE `TT.MM.JJJJ, HH:MM`. */
+/** Aktuelles Jahr in deutscher Zeit (für Belegnummern). */
+export function jahrBerlin(jetzt: Date = new Date()): number {
+  return Number(heuteBerlin(jetzt).slice(0, 4));
+}
+
+/**
+ * Datum als de-DE `TT.MM.JJJJ`. Reine Kalenderdaten (`YYYY-MM-DD`) werden unverändert angezeigt,
+ * Zeitstempel (Date / ISO mit Uhrzeit) in deutscher Zeit.
+ */
+export function formatDate(value: Date | string | null | undefined): string {
+  if (!value) return "–";
+  const nurDatum = typeof value === "string" && value.length <= 10;
+  const d = value instanceof Date ? value : new Date(nurDatum ? value + "T00:00:00Z" : value);
+  if (Number.isNaN(d.getTime())) return "–";
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit", month: "2-digit", year: "numeric", timeZone: nurDatum ? "UTC" : ZEITZONE,
+  }).format(d);
+}
+
+/** Zeitstempel (Date | ISO) als de-DE `TT.MM.JJJJ, HH:MM` in deutscher Zeit. */
 export function formatDateTime(value: Date | string | null | undefined): string {
   if (!value) return "–";
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "–";
   return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: ZEITZONE,
   }).format(d);
 }

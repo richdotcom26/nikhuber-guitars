@@ -12,7 +12,7 @@ import {
   TODO_PRIO, TODO_PRIO_LABEL, TODO_STATUS, TODO_STATUS_LABEL,
   type TodoPrio, type TodoStatus,
 } from "@/lib/todo-shared";
-import { formatDate } from "@/lib/utils";
+import { ZEITZONE, formatDate, formatDateTime, heuteBerlin } from "@/lib/utils";
 import {
   addTodoKommentarAction, createTodoAction, deleteTodoAction, markErledigtGesehenAction,
   setTodoStatusAction, todoVerlaufAction, uebernehmenTodoAction, updateTodoAction,
@@ -140,7 +140,7 @@ function TodoLine({
   const [ueState, ueAction] = useActionState(uebernehmenTodoAction, IDLE);
   const stForm = useRef<HTMLFormElement>(null);
 
-  const heute = new Date().toISOString().slice(0, 10);
+  const heute = heuteBerlin();
   const beiAbwesend = !!row.aktuellBeiAbwesendBis && row.aktuellBeiAbwesendBis >= heute
     && row.aktuellBeiId !== currentUserId;
   // von der anderen Seite erledigt, ich (Absender) habe es noch nicht quittiert
@@ -163,7 +163,7 @@ function TodoLine({
   }
 
   const faellig = row.faelligBis;
-  const ueberfaellig = faellig && row.status !== "ERLEDIGT" && faellig < new Date().toISOString().slice(0, 10);
+  const ueberfaellig = faellig && row.status !== "ERLEDIGT" && faellig < heuteBerlin();
   const beiMir = row.aktuellBeiId === currentUserId;
 
   return (
@@ -171,11 +171,11 @@ function TodoLine({
       <TR className={erledigtNeu ? "bg-green-50" : anMich && row.status !== "ERLEDIGT" ? "bg-brand-soft/40" : ""}>
         <TD
           className="whitespace-nowrap text-xs text-neutral-500"
-          title={`Eingang: ${new Date(row.eingangAm).toLocaleString("de-DE")}`}
+          title={`Eingang: ${formatDateTime(row.eingangAm)}`}
         >
           {formatDate(row.eingangAm)}
           <div className="text-[11px] text-neutral-400">
-            {new Date(row.eingangAm).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+            {new Date(row.eingangAm).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: ZEITZONE })}
           </div>
         </TD>
         <TD className="text-neutral-700">
@@ -324,12 +324,12 @@ function TodoDetail({ row, currentUserId }: { row: TodoRow; currentUserId: strin
             <span>📌</span>
             <span className="font-medium text-ink">Aufgabe erstellt</span>
             <span>
-              {new Date(row.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+              {new Date(row.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short", timeZone: ZEITZONE })}
               {row.absenderName ? ` · von ${row.absenderName}` : ""}
             </span>
             {row.eingangAm.slice(0, 10) !== row.createdAt.slice(0, 10) ? (
               <Badge tone="neutral">
-                letzter Eingang {new Date(row.eingangAm).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                letzter Eingang {new Date(row.eingangAm).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short", timeZone: ZEITZONE })}
               </Badge>
             ) : null}
           </div>
@@ -342,7 +342,7 @@ function TodoDetail({ row, currentUserId }: { row: TodoRow; currentUserId: strin
           <div key={e.id} className="rounded-md border border-line bg-white px-2.5 py-1.5">
             <div className="flex items-center gap-2 text-xs text-muted">
               <span className="font-medium text-ink">{e.autorName ?? "?"}</span>
-              <span>{new Date(e.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</span>
+              <span>{new Date(e.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short", timeZone: ZEITZONE })}</span>
               {e.statusNachher ? (
                 <Badge tone="blue">Status → {TODO_STATUS_LABEL[e.statusNachher as TodoStatus] ?? e.statusNachher}</Badge>
               ) : null}

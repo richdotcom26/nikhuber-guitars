@@ -7,6 +7,7 @@ import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
 import { getFirmaSetting } from "./stammdaten";
+import { heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 export const SERIENNUMMER_SORT: Record<string, unknown> = {
   lfd: seriennummer.lfd,
@@ -141,7 +142,7 @@ export async function vergebeSeriennummerAuto(auftragId: string) {
   const jahr = Number(a.bauplandatum.slice(0, 4));
   const praefix = jahrPraefixFuer(jahr);
   const lfd = await naechsteLfd();
-  const heute = new Date().toISOString().slice(0, 10);
+  const heute = heuteBerlin();
 
   await db.transaction(async (tx) => {
     // Wird eine Lücke wiederverwendet, die alte (gelöschte) Zeile reaktivieren statt neu anlegen
@@ -188,7 +189,7 @@ export async function vergebeSeriennummerManuell(auftragId: string, eingabe: str
     lfd = Number(parts[1]);
   } else {
     lfd = Number(parts[0]);
-    praefix = jahrPraefixFuer(a.bauplandatum ? Number(a.bauplandatum.slice(0, 4)) : new Date().getFullYear());
+    praefix = jahrPraefixFuer(a.bauplandatum ? Number(a.bauplandatum.slice(0, 4)) : jahrBerlin());
   }
   if (!Number.isInteger(lfd) || lfd <= 0) throw new DomainError("VALIDATION", "Ungültige Seriennummer.");
 
@@ -198,7 +199,7 @@ export async function vergebeSeriennummerManuell(auftragId: string, eingabe: str
     .where(and(eq(seriennummer.jahrPraefix, praefix), eq(seriennummer.lfd, lfd), eq(seriennummer.geloescht, false)));
   if (dup) throw new DomainError("CONFLICT", `Seriennummer ${praefix} ${lfd} ist bereits vergeben.`);
 
-  const heute = new Date().toISOString().slice(0, 10);
+  const heute = heuteBerlin();
   await db.transaction(async (tx) => {
     const [sn] = await tx.insert(seriennummer).values({
       lfd, jahrPraefix: praefix, auftragId, manuell: true, vergebenAm: heute,

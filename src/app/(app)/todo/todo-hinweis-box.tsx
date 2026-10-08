@@ -6,6 +6,7 @@ import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import { setTodoHinweisAction } from "./actions";
+import { ZEITZONE } from "@/lib/utils";
 
 /**
  * Hinweis: Nach erfolgreichem Speichern revalidiert die Seite und montiert diese
@@ -66,7 +67,7 @@ export function TodoHinweisBox({
         <p className="whitespace-pre-wrap text-sm font-medium text-amber-900">{hinweis}</p>
         {stand ? (
           <p className="mt-1 text-xs text-amber-700">
-            Stand {new Date(stand).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
+            Stand {new Date(stand).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: ZEITZONE })}
           </p>
         ) : null}
       </div>

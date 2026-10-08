@@ -9,6 +9,7 @@ import { allocateNummer, kdSnapshot } from "./belege";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
+import { heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 export { ANGEBOT_STATUS, ANGEBOT_STATUS_LABEL } from "@/lib/angebot-shared";
 
@@ -100,7 +101,7 @@ export async function angebotPositionCount(id: string) {
 export async function createAngebot(kundeId?: string | null): Promise<string> {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
-  const jahr = new Date().getFullYear();
+  const jahr = jahrBerlin();
   const nummer = await allocateNummer("ANGEBOT", jahr);
   const snap = kundeId ? await kdSnapshot(kundeId) : {};
   const [row] = await db
@@ -108,7 +109,7 @@ export async function createAngebot(kundeId?: string | null): Promise<string> {
     .values({
       nummer,
       status: "NEU",
-      angebotsdatum: new Date().toISOString().slice(0, 10),
+      angebotsdatum: heuteBerlin(),
       ...snap,
       createdBy: user.id,
       updatedBy: user.id,

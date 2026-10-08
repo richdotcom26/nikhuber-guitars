@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
-import { formatDate } from "@/lib/utils";
+import { formatDate, heuteBerlin } from "@/lib/utils";
 import { setAbwesenheitAction } from "./actions";
 
 interface Mitarbeiter { id: string; name: string }
@@ -25,7 +25,7 @@ export function TodoAbwesenheit({
   const [editing, setEditing] = useState(false);
   const [state, action] = useActionState(setAbwesenheitAction, IDLE);
 
-  const aktiv = abwesendBis && abwesendBis >= new Date().toISOString().slice(0, 10);
+  const aktiv = abwesendBis && abwesendBis >= heuteBerlin();
 
   const INFO =
     "Trägst du dich als abwesend ein, kann die gewählte Vertretung bis zum Enddatum deine "

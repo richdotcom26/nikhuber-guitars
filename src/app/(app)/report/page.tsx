@@ -6,7 +6,7 @@ import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import {
   monatsRechnungen, monatsUebersicht, reportJahre,
 } from "@/lib/domain/report";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { formatDate, formatMoney, jahrBerlin } from "@/lib/utils";
 
 export default async function ReportPage({
   searchParams,
@@ -15,7 +15,7 @@ export default async function ReportPage({
 }) {
   const sp = await searchParams;
   const jahre = await reportJahre();
-  const jahr = Number(sp.jahr) || jahre[0] || new Date().getFullYear();
+  const jahr = Number(sp.jahr) || jahre[0] || jahrBerlin();
   const monat = sp.monat ? Number(sp.monat) : null;
 
   const { zeilen, jahresSumme } = await monatsUebersicht(jahr);

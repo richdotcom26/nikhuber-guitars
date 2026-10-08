@@ -10,7 +10,7 @@ import { HOLZ_STATUS_VALUES, neueInventarId } from "@/lib/holz-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { orderByFor } from "./_sort";
-import { dezimal } from "@/lib/utils";
+import { dezimal, heuteBerlin } from "@/lib/utils";
 
 export const HOLZ_SORT: Record<string, unknown> = {
   inventarId: holzInventar.inventarId,
@@ -198,7 +198,7 @@ export async function setHolzStatus(id: string, status: string) {
   }
   const patch: Record<string, unknown> = {
     status: status as (typeof HOLZ_STATUS_VALUES)[number],
-    statusGeaendertAm: new Date().toISOString().slice(0, 10),
+    statusGeaendertAm: heuteBerlin(),
     updatedAt: new Date(),
     updatedBy: user.id,
   };
@@ -215,7 +215,7 @@ export async function reserviereHolz(id: string, auftragId: string | null) {
     .set({
       reserviertFuerAuftragId: auftragId,
       status: auftragId ? "RESERVIERT" : "FREI",
-      statusGeaendertAm: new Date().toISOString().slice(0, 10),
+      statusGeaendertAm: heuteBerlin(),
       updatedAt: new Date(),
       updatedBy: user.id,
     })

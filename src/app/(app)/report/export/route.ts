@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isDomainError } from "@/lib/domain/errors";
 import { reportXlsx } from "@/lib/domain/report";
+import { jahrBerlin } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const jahr = Number(req.nextUrl.searchParams.get("jahr")) || new Date().getFullYear();
+  const jahr = Number(req.nextUrl.searchParams.get("jahr")) || jahrBerlin();
   const monatRaw = req.nextUrl.searchParams.get("monat");
   const monat = monatRaw ? Number(monatRaw) : undefined;
 

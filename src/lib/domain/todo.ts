@@ -10,6 +10,7 @@ import { DomainError } from "./errors";
 export {
   TODO_PRIO, TODO_PRIO_LABEL, TODO_STATUS, TODO_STATUS_LABEL, TODO_STATUS_TONE,
 } from "@/lib/todo-shared";
+import { heuteBerlin } from "@/lib/utils";
 
 const empf = aliasedTable(appUser, "empf");
 const abs = aliasedTable(appUser, "abs");
@@ -17,7 +18,7 @@ const bei = aliasedTable(appUser, "bei");
 const beiVertr = aliasedTable(appUser, "bei_vertr");
 const autor = aliasedTable(appUser, "autor");
 
-const heuteIso = () => new Date().toISOString().slice(0, 10);
+const heuteIso = () => heuteBerlin();
 
 /* -------------------------------------------------------------------- helpers */
 
@@ -387,7 +388,7 @@ export async function setTodoStatus(id: string, status: string) {
   if (!(TODO_STATUS_VALUES as readonly string[]).includes(status)) {
     throw new DomainError("VALIDATION", "Ungültiger Status.");
   }
-  const heute = new Date().toISOString().slice(0, 10);
+  const heute = heuteBerlin();
   const patch: Record<string, unknown> = {
     status: status as (typeof TODO_STATUS_VALUES)[number],
     updatedAt: new Date(),

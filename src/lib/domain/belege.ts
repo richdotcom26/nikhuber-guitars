@@ -11,6 +11,7 @@ import { computeTiers } from "./artikel";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { getFirmaSetting } from "./stammdaten";
+import { heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 export type PosTraeger = "angebot" | "auftrag" | "rechnung";
 export type SpecBelegTraeger = "angebot" | "auftrag";
@@ -645,7 +646,7 @@ export async function angebotToAuftrag(angebotId: string): Promise<string> {
   const [a] = await db.select().from(angebot).where(eq(angebot.id, angebotId));
   if (!a) throw new DomainError("NOT_FOUND", "Angebot nicht gefunden.");
 
-  const jahr = new Date().getFullYear();
+  const jahr = jahrBerlin();
   const nummer = await allocateNummer("AUFTRAG", jahr);
 
   const specs = await db.select().from(specBelegung).where(eq(specBelegung.angebotId, angebotId));
@@ -662,7 +663,7 @@ export async function angebotToAuftrag(angebotId: string): Promise<string> {
         angebotId,
         auftragsart: "PRODUKTION",
         status: "BACKORDER",
-        auftragsdatum: new Date().toISOString().slice(0, 10),
+        auftragsdatum: heuteBerlin(),
         kundeId: a.kundeId,
         kdFirma: a.kdFirma, kdVorname: a.kdVorname, kdNachname: a.kdNachname,
         kdStrasse: a.kdStrasse, kdPlz: a.kdPlz, kdOrt: a.kdOrt, kdStaatId: a.kdStaatId,

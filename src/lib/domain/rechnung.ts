@@ -25,7 +25,7 @@ import { orderByFor } from "./_sort";
 export {
   RG_BELEGART_LABEL, RG_STATUS, RG_STATUS_LABEL,
 } from "@/lib/rechnung-shared";
-import { dezimal } from "@/lib/utils";
+import { dezimal, heuteBerlin } from "@/lib/utils";
 
 /*
  * Rechnungs-Lebenszyklus (GoBD / § 14 UStG):
@@ -150,10 +150,6 @@ export async function rechnungenZuAuftrag(auftragId: string) {
 
 /* ---------------------------------------------------------------- Hilfsfunktionen */
 
-/** Heutiges Datum (Europe/Berlin) als YYYY-MM-DD. */
-function heuteBerlin(): string {
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date());
-}
 
 /** Positionen eines Auftrags, die noch (teilweise) offen sind — mit offener Menge. */
 async function offeneAuftragsPositionen(auftragId: string) {

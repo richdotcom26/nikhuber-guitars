@@ -22,7 +22,7 @@ import { DomainError } from "./errors";
 export {
   AUFTRAG_STATUS, AUFTRAG_STATUS_LABEL, AUFTRAGSART, AUFTRAGSART_LABEL,
 } from "@/lib/auftrag-shared";
-import { dezimal } from "@/lib/utils";
+import { dezimal, heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- liste */
 
@@ -146,7 +146,7 @@ const START_STATUS: Record<Auftragsart, AuftragStatus> = {
 export async function createAuftrag(art: Auftragsart, kundeId?: string | null): Promise<string> {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
-  const jahr = new Date().getFullYear();
+  const jahr = jahrBerlin();
   const nummer = await allocateNummer("AUFTRAG", jahr);
   const snap = kundeId ? await kdSnapshot(kundeId) : {};
 
@@ -156,7 +156,7 @@ export async function createAuftrag(art: Auftragsart, kundeId?: string | null): 
       nummer,
       auftragsart: art,
       status: START_STATUS[art],
-      auftragsdatum: new Date().toISOString().slice(0, 10),
+      auftragsdatum: heuteBerlin(),
       ...snap,
       createdBy: user.id,
       updatedBy: user.id,
@@ -220,7 +220,7 @@ export async function changeAuftragStatus(id: string, ziel: AuftragStatus) {
     throw new DomainError("STATE", `Übergang ${von} → ${ziel} nicht erlaubt.`);
   }
 
-  const heute = new Date().toISOString().slice(0, 10);
+  const heute = heuteBerlin();
   const patch: Record<string, unknown> = { status: ziel, updatedAt: new Date(), updatedBy: user.id };
 
   if (ziel === "WERKSTATT") {
