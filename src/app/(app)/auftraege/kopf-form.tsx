@@ -72,7 +72,7 @@ export function KopfForm({ v }: { v: KopfValues }) {
               onClick={() => setBauplan(bauplan === m.value ? "" : m.value)}
               className={
                 "rounded border px-2 py-1 text-xs " +
-                (bauplan === m.value ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 hover:bg-neutral-100")
+                (bauplan === m.value ? "border-button bg-button text-primary-fg" : "border-neutral-300 hover:bg-neutral-100")
               }
             >
               {m.label}

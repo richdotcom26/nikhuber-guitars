@@ -12,6 +12,9 @@ import {
 import {
   deleteTextbaustein, saveTextbaustein, textbausteinSchema,
 } from "@/lib/domain/textbausteine";
+import {
+  aktiviereTheme, dupliziereTheme, loescheTheme, saveTheme, themeSchema,
+} from "@/lib/domain/theme";
 
 const BASE = "/einstellungen";
 
@@ -175,5 +178,45 @@ export async function deleteTextbausteinAction(
     await deleteTextbaustein(String(formData.get("id") ?? ""));
     revalidatePath(BASE);
     return ok("Textbaustein gelöscht.");
+  });
+}
+
+/* ---- Themes ---- */
+
+function revTheme() {
+  // Theme wirkt im Root-Layout → alle Seiten neu rendern
+  revalidatePath("/", "layout");
+}
+
+export async function saveThemeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(formData.get("id") ?? "") || null;
+    await saveTheme(id, parseForm(themeSchema, formData));
+    revTheme();
+    return ok("Theme gespeichert.");
+  });
+}
+
+export async function aktiviereThemeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await aktiviereTheme(String(formData.get("id") ?? ""));
+    revTheme();
+    return ok("Theme aktiviert.");
+  });
+}
+
+export async function dupliziereThemeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await dupliziereTheme(String(formData.get("id") ?? ""));
+    revTheme();
+    return ok("Kopie angelegt.");
+  });
+}
+
+export async function loescheThemeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await loescheTheme(String(formData.get("id") ?? ""));
+    revTheme();
+    return ok("Theme gelöscht.");
   });
 }

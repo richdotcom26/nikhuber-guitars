@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { aktivesThemeCss } from "@/lib/domain/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,12 +18,18 @@ export const metadata: Metadata = {
   description: "Auftrags- und Fertigungsverwaltung",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Aktives Theme (Einstellungen → Themes) überschreibt die Farb-Tokens aus globals.css.
+  // themeCss() lässt nur geprüfte Farbwerte durch.
+  const themeCss = await aktivesThemeCss();
   return (
     <html
       lang="de"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {themeCss ? <style id="theme-vars">{`:root{${themeCss}}`}</style> : null}
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

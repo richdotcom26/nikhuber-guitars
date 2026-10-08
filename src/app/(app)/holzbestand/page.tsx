@@ -108,7 +108,7 @@ function ChipLink({ href, active, children }: { href: string; active: boolean; c
       href={href}
       className={
         "rounded-full border px-2.5 py-1 text-xs transition-colors " +
-        (active ? "border-brand bg-brand text-white" : "border-line text-muted hover:bg-brand-soft hover:text-brand")
+        (active ? "border-button bg-button text-primary-fg" : "border-line text-muted hover:bg-brand-soft hover:text-brand")
       }
     >
       {children}

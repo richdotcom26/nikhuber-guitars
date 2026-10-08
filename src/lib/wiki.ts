@@ -337,6 +337,28 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "themes",
+    bereich: "Einstellungen",
+    titel: "Themes (Farben der Oberfläche)",
+    bloecke: [
+      { p: "Unter **Einstellungen → Themes** werden Farbschemata verwaltet. Das **aktive** Theme gilt für alle Benutzer, auch auf der Anmeldeseite." },
+      { ul: [
+        "Mitgeliefert: **„Navy & Petrol“** (Standard) und **„Claude“** (die frühere Creme/Clay-Optik).",
+        "**Neu aus Vorlage**, **Duplizieren** und **Bearbeiten**: Jede Farbe per Farbwähler oder als Wert (#001957 bzw. rgba(16,157,168,.24) für Transparenz). Rechts zeigt eine **Live-Vorschau** das Ergebnis.",
+        "**Aktivieren** schaltet sofort für alle um. Das aktive Theme kann nicht gelöscht werden.",
+        "Nur Admins dürfen Themes anlegen, ändern und aktivieren.",
+      ] },
+      { p: "Bedeutung der Farbfelder:" },
+      { ul: [
+        "**Schrift dunkel** = Überschriften · **Schrift mittel** = Fließtext · **Schrift gedämpft** = Nebentexte.",
+        "**Seitenhintergrund**, **Kartenfläche**, **Linien & Rahmen** = Flächen und Trennlinien.",
+        "**Akzent** = Links, Fokus-Rahmen, aktive Tabs · **Akzent hell** = Hover-Flächen und Badges · **Schein** = Leuchten um fokussierte Eingabefelder.",
+        "**Schaltfläche** = aktiver Menüpunkt, aktive Filter, Logo · **Hauptschaltfläche** = Speichern-/Haupt-Buttons (mit eigener Schriftfarbe).",
+        "**Eingabefeld** / **Eingabefeld-Rahmen** = Grund und Rand von Eingabefeldern.",
+      ] },
+    ],
+  },
+  {
     id: "staaten",
     bereich: "Einstellungen",
     titel: "Staaten und Porto-Zuordnung",

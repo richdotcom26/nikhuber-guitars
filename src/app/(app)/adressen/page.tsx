@@ -92,7 +92,7 @@ function ChipLink({
       className={
         "rounded-full border px-2.5 py-1 text-xs transition-colors " +
         (active
-          ? "border-brand bg-brand text-white"
+          ? "border-button bg-button text-primary-fg"
           : "border-line text-muted hover:bg-brand-soft hover:text-brand")
       }
     >

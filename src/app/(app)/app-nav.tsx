@@ -20,7 +20,7 @@ function NavLink({ href, label, muted }: { href: string; label: string; muted?: 
       className={cn(
         "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
         active
-          ? "bg-brand text-white shadow-sm"
+          ? "bg-button text-primary-fg shadow-sm"
           : muted
             ? "text-muted hover:bg-brand-soft hover:text-brand"
             : "text-ink/75 hover:bg-brand-soft hover:text-brand",
@@ -38,7 +38,7 @@ export function AppNav({ email }: { email: string | null }) {
       <div className="mx-auto max-w-[1600px] px-4">
         <div className="flex items-center gap-3 py-2.5">
           <Link href="/todo" className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-brand text-[13px] font-bold text-white">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-button text-[13px] font-bold text-primary-fg">
               NH
             </span>
             <span className="text-sm font-semibold tracking-tight text-navy">Nik Huber Guitars</span>

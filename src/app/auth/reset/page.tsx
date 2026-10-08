@@ -73,7 +73,7 @@ export default function ResetPage() {
     <div className="grid min-h-screen place-items-center bg-page px-4">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-brand text-sm font-bold text-white">NH</span>
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-button text-sm font-bold text-primary-fg">NH</span>
           <div>
             <h1 className="text-base font-semibold text-navy">Nik Huber Guitars</h1>
             <p className="text-xs text-muted">Passwort setzen</p>
@@ -83,7 +83,7 @@ export default function ResetPage() {
         {phase === "pruefe" && <p className="mt-6 text-sm text-muted">Link wird geprüft …</p>}
         {phase === "fehler" && <p className="mt-6 text-sm text-red-600">{meldung}</p>}
         {phase === "fertig" && (
-          <p className="mt-6 text-sm text-brand-bright">Passwort gespeichert. Weiter zur Anmeldung …</p>
+          <p className="mt-6 text-sm text-brand">Passwort gespeichert. Weiter zur Anmeldung …</p>
         )}
 
         {phase === "bereit" && (
@@ -101,7 +101,7 @@ export default function ResetPage() {
             {meldung && <p className="text-sm text-red-600">{meldung}</p>}
             <button
               type="submit" disabled={busy}
-              className="w-full rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
+              className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-fg shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50"
             >
               {busy ? "…" : "Passwort speichern"}
             </button>

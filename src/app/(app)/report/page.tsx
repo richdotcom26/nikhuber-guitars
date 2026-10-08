@@ -40,7 +40,7 @@ export default async function ReportPage({
             href={`/report?jahr=${j}`}
             className={
               "rounded-full border px-2.5 py-1 text-xs " +
-              (j === jahr ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:bg-neutral-100")
+              (j === jahr ? "border-button bg-button text-primary-fg" : "border-neutral-300 text-neutral-600 hover:bg-neutral-100")
             }
           >
             {j}

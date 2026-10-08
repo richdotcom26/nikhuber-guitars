@@ -1,35 +1,44 @@
 @import "tailwindcss";
 
 /**
- * Farbwelt = „Claude"-Optik (warmes Creme + Clay-Akzent):
- *  Text dunkel #1F1C15 · Fließtext #2E2B24 · gedämpft #78736A
- *  Seite #F5F3EC (Papier-Creme) · Karte #FDFCF9 · Linien #E5E0D3
- *  Schaltfläche #C96442 (Hover #B4552F) · Akzent hell #E0876B · Lasur #F4EAE2
- *  Fokus-Schein rgba(201,100,66,.22)
- * Dateneingabefelder: leicht getönter Grund + kräftigere Linie, damit sie sich
- * auch auf hellen Karten klar absetzen (--color-field / --color-field-border).
+ * Farb-Tokens. Standardwerte = Theme „Navy & Petrol“. Das aktive Theme aus
+ * Einstellungen → Themes überschreibt diese Variablen per <style> auf :root (app/layout.tsx).
+ *  navy = Schrift dunkel · ink = Schrift mittel · muted = gedämpft
+ *  page/surface/line = Seite/Karte/Linien
+ *  brand = Akzent (Links, Fokus, aktive Tabs) · brand-dark · brand-soft = Akzent hell · glow = Fokus-Schein
+ *  button = Schaltfläche (aktive Navigation, Filter-Chips) · primary = Hauptschaltfläche (+ fg = Schrift)
+ *  field / field-border = Eingabefelder
  */
 @theme {
-  --color-brand: #c96442;
-  --color-brand-hover: #b4552f;
-  --color-brand-bright: #e0876b;
-  --color-brand-soft: #f4eae2;
-  --color-navy: #1f1c15;
-  --color-navy-light: #3a352c;
+  --color-brand: #109da8;
+  --color-brand-dark: #0f7c87;
+  --color-brand-soft: #e3f5f7;
+  /* Alt-Aliase */
+  --color-brand-hover: var(--color-brand-dark);
+  --color-brand-bright: var(--color-brand);
+
+  --color-button: #001957;
+  --color-button-hover: #123a6e;
+  --color-primary: #001957;
+  --color-primary-hover: #123a6e;
+  --color-primary-fg: #ffffff;
+
+  --color-navy: #001957;
+  --color-navy-light: #123a6e;
   --color-info: #5c7999;
   --color-success: #3f7a46;
 
-  --color-page: #f5f3ec;
-  --color-surface: #fdfcf9;
-  --color-line: #e5e0d3;
-  --color-ink: #2e2b24;
-  --color-muted: #78736a;
+  --color-page: #f2f4f8;
+  --color-surface: #ffffff;
+  --color-line: #d8dee9;
+  --color-ink: #123a6e;
+  --color-muted: #6b7280;
 
   /* Eingabefelder */
-  --color-field: #f1eee4;
-  --color-field-border: #d7d0c0;
+  --color-field: #f7f9fc;
+  --color-field-border: #cbd3e1;
 
-  --color-glow: rgb(201 100 66 / 0.22);
+  --color-glow: rgba(16, 157, 168, 0.24);
 }
 
 :root {

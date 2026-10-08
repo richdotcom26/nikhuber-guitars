@@ -43,6 +43,13 @@
       "when": 1791238423219,
       "tag": "0005_rechnung_entwurf_buchen",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791492365664,
+      "tag": "0006_theme",
+      "breakpoints": true
     }
   ]
 }

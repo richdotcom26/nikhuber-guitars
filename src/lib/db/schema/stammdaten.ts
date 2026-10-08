@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
-  boolean, date, integer, numeric, pgTable, primaryKey, text, timestamp, unique, uuid,
+  boolean, date, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { artikel } from "./artikel";
@@ -105,4 +105,18 @@ export const seriennummer = pgTable("seriennummer", {
   ...auditCols,
 }, (t) => ({
   uqAnzeige: unique("seriennummer_praefix_lfd_uq").on(t.jahrPraefix, t.lfd),
+}));
+
+/**
+ * Farb-Themes (Einstellungen → Themes). `farben` = { schriftDunkel: "#001957", … } (Keys: lib/theme-shared).
+ * Genau ein Theme ist aktiv (partieller Unique-Index) — es gilt für alle Benutzer.
+ */
+export const theme = pgTable("theme", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  farben: jsonb("farben").$type<Record<string, string>>().notNull(),
+  aktiv: boolean("aktiv").default(false).notNull(),
+  ...auditCols,
+}, (t) => ({
+  einAktives: uniqueIndex("theme_ein_aktives_uq").on(t.aktiv).where(sql`${t.aktiv}`),
 }));
