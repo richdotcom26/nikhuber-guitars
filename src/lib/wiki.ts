@@ -291,7 +291,7 @@ export const WIKI: WikiArtikel[] = [
     bloecke: [
       { p: "Im Tab **Zahlung** einer gebuchten Rechnung den **tatsächlichen Zahlbetrag laut Bankauszug** eintragen, dazu Datum, Bank und Zahlungsstatus." },
       { ul: [
-        "**Abzug %** und **Differenz** werden sofort aus dem Zahlbetrag berechnet: Abzug % = (Rechnungsbetrag − Zahlbetrag) ÷ Rechnungsbetrag. Beispiel: 100,00 € Rechnung, 80,00 € Eingang → **20 %** Abzug, Differenz −20,00 €.",
+        "**Abzug %** und **Differenz** werden sofort aus dem Zahlbetrag berechnet: Abzug % = (Rechnungsbetrag − Zahlbetrag) ÷ Rechnungsbetrag. Beispiel: 100,00 € Rechnung, 80,00 € Eingang → Abzug **20 % · 20,00 €**, Differenz −20,00 €.",
         "Zahlt der Kunde mehr, erscheint ein negativer Abzug („Überzahlung“).",
         "Zahlungsstatus **BEZAHLT** setzt die Rechnung auf „Bezahlt“.",
       ] },

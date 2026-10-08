@@ -107,12 +107,12 @@ export function ZahlungForm({
           />
         </Field>
         <Field
-          label="Abzug %"
+          label="Abzug % · Betrag"
           hint={prozent == null ? "wird aus dem Zahlbetrag berechnet"
             : prozent < 0 ? "Überzahlung" : prozent === 0 ? "vollständig bezahlt" : undefined}
         >
           <Input
-            value={prozent == null ? "" : `${pct(prozent)} %`}
+            value={prozent == null || differenz == null ? "" : `${pct(prozent)} %   ·   ${formatMoney(-differenz, waehrung)}`}
             readOnly
             tabIndex={-1}
             className={prozent != null && prozent !== 0 ? "font-medium text-amber-700" : undefined}
