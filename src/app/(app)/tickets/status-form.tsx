@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Select } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import { TICKET_STATUS } from "@/lib/ticket-shared";
@@ -8,6 +8,8 @@ import { setTicketStatusAction } from "./actions";
 
 export function StatusForm({ id, status }: { id: string; status: string }) {
   const [state, action] = useActionState(setTicketStatusAction, IDLE);
+  // kontrolliert: React 19 setzt Formulare nach der Action auf defaultValue zurück
+  const [wert, setWert] = useState(status);
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
@@ -16,8 +18,8 @@ export function StatusForm({ id, status }: { id: string; status: string }) {
       <label className="text-xs font-medium text-muted">Status</label>
       <Select
         name="status"
-        defaultValue={status}
-        onChange={() => formRef.current?.requestSubmit()}
+        value={wert}
+        onChange={(e) => { setWert(e.target.value); formRef.current?.requestSubmit(); }}
         className="h-8 w-44"
       >
         {TICKET_STATUS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

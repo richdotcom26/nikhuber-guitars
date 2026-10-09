@@ -48,7 +48,7 @@ export function SpecsEditor({
                     <div className="space-y-1">
                       {slotRows.map((r) => (
                         <SlotLine
-                          key={r.id}
+                          key={`${r.id}:${r.artikelId}:${r.aufpreis}`}
                           {...{ traeger, traegerId, slot, candidates: cands, row: r, readOnly }}
                         />
                       ))}
@@ -61,7 +61,7 @@ export function SpecsEditor({
               }
               return (
                 <SlotLine
-                  key={`${slot.key}:${slotRows[0]?.id ?? "leer"}`}
+                  key={`${slot.key}:${slotRows[0]?.id ?? "leer"}:${slotRows[0]?.artikelId ?? ""}:${slotRows[0]?.aufpreis ?? ""}`}
                   {...{ traeger, traegerId, slot, candidates: cands, row: slotRows[0], readOnly }}
                 />
               );
@@ -128,8 +128,10 @@ function SlotLine({
   const [state, action] = useActionState(setSlotAction, IDLE);
   const formRef = useRef<HTMLFormElement>(null);
   const submit = () => formRef.current?.requestSubmit();
-  // Holz-Kennzeichnung sofort beim Auswählen aktualisieren (nicht erst nach dem Speichern)
+  // Kontrollierte Felder: React 19 setzt Formulare nach einer Action auf defaultValue zurück —
+  // mit eigenem State bleibt die neue Auswahl stehen (und die Holz-Kennzeichnung folgt sofort).
   const [gewaehlt, setGewaehlt] = useState(row?.artikelId ?? "");
+  const [aufpreis, setAufpreis] = useState(row?.aufpreis ?? false);
   const cand = candidates.find((c) => c.id === gewaehlt);
   const holz = cand ? cand.holz : gewaehlt && row?.artikelId === gewaehlt ? row.holz : false;
   const cites = cand ? cand.cites : gewaehlt && row?.artikelId === gewaehlt ? row.cites : false;
@@ -149,9 +151,9 @@ function SlotLine({
       <HolzMarker holz={holz} cites={cites} />
       <Select
         name="artikelId"
-        defaultValue={row?.artikelId ?? ""}
+        value={gewaehlt}
         disabled={readOnly}
-        onChange={(e) => { setGewaehlt(e.target.value); submit(); }}
+        onChange={(e) => { setGewaehlt(e.target.value); queueMicrotask(submit); }}
         className="h-8 max-w-md flex-1"
       >
         <option value="">– leer –</option>
@@ -169,9 +171,9 @@ function SlotLine({
           <input
             type="checkbox"
             name="aufpreis"
-            defaultChecked={row?.aufpreis ?? false}
+            checked={aufpreis}
             disabled={readOnly}
-            onChange={submit}
+            onChange={(e) => { setAufpreis(e.target.checked); queueMicrotask(submit); }}
           />
           Aufpreis
         </label>

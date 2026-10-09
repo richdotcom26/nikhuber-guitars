@@ -207,7 +207,8 @@ function Row({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
 function WartenGrund({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
   const [state, action] = useActionState(setSchrittWartenAufAction, IDLE);
   const formRef = useRef<HTMLFormElement>(null);
-  const grund = row.wartenAuf ?? "";
+  // kontrolliert: React 19 setzt Formulare nach der Action auf defaultValue zurück
+  const [grund, setGrund] = useState(row.wartenAuf ?? "");
   const bekannt = (WARTEN_GRUND_VALUES as readonly string[]).includes(grund);
 
   return (
@@ -216,8 +217,8 @@ function WartenGrund({ auftragId, row }: { auftragId: string; row: SchrittRow })
       <input type="hidden" name="schrittId" value={row.id} />
       <Select
         name="wartenAuf"
-        defaultValue={grund}
-        onChange={() => formRef.current?.requestSubmit()}
+        value={grund}
+        onChange={(e) => { setGrund(e.target.value); formRef.current?.requestSubmit(); }}
         className="h-7"
       >
         <option value="">– Grund wählen –</option>

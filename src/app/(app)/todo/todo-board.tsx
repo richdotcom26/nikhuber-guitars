@@ -136,6 +136,8 @@ function TodoLine({
   const [editing, setEditing] = useState(false);
   const anMich = row.aktuellBeiId === currentUserId;
   const [stState, stAction] = useActionState(setTodoStatusAction, IDLE);
+  // kontrolliert: React 19 setzt Formulare nach der Action auf defaultValue zurück
+  const [statusWert, setStatusWert] = useState(row.status);
   const [delState, delAction] = useActionState(deleteTodoAction, IDLE);
   const [ueState, ueAction] = useActionState(uebernehmenTodoAction, IDLE);
   const stForm = useRef<HTMLFormElement>(null);
@@ -201,9 +203,9 @@ function TodoLine({
             <input type="hidden" name="id" value={row.id} />
             <Select
               name="status"
-              defaultValue={row.status}
+              value={statusWert}
               className="h-7 w-32 text-xs"
-              onChange={() => stForm.current?.requestSubmit()}
+              onChange={(e) => { setStatusWert(e.target.value as typeof row.status); stForm.current?.requestSubmit(); }}
             >
               {TODO_STATUS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
