@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  angebot, auftrag, belegPosition, rechnung, rechnungAnzahlung, staat,
+  angebot, appUser, auftrag, belegPosition, kunde, rechnung, rechnungAnzahlung, staat,
 } from "@/lib/db/schema";
 
 const azRechnung = alias(rechnung, "az_rechnung");
@@ -34,7 +34,11 @@ export interface BelegRenderData {
     firma: string; strasse: string | null; plz: string | null; ort: string | null;
     land: string | null; landCode: string; steuerNr: string | null; bank: string | null;
     ustId: string | null; iban: string | null; bic: string | null;
+    telefon: string | null; fax: string | null; email: string | null; webseite: string | null;
   };
+  /** Kundennummer + Bearbeiter (Infoblock rechts oben). */
+  kundenNr: string | null;
+  bearbeiter: string | null;
   titel: string;
   belegart: string | null;   // rechnung: RECHNUNG | STORNORECHNUNG | RECHNUNGSKORREKTUR
   nummer: string;
@@ -247,7 +251,14 @@ export async function ladeBelegData(
       ustId: fs.ustId,
       iban: fs.iban,
       bic: fs.bic,
+      telefon: fs.telefon, fax: fs.fax, email: fs.email, webseite: fs.webseite,
     },
+    kundenNr: h.kundeId
+      ? (await db.select({ n: kunde.kundenNr }).from(kunde).where(eq(kunde.id, h.kundeId)))[0]?.n ?? null
+      : null,
+    bearbeiter: h.createdBy
+      ? (await db.select({ n: appUser.name }).from(appUser).where(eq(appUser.id, h.createdBy)))[0]?.n ?? null
+      : null,
     titel: (entwurf ? (sprache === "DE" ? "ENTWURF – " : "DRAFT – ") : "") + titelFor(art, rr?.belegart ?? null, sprache),
     belegart: rr?.belegart ?? null,
     region: h.kdRegion ?? null,

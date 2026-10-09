@@ -1,6 +1,7 @@
 import {
   Document, Font, Image, Page, Text, View, StyleSheet,
 } from "@react-pdf/renderer";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { BelegRenderData } from "@/lib/domain/beleg-render";
 import { formatDate, formatMoney } from "@/lib/utils";
@@ -19,7 +20,7 @@ const T = {
     summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", abzug: "abzgl. Anzahlung", vom: "vom", nettoKurz: "netto", nochZuZahlen: "Noch zu zahlen", netto: "Summe netto", mwst: "MwSt",
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
     zahlung: "Zahlungsbedingung", ustId: "USt-IdNr.", steuerNr: "Steuernummer", bank: "Bankverbindung",
-    seite: "Seite von",
+    seite: "Seite", kundenNr: "Kunden-Nr.", bearbeiter: "Bearbeiter", telefon: "Telefon", web: "Internet",
     annahme: "Auftragsannahme",
     annahmeText: "Hiermit bestelle ich verbindlich die oben aufgeführten Leistungen zu den genannten Preisen und Bedingungen.",
     unterschrift: "Datum, Unterschrift Auftraggeber",
@@ -32,7 +33,7 @@ const T = {
     summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", abzug: "less down payment", vom: "of", nettoKurz: "net", nochZuZahlen: "Amount due", netto: "Net total", mwst: "VAT",
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
     zahlung: "Payment terms", ustId: "VAT ID", steuerNr: "Tax number", bank: "Bank details",
-    seite: "Page of",
+    seite: "Page", kundenNr: "Customer no.", bearbeiter: "Contact", telefon: "Phone", web: "Web",
     annahme: "Order acceptance",
     annahmeText: "I hereby place a binding order for the items listed above at the stated prices and terms.",
     unterschrift: "Date, customer signature",
@@ -41,6 +42,8 @@ const T = {
   },
 };
 
+// Logo als Buffer (Pfade mit Umlauten werden von react-pdf nicht zuverlässig geladen)
+const LOGO = { data: readFileSync(path.join(process.cwd(), "src", "lib", "pdf", "logo-grau.jpg")), format: "jpg" as const };
 const FONT_DIR = path.join(process.cwd(), "src", "lib", "pdf", "fonts");
 Font.register({
   family: "NotoSans",
@@ -52,11 +55,11 @@ Font.register({
 Font.registerHyphenationCallback((w) => [w]); // keine Silbentrennung
 
 const s = StyleSheet.create({
-  page: { fontFamily: "NotoSans", fontSize: 9, color: "#111", padding: "18mm 16mm", lineHeight: 1.45 },
+  page: { fontFamily: "NotoSans", fontSize: 9, color: "#111", paddingTop: "12mm", paddingHorizontal: "16mm", paddingBottom: "30mm", lineHeight: 1.45 },
   rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   firma: { fontWeight: 700, fontSize: 11 },
   muted: { color: "#666" },
-  titel: { fontSize: 18, fontWeight: 700, marginBottom: 2 },
+  titel: { fontSize: 14, fontWeight: 700, marginBottom: 10 },
   block: { marginBottom: 16 },
   kopftext: { marginBottom: 12 },
   th: {
@@ -77,8 +80,13 @@ const s = StyleSheet.create({
   sumRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 1.5 },
   sumStrong: { fontWeight: 700, borderTopWidth: 1.5, borderTopColor: "#333", marginTop: 2, paddingTop: 3 },
   fuss: { marginTop: 22, fontSize: 8, color: "#666" },
+  fusszeile: {
+    position: "absolute", bottom: 26, left: 45, right: 45, height: 44,
+    textAlign: "center", fontSize: 7, color: "#777", lineHeight: 1.4,
+    borderTopWidth: 0.5, borderTopColor: "#bbb", paddingTop: 4,
+  },
   seite: {
-    position: "absolute", bottom: "10mm", left: "16mm", right: "16mm",
+    position: "absolute", bottom: 12, left: 45, right: 45,
     textAlign: "center", fontSize: 8, color: "#999",
   },
 });
@@ -99,30 +107,38 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
   return (
     <Document title={`${data.titel} ${data.nummer}`} author={data.firma.firma}>
       <Page size="A4" style={s.page}>
-        <View style={[s.rowBetween, { marginBottom: 22 }]}>
-          <View>
-            <Text style={s.firma}>{data.firma.firma}</Text>
-            <Text style={s.muted}>{firmaZeile}</Text>
+        {/* Logo mittig oben (wie das alte Ninox-Formular) */}
+        {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf-Image hat kein alt */}
+        <Image src={LOGO} style={{ width: 150, alignSelf: "center", marginBottom: 18 }} />
+
+        <View style={[s.rowBetween, { marginBottom: 20 }]}>
+          <View style={{ width: "55%" }}>
+            <Text style={[s.muted, { fontSize: 7, marginBottom: 4, textDecoration: "underline" }]}>
+              {data.firma.firma}{firmaZeile ? ` · ${firmaZeile}` : ""}
+            </Text>
+            <Text>{kundeBlock}</Text>
           </View>
-          <View style={{ textAlign: "right" }}>
-            <Text style={s.titel}>{data.titel}</Text>
-            <Text>{t.nr} {data.nummer}</Text>
-            <Text style={s.muted}>{t.datum}: {formatDate(data.datum)}</Text>
-            {data.lieferdatum && (data.art === "rechnung" || data.ohnePreise) ? (
-              <Text style={s.muted}>{t.lieferdatum}: {formatDate(data.lieferdatum)}</Text>
-            ) : null}
-            {data.auftragNummer ? <Text style={s.muted}>{t.auftrag}: {data.auftragNummer}</Text> : null}
-            {data.referenzNummer ? <Text style={s.muted}>{t.bezug} {data.referenzNummer}</Text> : null}
+          <View style={{ width: "38%" }}>
+            {[
+              data.kundenNr ? [t.kundenNr, data.kundenNr] : null,
+              [t.datum, formatDate(data.datum)],
+              data.lieferdatum && (data.art === "rechnung" || data.ohnePreise) ? [t.lieferdatum, formatDate(data.lieferdatum)] : null,
+              data.auftragNummer ? [t.auftrag, data.auftragNummer] : null,
+              data.referenzNummer ? [t.bezug, data.referenzNummer] : null,
+              data.kunde.ustId ? [t.ustId, data.kunde.ustId] : null,
+              data.bearbeiter ? [t.bearbeiter, data.bearbeiter] : null,
+              data.firma.email ? ["E-Mail", data.firma.email] : null,
+            ].filter((z): z is string[] => !!z).map(([k, v]) => (
+              <View key={k} style={{ flexDirection: "row" }}>
+                <Text style={[s.muted, { width: 72 }]}>{k}:</Text>
+                <Text style={{ flex: 1 }}>{v}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
-        <View style={s.block}>
-          <Text style={[s.muted, { fontSize: 7, marginBottom: 2 }]}>
-            {data.firma.firma}{firmaZeile ? ` · ${firmaZeile}` : ""}
-          </Text>
-          <Text>{kundeBlock}</Text>
-          {data.kunde.ustId ? <Text style={s.muted}>{t.ustId}: {data.kunde.ustId}</Text> : null}
-        </View>
+        {/* Belegart + Nummer fett als Überschrift */}
+        <Text style={s.titel}>{data.titel} {data.nummer}</Text>
 
         {data.kopftext ? <Text style={s.kopftext}>{data.kopftext}</Text> : null}
 
@@ -227,18 +243,35 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
         <View style={s.fuss}>
           {data.steuerHinweis ? <Text>{data.steuerHinweis}</Text> : null}
           {data.zahlungsbedingung ? <Text>{t.zahlung}: {data.zahlungsbedingung}</Text> : null}
-          <Text style={{ marginTop: 6 }}>
-            {data.firma.firma}
-            {data.firma.steuerNr ? ` · ${t.steuerNr}: ${data.firma.steuerNr}` : ""}
-          </Text>
-          {data.firma.bank ? <Text>{t.bank}: {data.firma.bank}</Text> : null}
         </View>
 
-        <Text
-          style={s.seite}
-          render={({ pageNumber, totalPages }) => `${t.seite} ${pageNumber} / ${totalPages}`}
-          fixed
-        />
+        {/* Fußzeile auf jeder Seite: Firma, Steuer, Bank, Kontakt (wie das alte Formular) */}
+        <View style={s.fusszeile} fixed>
+          <Text>
+            {[
+              data.firma.firma,
+              data.firma.ustId ? `${t.ustId}: ${data.firma.ustId}` : null,
+              data.firma.steuerNr ? `${t.steuerNr}: ${data.firma.steuerNr}` : null,
+              firmaZeile,
+            ].filter(Boolean).join(" – ")}
+          </Text>
+          <Text>
+            {[
+              data.firma.bank ? `${t.bank}: ${data.firma.bank}` : null,
+              data.firma.iban ? `IBAN: ${data.firma.iban}` : null,
+              data.firma.bic ? `BIC: ${data.firma.bic}` : null,
+            ].filter(Boolean).join(" – ")}
+          </Text>
+          <Text>
+            {[
+              data.firma.telefon ? `${t.telefon}: ${data.firma.telefon}` : null,
+              data.firma.fax ? `Fax: ${data.firma.fax}` : null,
+              data.firma.email ? `E-Mail: ${data.firma.email}` : null,
+              data.firma.webseite ? `${t.web}: ${data.firma.webseite}` : null,
+            ].filter(Boolean).join(" – ")}
+          </Text>
+        </View>
+        <Text style={s.seite} fixed render={({ pageNumber, totalPages }) => `${t.seite} ${pageNumber} / ${totalPages}`} />
       </Page>
     </Document>
   );
