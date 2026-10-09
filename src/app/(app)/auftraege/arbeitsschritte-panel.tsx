@@ -40,9 +40,12 @@ export interface SchrittRow {
 export function ArbeitsschrittePanel({
   auftragId,
   rows,
+  bereich = "WERKSTATT",
 }: {
   auftragId: string;
   rows: SchrittRow[];
+  /** Welche Schritte: Werkstatt (Reiter „Arbeitsschritte") oder Office/Compliance (Reiter „Arbeitsschritte Office"). */
+  bereich?: "WERKSTATT" | "OFFICE";
 }) {
   const [zeigeAlle, setZeigeAlle] = useState(false);
 
@@ -60,6 +63,10 @@ export function ArbeitsschrittePanel({
   const istVersteckt = (r: SchrittRow) => r.status === "ERLEDIGT" && r.reihenfolge < grenze;
   const versteckt = werkstatt.filter(istVersteckt);
   const werkstattSichtbar = zeigeAlle ? werkstatt : werkstatt.filter((r) => !istVersteckt(r));
+
+  if (bereich === "OFFICE") {
+    return <Section title="Office / Compliance" auftragId={auftragId} rows={office} gesamt={office.length} />;
+  }
 
   return (
     <div className="space-y-5">
@@ -83,7 +90,6 @@ export function ArbeitsschrittePanel({
           ) : null
         }
       />
-      <Section title="Office / Compliance" auftragId={auftragId} rows={office} gesamt={office.length} />
     </div>
   );
 }

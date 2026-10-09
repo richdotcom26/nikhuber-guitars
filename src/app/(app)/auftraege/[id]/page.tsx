@@ -47,6 +47,7 @@ const TABS: readonly TabItem[] = [
   { key: "details", label: "Details (Specs)" },
   { key: "positionen", label: "Positionen" },
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
+  { key: "office", label: "Arbeitsschritte Office" },
   { key: "nks", label: "NKS" },
   { key: "rechnung", label: "Rechnung" },
 ];
@@ -234,9 +235,10 @@ export default async function AuftragDetailPage({
         />
       ) : null}
 
-      {active === "arbeitsschritte" ? (
+      {active === "arbeitsschritte" || active === "office" ? (
         <ArbeitsschrittePanel
           auftragId={id}
+          bereich={active === "office" ? "OFFICE" : "WERKSTATT"}
           rows={(await listArbeitsschritte(id)).map((s) => ({
             id: s.id,
             status: s.status,
