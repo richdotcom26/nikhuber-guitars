@@ -48,6 +48,10 @@ export interface SpecRow {
   vkEur: string | null;
   net1: string | null;
   net2: string | null;
+  /** Artikeltyp „Holz / Fertigung" */
+  holz: boolean;
+  /** geschütztes Holz (CITES) */
+  cites: boolean;
 }
 
 export async function getSpecs(traeger: SpecTraeger, traegerId: string) {
@@ -63,6 +67,8 @@ export async function getSpecs(traeger: SpecTraeger, traegerId: string) {
       vkEur: artikel.vkEur,
       net1: artikel.net1,
       net2: artikel.net2,
+      holz: sql<boolean>`${artikel.artikeltyp} = 'HOLZ'`,
+      cites: sql<boolean>`coalesce(${artikel.geschuetztesHolzCites}, false)`,
     })
     .from(specBelegung)
     .innerJoin(artikel, eq(artikel.id, specBelegung.artikelId))
@@ -102,6 +108,8 @@ export interface SlotCandidate {
   name: string;
   artikelNr: string | null;
   vkEur: string | null;
+  holz: boolean;
+  cites: boolean;
 }
 
 /**
@@ -120,6 +128,8 @@ export async function candidatesBySlot(): Promise<Record<string, SlotCandidate[]
       nameLang: artikel.nameLang,
       artikelNr: artikel.artikelNr,
       vkEur: artikel.vkEur,
+      artikeltyp: artikel.artikeltyp,
+      cites: artikel.geschuetztesHolzCites,
     })
     .from(artikel)
     .where(and(
@@ -132,7 +142,10 @@ export async function candidatesBySlot(): Promise<Record<string, SlotCandidate[]
   const byGruppe = new Map<string, SlotCandidate[]>();
   for (const r of rows) {
     const list = byGruppe.get(r.gruppe) ?? [];
-    list.push({ id: r.id, name: r.nameBelege || r.nameLang || "–", artikelNr: r.artikelNr, vkEur: r.vkEur });
+    list.push({
+      id: r.id, name: r.nameBelege || r.nameLang || "–", artikelNr: r.artikelNr, vkEur: r.vkEur,
+      holz: r.artikeltyp === "HOLZ", cites: !!r.cites,
+    });
     byGruppe.set(r.gruppe, list);
   }
 

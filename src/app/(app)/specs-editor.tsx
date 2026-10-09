@@ -82,6 +82,37 @@ export function SpecsEditor({
   );
 }
 
+/* ------------------------------------------------------------------ holz marker */
+
+/**
+ * Kennzeichnung links neben der Auswahl: Holzstamm bei Artikeltyp „Holz / Fertigung";
+ * bei geschütztem Holz (CITES) rot mit Warndreieck davor. Feste Breite → Auswahlfelder bleiben bündig.
+ */
+function HolzMarker({ holz, cites }: { holz: boolean; cites: boolean }) {
+  const titel = cites
+    ? "Geschütztes Holz (CITES) – Herkunfts-/Ausfuhrdokumente beachten"
+    : holz ? "Holz / Fertigung" : undefined;
+  return (
+    <span className="flex w-9 shrink-0 items-center justify-end gap-0.5" title={titel} aria-label={titel}>
+      {cites ? (
+        <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-red-600" aria-hidden="true">
+          <path fill="currentColor" d="M8 1.5 15 14H1L8 1.5Zm-.75 4.5v4h1.5V6h-1.5Zm0 5.25v1.5h1.5v-1.5h-1.5Z" />
+        </svg>
+      ) : null}
+      {holz || cites ? (
+        <svg viewBox="0 0 20 16" className={"h-4 w-5 " + (cites ? "text-red-600" : "text-amber-800")} aria-hidden="true">
+          {/* liegender Holzstamm mit Jahresringen an der Stirnseite */}
+          <rect x="1" y="4" width="13" height="8" rx="1.5" fill="currentColor" opacity="0.35" />
+          <path d="M3 6.5h8M4 9.5h6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
+          <ellipse cx="14.5" cy="8" rx="4" ry="4" fill="currentColor" />
+          <ellipse cx="14.5" cy="8" rx="2.6" ry="2.6" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.8" />
+          <circle cx="14.5" cy="8" r="1" fill="#fff" opacity="0.8" />
+        </svg>
+      ) : null}
+    </span>
+  );
+}
+
 /* -------------------------------------------------------------------- slot line */
 
 function SlotLine({
@@ -97,6 +128,11 @@ function SlotLine({
   const [state, action] = useActionState(setSlotAction, IDLE);
   const formRef = useRef<HTMLFormElement>(null);
   const submit = () => formRef.current?.requestSubmit();
+  // Holz-Kennzeichnung sofort beim Auswählen aktualisieren (nicht erst nach dem Speichern)
+  const [gewaehlt, setGewaehlt] = useState(row?.artikelId ?? "");
+  const cand = candidates.find((c) => c.id === gewaehlt);
+  const holz = cand ? cand.holz : gewaehlt && row?.artikelId === gewaehlt ? row.holz : false;
+  const cites = cand ? cand.cites : gewaehlt && row?.artikelId === gewaehlt ? row.cites : false;
 
   return (
     <form
@@ -110,11 +146,12 @@ function SlotLine({
       <input type="hidden" name="reihenfolge" value={row?.reihenfolge ?? 0} />
 
       <span className="w-36 shrink-0 text-neutral-500">{slot.caption}</span>
+      <HolzMarker holz={holz} cites={cites} />
       <Select
         name="artikelId"
         defaultValue={row?.artikelId ?? ""}
         disabled={readOnly}
-        onChange={submit}
+        onChange={(e) => { setGewaehlt(e.target.value); submit(); }}
         className="h-8 max-w-md flex-1"
       >
         <option value="">– leer –</option>
