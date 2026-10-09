@@ -168,6 +168,7 @@ export async function kundenPickerListe(q: string, limit = 30) {
       kurzname: kunde.kurzname,
       ort: kunde.ort,
       kontaktart: kunde.kontaktart,
+      region: kunde.region, waehrung: kunde.waehrung, vertriebsweg: kunde.vertriebsweg, sprache: kunde.sprache,
     })
     .from(kunde)
     .where(and(...filters))

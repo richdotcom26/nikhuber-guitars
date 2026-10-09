@@ -24,6 +24,7 @@ import {
 } from "../actions";
 import { KopfForm } from "../kopf-form";
 import { SetKundeButton } from "../set-kunde-form";
+import type { KundeMerkmale } from "../../_components/kunde-wechsel-button";
 import { ToAuftragButton } from "../to-auftrag-button";
 import { VorlagePicker } from "../../_components/vorlage-picker";
 import { SpecsEditor } from "../../specs-editor";
@@ -97,7 +98,7 @@ export default async function AngebotDetailPage({
                 <Input name="kundenSuche" defaultValue={kundenSuche ?? ""} placeholder="Kunde suchen …" className="h-8 w-56" />
                 <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
               </form>
-              {kundenSuche ? <KundenTreffer angebotId={id} q={kundenSuche} bisher={a.kundeId ? kundeKurz(a) : null} /> : null}
+              {kundenSuche ? <KundenTreffer angebotId={id} q={kundenSuche} bisher={a.kundeId ? { name: kundeKurz(a), region: a.kdRegion, waehrung: a.kdWaehrung, vertriebsweg: a.kdVertriebsweg, sprache: a.kdSprache } : null} /> : null}
             </CardContent>
           </Card>
 
@@ -168,7 +169,7 @@ export default async function AngebotDetailPage({
   );
 }
 
-async function KundenTreffer({ angebotId, q, bisher }: { angebotId: string; q: string; bisher: string | null }) {
+async function KundenTreffer({ angebotId, q, bisher }: { angebotId: string; q: string; bisher: KundeMerkmale | null }) {
   const positionen = bisher ? await bepreisbarePositionen("angebot", angebotId) : 0;
   const kunden = await kundenPickerListe(q, 15);
   if (kunden.length === 0) return <p className="text-xs text-neutral-400">Kein Treffer.</p>;
@@ -181,7 +182,7 @@ async function KundenTreffer({ angebotId, q, bisher }: { angebotId: string; q: s
             <span>
               {name} <span className="text-xs text-neutral-400">{k.ort ?? ""} · {k.kontaktart}</span>
             </span>
-            <SetKundeButton angebotId={angebotId} kundeId={k.id} kundeName={name} bisher={bisher} positionen={positionen} />
+            <SetKundeButton angebotId={angebotId} kundeId={k.id} neu={{ name, region: k.region, waehrung: k.waehrung, vertriebsweg: k.vertriebsweg, sprache: k.sprache }} alt={bisher} positionen={positionen} />
           </li>
         );
       })}

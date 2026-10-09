@@ -358,6 +358,7 @@ export async function kundenPickerListe(q: string, limit = 15) {
     .select({
       id: kunde.id, firma: kunde.firma, vorname: kunde.vorname, nachname: kunde.nachname,
       kurzname: kunde.kurzname, ort: kunde.ort, kontaktart: kunde.kontaktart,
+      region: kunde.region, waehrung: kunde.waehrung, vertriebsweg: kunde.vertriebsweg, sprache: kunde.sprache,
     })
     .from(kunde)
     .where(and(...filters))

@@ -44,6 +44,7 @@ import { AuftragVerlauf } from "../auftrag-verlauf";
 import { KopfForm } from "../kopf-form";
 import { NksDokument } from "../nks-dokumente";
 import { SetKundeButton } from "../set-kunde-form";
+import type { KundeMerkmale } from "../../_components/kunde-wechsel-button";
 import { StatusChanger } from "../status-changer";
 import { StatusBemerkung } from "../status-bemerkung";
 
@@ -138,7 +139,7 @@ export default async function AuftragDetailPage({
                       <Input name="kundenSuche" defaultValue={kundenSuche ?? ""} placeholder="Kunde suchen …" className="h-8 w-56" />
                       <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
                     </form>
-                    {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} bisher={a.kundeId ? kundeKurz(a) : null} /> : null}
+                    {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} bisher={a.kundeId ? { name: kundeKurz(a), region: a.kdRegion, waehrung: a.kdWaehrung, vertriebsweg: a.kdVertriebsweg, sprache: a.kdSprache } : null} /> : null}
                   </>
                 )}
               </CardContent>
@@ -301,7 +302,7 @@ export default async function AuftragDetailPage({
   );
 }
 
-async function KundenTreffer({ auftragId, q, bisher }: { auftragId: string; q: string; bisher: string | null }) {
+async function KundenTreffer({ auftragId, q, bisher }: { auftragId: string; q: string; bisher: KundeMerkmale | null }) {
   const positionen = bisher ? await bepreisbarePositionen("auftrag", auftragId) : 0;
   const kunden = await kundenPickerListe(q, 15);
   if (kunden.length === 0) return <p className="text-xs text-neutral-400">Kein Treffer.</p>;
@@ -312,7 +313,7 @@ async function KundenTreffer({ auftragId, q, bisher }: { auftragId: string; q: s
         return (
           <li key={k.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
             <span>{name} <span className="text-xs text-neutral-400">{k.ort ?? ""} · {k.kontaktart}</span></span>
-            <SetKundeButton auftragId={auftragId} kundeId={k.id} kundeName={name} bisher={bisher} positionen={positionen} />
+            <SetKundeButton auftragId={auftragId} kundeId={k.id} neu={{ name, region: k.region, waehrung: k.waehrung, vertriebsweg: k.vertriebsweg, sprache: k.sprache }} alt={bisher} positionen={positionen} />
           </li>
         );
       })}
