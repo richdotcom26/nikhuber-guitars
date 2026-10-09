@@ -346,6 +346,44 @@ export async function applyModellvorlage(
       })
       .where(eq(head.id, traegerId));
   });
+  if (traeger === "auftrag") await recomputeUmsatzerwartung(traegerId);
+}
+
+/**
+ * Umsatzerwartung eines Auftrags (EUR-normierter Planungswert, ex Ninox A.GY, MIGRATION 7k):
+ * - Positionen vorhanden → Summe netto des Auftrags (USD × USD→EUR-Faktor),
+ * - sonst Modell gewählt → Grundpreis (netto) des Modells nach Vertriebsweg (NET1/NET2/NET_US/VK_US/VK_EUR),
+ * - sonst leer.
+ * Hält auch `stand_he_wert` (= Umsatzerwartung × Fortschritt) aktuell.
+ */
+export async function recomputeUmsatzerwartung(auftragId: string) {
+  const [a] = await db.select().from(auftrag).where(eq(auftrag.id, auftragId));
+  if (!a) return;
+  const faktor = Number((await getFirmaSetting()).usdEurFaktor) || 0.92;
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(belegPosition)
+    .where(eq(belegPosition.auftragId, auftragId));
+
+  let wert: number | null = null;
+  if (n > 0 && a.summeNetto != null) {
+    wert = Number(a.summeNetto) * (a.kdWaehrung === "USD" ? faktor : 1);
+  } else if (a.modellArtikelId) {
+    const [m] = await db.select().from(artikel).where(eq(artikel.id, a.modellArtikelId));
+    if (m) {
+      const preis = tierPreis(m, a.kdVertriebsweg, a.kdWaehrung, null, await positionMargen());
+      const usd = a.kdVertriebsweg === "NET_US" || a.kdVertriebsweg === "VK_US";
+      if (preis != null) wert = preis * (usd ? faktor : 1);
+    }
+  }
+  const umsatz = wert == null ? null : Math.round(wert * 100) / 100;
+  const standHe = umsatz == null || a.fortschrittProzent == null
+    ? null
+    : Math.round(umsatz * (a.fortschrittProzent / 100) * 100) / 100;
+  await db
+    .update(auftrag)
+    .set({ umsatzerwartung: umsatz == null ? null : String(umsatz), standHeWert: standHe == null ? null : String(standHe) })
+    .where(eq(auftrag.id, auftragId));
 }
 
 /* --------------------------------------------------- Positionen generieren */
@@ -591,6 +629,8 @@ export async function recomputeSummen(traeger: PosTraeger, traegerId: string) {
       summeBrutto: String(summeBrutto),
     })
     .where(eq(head.id, traegerId));
+
+  if (traeger === "auftrag") await recomputeUmsatzerwartung(traegerId);
 
   // Rechnung: Zahlbetrag = Brutto − abgezogene Anzahlungsrechnungen − (Altbestand) manuelle Anzahlung
   if (traeger === "rechnung") {

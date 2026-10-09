@@ -91,7 +91,14 @@ export function KopfForm({ v }: { v: KopfValues }) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Umsatzerwartung (EUR-normiert)" htmlFor="umsatzerwartung">
-          <Input id="umsatzerwartung" name="umsatzerwartung" inputMode="decimal" defaultValue={formatBetrag(v.umsatzerwartung)} />
+          <Input
+            id="umsatzerwartung"
+            value={v.umsatzerwartung == null ? "–" : formatBetrag(v.umsatzerwartung)}
+            readOnly
+            tabIndex={-1}
+            className="cursor-default bg-page text-muted"
+            title="Wird berechnet: Summe netto der Positionen, sonst Grundpreis (netto) des Modells; USD in EUR umgerechnet."
+          />
         </Field>
         <Field label="Anzahlung" htmlFor="anzahlung">
           <Input id="anzahlung" name="anzahlung" inputMode="decimal" defaultValue={formatBetrag(v.anzahlung)} />

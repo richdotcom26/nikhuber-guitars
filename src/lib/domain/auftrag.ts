@@ -15,7 +15,7 @@ import {
   addSchritt, clearSchritte, computeFortschritt, hatCitesHolzImAuftrag, recomputeComplianceSteps,
   seedStandardSchritte, VORRAT_NR,
 } from "./arbeitsschritt";
-import { allocateNummer, kdSnapshot, recomputeSummen } from "./belege";
+import { allocateNummer, kdSnapshot, recomputeSummen, recomputeUmsatzerwartung } from "./belege";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 
@@ -184,6 +184,7 @@ export async function setAuftragKunde(id: string, kundeId: string) {
     .set({ ...snap, updatedAt: new Date(), updatedBy: user.id })
     .where(eq(auftrag.id, id));
   await recomputeComplianceSteps(id, snap.kdRegion ?? null, await hatCitesHolz(id));
+  await recomputeUmsatzerwartung(id); // Vertriebsweg/Währung des Kunden bestimmen den Modell-Grundpreis
 }
 
 const hatCitesHolz = hatCitesHolzImAuftrag;
@@ -298,7 +299,6 @@ export const auftragKopfSchema = z.object({
   besonderes: nullableText,
   spezialauftrag: nullableText,
   bauplandatum: dateOrNull,
-  umsatzerwartung: decimalOrNull,
   anzahlung: decimalOrNull,
 });
 export type AuftragKopfInput = z.infer<typeof auftragKopfSchema>;

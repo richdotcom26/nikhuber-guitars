@@ -130,6 +130,20 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "umsatzerwartung",
+    bereich: "Aufträge",
+    titel: "Umsatzerwartung (wird berechnet)",
+    bloecke: [
+      { p: "Die **Umsatzerwartung** im Kopf des Auftrags ist ein Planungswert in **Euro (netto)** – Grundlage für Bauplanung und „Stand HE“ (Umsatzerwartung × Fortschritt). Sie wird **automatisch berechnet** und kann nicht von Hand geändert werden:" },
+      { ul: [
+        "**Positionen vorhanden** → die **Summe netto** des Auftrags (nach Gesamtrabatt, mit Versand), also der konkret erreichte Preis.",
+        "**Noch keine Positionen, aber ein Modell gewählt** → der **Grundpreis (netto) des Modells** passend zum Vertriebsweg des Kunden (NET1, NET2, NET US, VK US, VK EUR). Aufpreise aus den Specs zählen erst, wenn die Positionen erzeugt sind.",
+        "**US-Dollar** wird mit dem **USD → EUR Faktor** (Einstellungen → Firma) in Euro umgerechnet.",
+        "Neu berechnet wird bei jeder Änderung der Positionen, beim Übernehmen einer Modellvorlage, beim Wechsel des Kunden und beim Speichern des Kopfes.",
+      ] },
+    ],
+  },
+  {
     id: "nks",
     bereich: "Aufträge",
     titel: "NKS: Lacey Act, CITES, Fish&Wildlife und Ausfuhrantrag",
