@@ -212,6 +212,12 @@ export const WIKI: WikiArtikel[] = [
         "Texte kommen aus **Einstellungen → Textbausteine** (Mahnwesen 1/2/letzte, DE und EN, passend zur Kundensprache). Platzhalter: {{rechnungsnummer}}, {{rechnungsdatum}}, {{betrag}}, {{mahngebuehr}}, {{gesamtbetrag}}, {{briefanrede}}.",
         "Jede gesendete Mahnung wird protokolliert (Stufe, Gebühr, Mail im Mailversand); die Rechnung bekommt den Zahlungsstatus „angemahnt“. Wird eine Zahlung erfasst, verschwindet sie aus der Liste.",
       ] },
+      { p: "**Vor dem ersten Versand prüfen:**" },
+      { ul: [
+        "Aus dem Ninox-Bestand erscheinen viele alte Rechnungen als offen (älteste 2022) – vermutlich fehlt dort nur das Zahlungsdatum. Bitte prüfen bzw. Zahlung nachtragen, sonst werden bezahlte Rechnungen gemahnt.",
+        "Zuerst eine Testmahnung an eine eigene Adresse senden (z. B. Kunden-E-Mail vorübergehend ändern) und Text, Beträge und Anhang kontrollieren.",
+        "Die Mahn-Textbausteine (DE/EN) einmal gegenlesen und bei Bedarf anpassen.",
+      ] },
     ],
   },
   {
@@ -222,7 +228,14 @@ export const WIKI: WikiArtikel[] = [
       { ul: [
         "Je Belegart ein Kasten; links **Deutsch**, rechts **English**. Angezeigt wird nur der Titel – ein Klick klappt Betreff und Text auf.",
         "Knopf **„→ EN“** am deutschen Baustein übersetzt Name, Betreff und Text mit DeepL ins Englische und öffnet rechts ein Formular zum Prüfen und Speichern. Platzhalter wie {{briefanrede}} bleiben unverändert.",
-        "Voraussetzung: ein (kostenloser) DeepL-API-Key als Umgebungsvariable **DEEPL_API_KEY** in Vercel.",
+        "Voraussetzung: ein (kostenloser) DeepL-API-Key als Umgebungsvariable **DEEPL_API_KEY** in Vercel. Ohne Key zeigt der Knopf einen entsprechenden Hinweis.",
+      ] },
+      { p: "**Einrichtung des DeepL-Keys (einmalig):**" },
+      { ul: [
+        "1. Auf **deepl.com/pro-api** ein kostenloses Konto „DeepL API Free“ anlegen (bis 500.000 Zeichen/Monat).",
+        "2. Im DeepL-Konto unter **API-Keys** den Schlüssel kopieren (Free-Keys enden auf „:fx“).",
+        "3. In **Vercel** → Projekt „nikhuber-guitars“ → **Settings → Environment Variables**: Name `DEEPL_API_KEY`, Wert = der Schlüssel, Umgebung Production (und ggf. Preview) → Speichern.",
+        "4. Unter **Deployments** das letzte Deployment **neu deployen** (Redeploy), damit der Key wirksam wird.",
       ] },
     ],
   },
