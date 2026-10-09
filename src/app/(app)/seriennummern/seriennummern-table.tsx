@@ -61,7 +61,7 @@ export function SeriennummernTable({
       cell: (r) => formatDate(r.vergebenAm),
     },
     {
-      key: "auftrag", header: "Auftrag", sortable: true, className: "font-mono text-[13px]",
+      key: "auftrag", header: "Auftrag", sortable: true, className: "font-mono text-sm",
       cell: (r) => (r.auftragId
         ? <Link href={`/auftraege/${r.auftragId}`} className="font-semibold text-brand hover:underline">{r.auftragNummer}</Link>
         : "–"),

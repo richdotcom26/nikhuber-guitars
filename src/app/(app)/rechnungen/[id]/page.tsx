@@ -221,7 +221,7 @@ export default async function RechnungDetailPage({
                   <>
                     <div>
                       Auftrag:{" "}
-                      <Link href={`/auftraege/${data.auftragInfo.id}`} className="font-mono text-blue-700 hover:underline font-semibold text-[13px]">
+                      <Link href={`/auftraege/${data.auftragInfo.id}`} className="font-mono text-blue-700 hover:underline font-semibold text-sm">
                         {data.auftragInfo.nummer}
                       </Link>
                     </div>

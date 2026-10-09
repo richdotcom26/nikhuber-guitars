@@ -38,7 +38,7 @@ export function AppNav({ email }: { email: string | null }) {
       <div className="mx-auto max-w-[1600px] px-4">
         <div className="flex items-center gap-3 py-2.5">
           <Link href="/todo" className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-button text-[13px] font-bold text-primary-fg">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-button text-sm font-bold text-primary-fg">
               NH
             </span>
             <span className="text-sm font-semibold tracking-tight text-navy">Nik Huber Guitars</span>
