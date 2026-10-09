@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { artikelName } from "@/lib/artikel-shared";
 import { listArtikel } from "@/lib/domain/artikel";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney, kontrastText } from "@/lib/utils";
 
 export default async function ModellePage({
   searchParams,
@@ -54,6 +54,7 @@ export default async function ModellePage({
           <THead>
             <TR>
               <TH>Modell</TH>
+              <TH>Modellgruppe</TH>
               <TH>Nr</TH>
               <TH className="text-right">VK EUR</TH>
               <TH className="text-right">VK US</TH>
@@ -64,6 +65,16 @@ export default async function ModellePage({
             {rows.map((r) => (
               <LinkRow key={r.id} href={`/modelle/${r.id}`} className={r.datensatzInaktiv ? "opacity-50" : ""}>
                 <TD>{artikelName(r)}</TD>
+                <TD>
+                  {r.modellgruppeName ? (
+                    <span
+                      className="inline-block rounded px-1.5 py-0.5 text-xs font-medium"
+                      style={{ background: r.modellgruppeFarbe ?? "#e5e7eb", color: kontrastText(r.modellgruppeFarbe) }}
+                    >
+                      {r.modellgruppeName}
+                    </span>
+                  ) : <span className="text-neutral-300">–</span>}
+                </TD>
                 <TD className="font-mono text-xs text-neutral-500">{r.artikelNr ?? "–"}</TD>
                 <TD className="text-right tabular-nums">{formatMoney(r.vkEur)}</TD>
                 <TD className="text-right tabular-nums">{formatMoney(r.vkUs, "USD")}</TD>
@@ -71,7 +82,7 @@ export default async function ModellePage({
               </LinkRow>
             ))}
             {rows.length === 0 ? (
-              <TR><TD colSpan={5} className="py-6 text-center text-neutral-400">Keine Treffer.</TD></TR>
+              <TR><TD colSpan={6} className="py-6 text-center text-neutral-400">Keine Treffer.</TD></TR>
             ) : null}
           </TBody>
         </Table>

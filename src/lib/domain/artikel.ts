@@ -3,7 +3,7 @@ import { and, asc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
-import { artikel, kunde } from "@/lib/db/schema";
+import { artikel, kunde, modellgruppe } from "@/lib/db/schema";
 import { ARTIKELGRUPPE_VALUES } from "@/lib/artikel-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -199,8 +199,11 @@ export async function listArtikel(params: ListArtikelParams = {}) {
       geschuetztesHolzCites: artikel.geschuetztesHolzCites,
       datensatzInaktiv: artikel.datensatzInaktiv,
       aktuell: artikel.aktuell,
+      modellgruppeName: modellgruppe.name,
+      modellgruppeFarbe: modellgruppe.farbe,
     })
     .from(artikel)
+    .leftJoin(modellgruppe, eq(modellgruppe.id, artikel.modellgruppeId))
     .where(where)
     .orderBy(...orderByFor(ARTIKEL_SORT, params.sort, ARTIKEL_NAME_SQL, "asc"))
     .limit(pageSize)
