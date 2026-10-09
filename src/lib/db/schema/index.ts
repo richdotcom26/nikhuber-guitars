@@ -25,3 +25,4 @@ FK-Referenzen, die (noch) NICHT als DB-Constraint verdrahtet sind — nur in rel
   - *_asset_id (cites/lacey/zertifikat/lieferschein/erechnung/bild/qr) -> anhang  (Zyklus; FK folgt)
 */
 export * from "./arbeitszeit";
+export * from "./verleih";

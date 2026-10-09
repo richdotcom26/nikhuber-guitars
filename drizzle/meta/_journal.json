@@ -85,6 +85,13 @@
       "when": 1791538792327,
       "tag": "0011_nks_volumen_bezeichnung",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791541923905,
+      "tag": "0012_verleih",
+      "breakpoints": true
     }
   ]
 }

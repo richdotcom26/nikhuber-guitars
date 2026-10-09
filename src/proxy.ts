@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Hält die Supabase-Session frisch und schützt alle Routen außer /login und /auth/*.
+ * Hält die Supabase-Session frisch und schützt alle Routen außer /login, /auth/* und /unterschrift/*
+ * (öffentliche Unterschrifts-Seite für Verleih-Vereinbarungen — Zugriff nur über geheimen Token).
  * Rollen-/Feingranular-Autorisierung passiert im Service-Layer (lib/domain), nicht hier.
  */
 export async function proxy(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth");
+  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth") || pathname.startsWith("/unterschrift/");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

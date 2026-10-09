@@ -13,6 +13,7 @@ export const NAV = [
 
 /** Sekundärbereiche (unter „Verwaltung"). */
 export const NAV_VERWALTUNG = [
+  { href: "/verleih", label: "Verleih-/Testgitarren" },
   { href: "/bauplanung", label: "Bauplanung" },
   { href: "/report", label: "Report Monat" },
   { href: "/mailversand", label: "Mailversand" },

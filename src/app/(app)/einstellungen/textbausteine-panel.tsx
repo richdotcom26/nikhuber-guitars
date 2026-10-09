@@ -9,6 +9,7 @@ import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import { MAIL_PLATZHALTER } from "@/lib/mail-vorlage-shared";
+import { VERLEIH_PLATZHALTER } from "@/lib/verleih-shared";
 import { deleteTextbausteinAction, saveTextbausteinAction } from "./actions";
 
 interface Row {
@@ -26,6 +27,8 @@ const BELEGARTEN = [
   { value: "RECHNUNG", label: "Rechnung" },
   { value: "ANGEBOT", label: "Angebot" },
   { value: "AUFTRAGSBESTAETIGUNG", label: "Auftragsbestätigung" },
+  { value: "VERLEIH_VEREINBARUNG", label: "Verleih: Vereinbarung / Unterschrift" },
+  { value: "VERLEIH_ERINNERUNG", label: "Verleih: Rückgabe-Erinnerung" },
 ];
 const artLabel = (v: string) => BELEGARTEN.find((b) => b.value === v)?.label ?? v;
 
@@ -52,6 +55,15 @@ export function TextbausteinePanel({ rows }: { rows: Row[] }) {
                 {i > 0 ? " · " : ""}<code className="rounded bg-field px-1 text-ink">{`{{${p.key}}}`}</code>
               </span>
             ))}
+          </p>
+          <p>
+            Verleih-Bausteine:{" "}
+            {VERLEIH_PLATZHALTER.map((p, i) => (
+              <span key={p.key} title={p.label}>
+                {i > 0 ? " · " : ""}<code className="rounded bg-field px-1 text-ink">{`{{${p.key}}}`}</code>
+              </span>
+            ))}
+            {" "}— <code className="rounded bg-field px-1 text-ink">{"{{link}}"}</code> = Link zur elektronischen Unterschrift.
           </p>
         </CardContent>
       </Card>

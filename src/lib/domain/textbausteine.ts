@@ -8,7 +8,9 @@ import { DomainError } from "./errors";
 
 /** Mail-Textbausteine (Einstellungen → Textbausteine). Text = Klartext mit {{Platzhaltern}}. */
 
-export const TEXTBAUSTEIN_BELEGARTEN = ["RECHNUNG", "ANGEBOT", "AUFTRAGSBESTAETIGUNG"] as const;
+export const TEXTBAUSTEIN_BELEGARTEN = [
+  "RECHNUNG", "ANGEBOT", "AUFTRAGSBESTAETIGUNG", "VERLEIH_VEREINBARUNG", "VERLEIH_ERINNERUNG",
+] as const;
 
 export async function listMailVorlagen(belegart?: (typeof TEXTBAUSTEIN_BELEGARTEN)[number]) {
   await requireUser();

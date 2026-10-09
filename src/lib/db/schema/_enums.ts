@@ -89,7 +89,7 @@ export const vorratGruppeEnum = pgEnum("vorrat_gruppe", [
 // --- Dokumente / Mail -------------------------------------------------------
 export const docArtEnum = pgEnum("doc_art", [
   "ANGEBOT", "AUFTRAGSBESTAETIGUNG", "RECHNUNG", "LIEFERSCHEIN",
-  "ZERTIFIKAT", "CITES", "LACEY",
+  "ZERTIFIKAT", "CITES", "LACEY", "VERLEIH_VEREINBARUNG", "VERLEIH_ERINNERUNG",
 ]);
 export const mailArtEnum = pgEnum("mail_art", [
   "ANGEBOT", "AUFTRAGSBESTAETIGUNG", "RECHNUNG", "GUTSCHRIFT", "SONSTIGES",
@@ -99,7 +99,7 @@ export const mailStatusEnum = pgEnum("mail_status", [
   "ENTWURF", "VERSENDET", "FEHLER", "ERFOLG",
 ]);
 export const anhangArtEnum = pgEnum("anhang_art", [
-  "BELEG_PDF", "BILD", "CITES", "LACEY", "ZERTIFIKAT", "SONSTIGES",
+  "BELEG_PDF", "BILD", "CITES", "LACEY", "ZERTIFIKAT", "SONSTIGES", "VERLEIH",
 ]);
 
 // --- Holzinventar -------------------------------------------------------

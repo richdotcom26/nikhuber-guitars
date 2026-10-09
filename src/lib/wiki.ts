@@ -130,6 +130,29 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "verleih",
+    bereich: "Aufträge",
+    titel: "Verleih-/Testgitarren: Übersicht, Vereinbarung, Unterschrift, Erinnerung",
+    bloecke: [
+      { p: "Unter **Verwaltung → Verleih-/Testgitarren** sieht man alle Leihgitarren und wer welche wann hatte. Als Leihgitarre zählt jeder Auftrag, bei dem im Kopf unter **Besonderes** „Verleih-/Testgitarre“ gewählt ist." },
+      { ul: [
+        "Oben je Gitarre eine Kachel: **verfügbar** oder **verliehen an … bis …** (rot, wenn überfällig).",
+        "Darunter die Vorgänge mit Versanddatum, „zur Verfügung bis“, Rückgabe, Status (vorbereitet / verliehen / **überfällig** / zurück), Stand der Vereinbarung und der letzten Erinnerung. Zurückgegebene sind ausgeblendet (Häkchen „zurückgegebene anzeigen“).",
+      ] },
+      { p: "**Neuer Verleih:** Zuerst den **Kontakt** suchen und wählen – der Empfänger muss in den Adressen angelegt sein (Link „Neuen Kontakt anlegen“). Dann Gitarre, Versanddatum, **zur Verfügung bis**, Zweck, Zubehör und **Wert** (für die Haftung; vorbelegt mit der Umsatzerwartung) eintragen. Eine Gitarre kann nicht zweimal gleichzeitig verliehen sein." },
+      { p: "**Übergabevereinbarung** (zugleich Lieferschein): PDF mit Verleiher, Leihnehmer, Gitarre (Modell, Seriennummer, Zubehör, Wert), Leihdauer und Bedingungen – auf Deutsch oder Englisch je nach Sprache des Kontakts. Sie wird als Anhang „Verleih-Vereinbarung“ an der Gitarre (Auftrag) abgelegt." },
+      { p: "**Elektronische Unterschrift:** „Zur Unterschrift senden …“ öffnet ein Mail-Fenster (Text aus den Textbausteinen, änderbar). Die Mail enthält die Vereinbarung als PDF und einen **persönlichen Link**. Der Empfänger öffnet ihn ohne Anmeldung, liest die Vereinbarung, gibt seinen Namen ein, unterschreibt mit Maus oder Finger und bestätigt. Danach:" },
+      { ul: [
+        "wird das **unterschriebene PDF** (mit Unterschrift, Name, Zeitpunkt und IP-Adresse) automatisch an der Gitarre abgelegt,",
+        "steht im Verleih „Unterschrieben von … am …“,",
+        "bekommt der Benutzer, der den Verleih angelegt hat, eine Mail mit dem PDF.",
+        "Rechtlich ist das eine **einfache elektronische Signatur** – für eine Leihvereinbarung ausreichend (keine gesetzliche Schriftform nötig). Es fallen keine Kosten an, es wird kein externer Dienst benötigt.",
+      ] },
+      { p: "**Rückgabe und Erinnerung:** Mit „Gitarre ist zurück“ (Datum, Standard heute) wird der Vorgang abgeschlossen. Solange sie unterwegs ist, schickt „Erinnerung senden …“ eine Erinnerungsmail; Anzahl und Zeitpunkt der letzten Erinnerung werden angezeigt. Alle Mails stehen auch im Mailversand beim Kontakt." },
+      { hinweis: "Die Mail-Texte (Vereinbarung und Erinnerung, DE/EN) werden unter Einstellungen → Textbausteine gepflegt; Platzhalter z. B. {{model}}, {{seriennummer}}, {{rueckgabe_bis}}, {{link}}. Die Bedingungen der Vereinbarung sind ein Vorschlag – bitte einmal prüfen (lassen)." },
+    ],
+  },
+  {
     id: "besonderes",
     bereich: "Aufträge",
     titel: "Besonderes und Spezialauftrag",

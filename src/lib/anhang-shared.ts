@@ -1,7 +1,7 @@
 /** Client-sichere Anhang-Konstanten (kein DB-/Storage-Zugriff). */
 
 export const ANHANG_ART_VALUES = [
-  "BELEG_PDF", "BILD", "CITES", "LACEY", "ZERTIFIKAT", "SONSTIGES",
+  "BELEG_PDF", "BILD", "CITES", "LACEY", "ZERTIFIKAT", "SONSTIGES", "VERLEIH",
 ] as const;
 export type AnhangArt = (typeof ANHANG_ART_VALUES)[number];
 
@@ -12,6 +12,7 @@ export const ANHANG_ART_LABEL: Record<AnhangArt, string> = {
   LACEY: "Lacey Act",
   ZERTIFIKAT: "Zertifikat",
   SONSTIGES: "Sonstiges",
+  VERLEIH: "Verleih-Vereinbarung",
 };
 export const ANHANG_ART = ANHANG_ART_VALUES.map((value) => ({ value, label: ANHANG_ART_LABEL[value] }));
 
