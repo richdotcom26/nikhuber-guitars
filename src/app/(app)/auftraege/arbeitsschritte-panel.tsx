@@ -113,7 +113,7 @@ function Section({
 }
 
 function Row({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
-  const [, statusAction] = useActionState(setSchrittStatusAction, IDLE);
+  const [statusState, statusAction] = useActionState(setSchrittStatusAction, IDLE);
   const [, vorherAction] = useActionState(alleVorherigenErledigtAction, IDLE);
   const [bemState, bemAction] = useActionState(saveSchrittBemerkungAction, IDLE);
   const formRef = useRef<HTMLFormElement>(null);
@@ -158,6 +158,7 @@ function Row({ auftragId, row }: { auftragId: string; row: SchrittRow }) {
             ))}
           </Select>
         </form>
+        {statusState && !statusState.ok ? <div className="mt-1 text-xs text-red-600">{statusState.message}</div> : null}
         {row.status === "WARTEN_AUF" ? <WartenGrund auftragId={auftragId} row={row} /> : null}
       </TD>
       <TD className="text-xs text-neutral-500">{formatDateTime(row.erledigtAm)}</TD>
