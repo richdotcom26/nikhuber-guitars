@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean, date, index, integer, pgTable, text, timestamp, uuid,
+  boolean, date, index, integer, numeric, pgTable, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import {
@@ -80,3 +80,15 @@ export const anhang = pgTable("anhang", {
   artikelIdx: index("anhang_artikel_idx").on(t.artikelId),
   ticketIdx: index("anhang_ticket_idx").on(t.ticketId),
 }));
+
+/** Gesendete Zahlungserinnerungen/Mahnungen je Rechnung (Stufe 1–3). */
+export const mahnung = pgTable("mahnung", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  rechnungId: uuid("rechnung_id").notNull().references(() => rechnung.id, { onDelete: "cascade" }),
+  stufe: integer("stufe").notNull(),
+  gebuehr: numeric("gebuehr", { precision: 12, scale: 2 }).default("0").notNull(),
+  waehrung: text("waehrung"),
+  offenerBetrag: numeric("offener_betrag", { precision: 12, scale: 2 }),
+  mailversandId: uuid("mailversand_id").references(() => mailversand.id, { onDelete: "set null" }),
+  ...auditCols,
+}, (t) => ({ rechnungIdx: index("mahnung_rechnung_idx").on(t.rechnungId) }));

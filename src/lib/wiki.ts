@@ -200,6 +200,33 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "mahnwesen",
+    bereich: "Rechnungen",
+    titel: "Mahnvorschläge: 2 Zahlungserinnerungen + letzte Mahnung",
+    bloecke: [
+      { p: "**Rechnungen → Mahnvorschläge** listet alle gebuchten, noch nicht bezahlten Rechnungen (auch Anzahlungsrechnungen), deren nächste Mahnstufe fällig ist. „alle offenen Rechnungen anzeigen“ zeigt auch die noch nicht fälligen." },
+      { ul: [
+        "Stufen: **1. Erinnerung** und **2. Erinnerung** (freundlich), danach **Letzte Mahnung**. Jede Rechnung bekommt immer die jeweils nächste Stufe.",
+        "Fristen (Tage seit Rechnungsdatum) und **Mahngebühren** je Stufe: **Einstellungen → Mahnwesen**. Vorgabe: 14 / 28 / 42 Tage, Gebühr 0 / 5 / 10 (gesamt, in Rechnungswährung EUR bzw. USD).",
+        "Rechnungen per **Häkchen** auswählen (oben: alle), dann „Mahnungen senden“. Die Mail geht an die E-Mail des Kunden (Rechnungs-CC in Kopie), **das Rechnungs-PDF hängt an**. Altbestand aus Ninox hat kein archiviertes PDF – dann geht die Mail ohne Anhang (Hinweis „ohne PDF“).",
+        "Texte kommen aus **Einstellungen → Textbausteine** (Mahnwesen 1/2/letzte, DE und EN, passend zur Kundensprache). Platzhalter: {{rechnungsnummer}}, {{rechnungsdatum}}, {{betrag}}, {{mahngebuehr}}, {{gesamtbetrag}}, {{briefanrede}}.",
+        "Jede gesendete Mahnung wird protokolliert (Stufe, Gebühr, Mail im Mailversand); die Rechnung bekommt den Zahlungsstatus „angemahnt“. Wird eine Zahlung erfasst, verschwindet sie aus der Liste.",
+      ] },
+    ],
+  },
+  {
+    id: "textbausteine-zweispaltig",
+    bereich: "Einstellungen",
+    titel: "Textbausteine: Deutsch/Englisch nebeneinander, Übersetzen per Knopf",
+    bloecke: [
+      { ul: [
+        "Je Belegart ein Kasten; links **Deutsch**, rechts **English**. Angezeigt wird nur der Titel – ein Klick klappt Betreff und Text auf.",
+        "Knopf **„→ EN“** am deutschen Baustein übersetzt Name, Betreff und Text mit DeepL ins Englische und öffnet rechts ein Formular zum Prüfen und Speichern. Platzhalter wie {{briefanrede}} bleiben unverändert.",
+        "Voraussetzung: ein (kostenloser) DeepL-API-Key als Umgebungsvariable **DEEPL_API_KEY** in Vercel.",
+      ] },
+    ],
+  },
+  {
     id: "auftrag-status-ab",
     bereich: "Aufträge",
     titel: "Auftragseingang: Status Eingang → Bestätigt, Auftragsbestätigung mit Unterschrift",

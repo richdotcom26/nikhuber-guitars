@@ -35,3 +35,13 @@ export function splitEmails(s: string | null | undefined): string[] {
 export function istEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
+
+/** Platzhalter der Mahn-Bausteine (Zahlungserinnerung 1/2, letzte Mahnung). */
+export const MAHN_PLATZHALTER = [
+  { key: "briefanrede", label: "Briefanrede des Kunden" },
+  { key: "rechnungsnummer", label: "Rechnungsnummer" },
+  { key: "rechnungsdatum", label: "Rechnungsdatum" },
+  { key: "betrag", label: "Rechnungsbetrag (Gesamtpreis)" },
+  { key: "mahngebuehr", label: "Mahngebühr dieser Stufe" },
+  { key: "gesamtbetrag", label: "Rechnungsbetrag + Mahngebühr" },
+] as const;

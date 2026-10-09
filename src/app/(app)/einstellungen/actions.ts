@@ -16,6 +16,8 @@ import {
   aktiviereTheme, dupliziereTheme, loescheTheme, saveTheme, themeSchema,
 } from "@/lib/domain/theme";
 import { arbeitstagSchema, deleteArbeitstag, saveArbeitstag } from "@/lib/domain/arbeitszeit";
+import { updateMahnKonfig } from "@/lib/domain/mahnung";
+import { uebersetzeDeEn } from "@/lib/domain/uebersetzen";
 
 const BASE = "/einstellungen";
 
@@ -238,4 +240,29 @@ export async function deleteArbeitstagAction(_prev: ActionState, formData: FormD
     revalidatePath(BASE);
     return ok("Gelöscht.");
   });
+}
+
+export async function saveMahnKonfigAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const n = (k: string) => Number(String(fd.get(k) ?? "").replace(",", "."));
+    await updateMahnKonfig({
+      tage: [n("tage1"), n("tage2"), n("tage3")],
+      gebuehr: [n("gebuehr1"), n("gebuehr2"), n("gebuehr3")],
+    });
+    revalidatePath(BASE);
+    revalidatePath("/rechnungen/mahnungen");
+    return ok("Mahnwesen gespeichert.");
+  });
+}
+
+/** Name/Betreff/Text eines deutschen Bausteins nach Englisch übersetzen (Vorbelegung für einen neuen EN-Baustein). */
+export async function uebersetzeTextbausteinAction(
+  input: { name: string; betreff: string; text: string },
+): Promise<{ ok: true; name: string; betreff: string; text: string } | { ok: false; message: string }> {
+  try {
+    const [name, betreff, text] = await uebersetzeDeEn([input.name, input.betreff, input.text]);
+    return { ok: true, name, betreff, text };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
 }

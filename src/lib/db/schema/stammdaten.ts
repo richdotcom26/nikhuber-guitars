@@ -42,6 +42,15 @@ export const firmaSetting = pgTable("firma_setting", {
 
   kostensatzStunde: numeric("kostensatz_stunde", { precision: 12, scale: 2 }), // Kalkulation (§9.2)
 
+  // Mahnwesen: Tage seit Rechnungsdatum je Stufe (1+2 = freundliche Erinnerung, 3 = letzte Mahnung)
+  mahnTage1: integer("mahn_tage_1").default(14).notNull(),
+  mahnTage2: integer("mahn_tage_2").default(28).notNull(),
+  mahnTage3: integer("mahn_tage_3").default(42).notNull(),
+  // Mahngebühr je Stufe (gesamt, in Rechnungswährung)
+  mahnGebuehr1: numeric("mahn_gebuehr_1", { precision: 12, scale: 2 }).default("0").notNull(),
+  mahnGebuehr2: numeric("mahn_gebuehr_2", { precision: 12, scale: 2 }).default("5").notNull(),
+  mahnGebuehr3: numeric("mahn_gebuehr_3", { precision: 12, scale: 2 }).default("10").notNull(),
+
   todoHinweis: text("todo_hinweis"),                         // Aushang oben im ToDo-Reiter (an alle)
   todoHinweisAm: timestamp("todo_hinweis_am", { withTimezone: true }),
   ...auditCols,

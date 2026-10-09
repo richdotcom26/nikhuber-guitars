@@ -10,6 +10,7 @@ import { DomainError } from "./errors";
 
 export const TEXTBAUSTEIN_BELEGARTEN = [
   "RECHNUNG", "ANGEBOT", "AUFTRAGSBESTAETIGUNG", "VERLEIH_VEREINBARUNG", "VERLEIH_ERINNERUNG", "AUFTRAG",
+  "MAHNUNG_1", "MAHNUNG_2", "MAHNUNG_3",
 ] as const;
 
 export async function listMailVorlagen(belegart?: (typeof TEXTBAUSTEIN_BELEGARTEN)[number]) {

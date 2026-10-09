@@ -134,6 +134,13 @@
       "when": 1791574750311,
       "tag": "0018_auftrag_status_bemerkung",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791576926767,
+      "tag": "0019_mahnwesen",
+      "breakpoints": true
     }
   ]
 }

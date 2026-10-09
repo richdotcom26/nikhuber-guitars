@@ -10,7 +10,8 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import { MAIL_PLATZHALTER } from "@/lib/mail-vorlage-shared";
 import { VERLEIH_PLATZHALTER } from "@/lib/verleih-shared";
-import { deleteTextbausteinAction, saveTextbausteinAction } from "./actions";
+import { deleteTextbausteinAction, saveTextbausteinAction, uebersetzeTextbausteinAction } from "./actions";
+import { MAHN_PLATZHALTER } from "@/lib/mail-vorlage-shared";
 
 interface Row {
   id: string;
@@ -30,8 +31,10 @@ const BELEGARTEN = [
   { value: "AUFTRAG", label: "Auftrag (allgemeine Mail)" },
   { value: "VERLEIH_VEREINBARUNG", label: "Verleih: Vereinbarung / Unterschrift" },
   { value: "VERLEIH_ERINNERUNG", label: "Verleih: Rückgabe-Erinnerung" },
+  { value: "MAHNUNG_1", label: "Mahnwesen: 1. Zahlungserinnerung" },
+  { value: "MAHNUNG_2", label: "Mahnwesen: 2. Zahlungserinnerung" },
+  { value: "MAHNUNG_3", label: "Mahnwesen: Letzte Mahnung" },
 ];
-const artLabel = (v: string) => BELEGARTEN.find((b) => b.value === v)?.label ?? v;
 
 export function TextbausteinePanel({ rows }: { rows: Row[] }) {
   const [adding, setAdding] = useState(false);
@@ -66,48 +69,123 @@ export function TextbausteinePanel({ rows }: { rows: Row[] }) {
             ))}
             {" "}— <code className="rounded bg-field px-1 text-ink">{"{{link}}"}</code> = Link zur elektronischen Unterschrift.
           </p>
+          <p>
+            Mahn-Bausteine:{" "}
+            {MAHN_PLATZHALTER.map((p, i) => (
+              <span key={p.key} title={p.label}>
+                {i > 0 ? " · " : ""}<code className="rounded bg-field px-1 text-ink">{`{{${p.key}}}`}</code>
+              </span>
+            ))}
+          </p>
         </CardContent>
       </Card>
 
       {adding ? <BausteinForm onDone={() => setAdding(false)} /> : null}
-      {rows.map((r) => (
-        <BausteinView key={`${r.id}:${new Date(r.updatedAt).getTime()}`} row={r} />
-      ))}
+      {BELEGARTEN.filter((b) => rows.some((r) => r.belegart === b.value)).map((b) => {
+        const de = rows.filter((r) => r.belegart === b.value && r.sprache === "DE").sort(stdZuerst);
+        const en = rows.filter((r) => r.belegart === b.value && r.sprache === "EN").sort(stdZuerst);
+        const n = Math.max(de.length, en.length);
+        return (
+          <Card key={b.value}>
+            <CardHeader><CardTitle>{b.label}</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-x-4 gap-y-2 md:grid-cols-2">
+                <div className="hidden text-xs font-semibold text-muted md:block">Deutsch</div>
+                <div className="hidden text-xs font-semibold text-muted md:block">English</div>
+                {Array.from({ length: n }, (_, i) => (
+                  <Paar key={i} de={de[i]} en={en[i]} belegart={b.value} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
 
-function BausteinView({ row }: { row: Row }) {
+const stdZuerst = (a: Row, b: Row) => Number(b.istStandard) - Number(a.istStandard) || (a.name ?? "").localeCompare(b.name ?? "");
+
+/** Eine Zeile: deutscher Baustein links, englischer rechts (fehlt er: „aus Deutsch übersetzen“). */
+function Paar({ de, en, belegart }: { de?: Row; en?: Row; belegart: string }) {
+  const [vorlage, setVorlage] = useState<Partial<Row> | null>(null);
+  const [fehler, setFehler] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function uebersetzen() {
+    if (!de) return;
+    if (en && !confirm("Es gibt schon einen englischen Baustein. Übersetzung als neuen Baustein vorbereiten?")) return;
+    setBusy(true);
+    setFehler(null);
+    const r = await uebersetzeTextbausteinAction({ name: de.name ?? "", betreff: de.betreff ?? "", text: de.text ?? "" });
+    setBusy(false);
+    if (!r.ok) { setFehler(r.message); return; }
+    setVorlage({ belegart, sprache: "EN", name: r.name, betreff: r.betreff, text: r.text, istStandard: !en });
+  }
+
+  return (
+    <>
+      <div>
+        {de ? (
+          <BausteinView
+            key={`${de.id}:${new Date(de.updatedAt).getTime()}`}
+            row={de}
+            extra={(
+              <Button size="sm" variant="ghost" onClick={uebersetzen} disabled={busy} title="Mit DeepL ins Englische übersetzen">
+                {busy ? "übersetzt …" : "→ EN"}
+              </Button>
+            )}
+          />
+        ) : <Leer />}
+        {fehler ? <p className="mt-1 text-xs text-red-600">{fehler}</p> : null}
+      </div>
+      <div>
+        {vorlage ? (
+          <BausteinForm row={vorlage as Row} neu onDone={() => setVorlage(null)} />
+        ) : en ? (
+          <BausteinView key={`${en.id}:${new Date(en.updatedAt).getTime()}`} row={en} />
+        ) : <Leer />}
+      </div>
+    </>
+  );
+}
+
+function Leer() {
+  return <div className="rounded-lg border border-dashed border-line px-3 py-2 text-xs text-muted">–</div>;
+}
+
+function BausteinView({ row, extra }: { row: Row; extra?: React.ReactNode }) {
+  const [offen, setOffen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [delState, delAction] = useActionState(deleteTextbausteinAction, IDLE);
   if (editing) return <BausteinForm row={row} onDone={() => setEditing(false)} />;
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex flex-wrap items-center gap-2">
-          {row.name ?? "(ohne Namen)"}
-          <Badge tone="neutral">{artLabel(row.belegart)}</Badge>
-          <Badge tone="blue">{row.sprache}</Badge>
+    <div className="rounded-lg border border-line">
+      <div className="flex items-center gap-2 px-3 py-1.5">
+        <button type="button" onClick={() => setOffen((o) => !o)} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-medium hover:text-brand">
+          <span className="text-xs text-muted">{offen ? "▾" : "▸"}</span>
+          <span className="truncate">{row.name ?? "(ohne Namen)"}</span>
           {row.istStandard ? <Badge tone="green">Standard</Badge> : null}
-        </CardTitle>
-        <div className="flex gap-1">
-          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearbeiten</Button>
-          <form action={delAction} onSubmit={(e) => { if (!confirm("Textbaustein löschen?")) e.preventDefault(); }}>
-            <input type="hidden" name="id" value={row.id} />
-            <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">Löschen</SubmitButton>
-          </form>
+        </button>
+        {extra}
+        <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Bearbeiten</Button>
+        <form action={delAction} onSubmit={(e) => { if (!confirm("Textbaustein löschen?")) e.preventDefault(); }}>
+          <input type="hidden" name="id" value={row.id} />
+          <SubmitButton size="sm" variant="ghost" className="text-red-600" pendingText="…">Löschen</SubmitButton>
+        </form>
+      </div>
+      {delState && !delState.ok ? <div className="px-3"><FormMessage state={delState} /></div> : null}
+      {offen ? (
+        <div className="space-y-1 border-t border-line px-3 py-2 text-sm">
+          <div><span className="text-muted">Betreff:</span> {row.betreff}</div>
+          <pre className="whitespace-pre-wrap rounded-md bg-field px-3 py-2 font-sans text-ink">{row.text}</pre>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-1 text-sm">
-        {delState && !delState.ok ? <FormMessage state={delState} /> : null}
-        <div><span className="text-muted">Betreff:</span> {row.betreff}</div>
-        <pre className="whitespace-pre-wrap rounded-md bg-field px-3 py-2 font-sans text-ink">{row.text}</pre>
-      </CardContent>
-    </Card>
+      ) : null}
+    </div>
   );
 }
 
-function BausteinForm({ row, onDone }: { row?: Row; onDone: () => void }) {
+function BausteinForm({ row, neu, onDone }: { row?: Row; neu?: boolean; onDone: () => void }) {
   const [state, action] = useActionState(saveTextbausteinAction, IDLE);
   useEffect(() => {
     if (state?.ok) onDone();
@@ -117,9 +195,9 @@ function BausteinForm({ row, onDone }: { row?: Row; onDone: () => void }) {
     <Card>
       <CardContent className="pt-5">
         <form action={action} className="space-y-3">
-          {row ? <input type="hidden" name="id" value={row.id} /> : null}
+          {row && !neu ? <input type="hidden" name="id" value={row.id} /> : null}
           {state && !state.ok ? <FormMessage state={state} /> : null}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_12rem_6rem]">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_12rem_6rem]">
             <Field label="Name" htmlFor="name">
               <Input id="name" name="name" defaultValue={row?.name ?? ""} required />
             </Field>

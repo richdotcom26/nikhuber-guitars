@@ -19,6 +19,8 @@ import { listThemes } from "@/lib/domain/theme";
 import { TextbausteinePanel } from "./textbausteine-panel";
 import { ThemesPanel } from "./themes-panel";
 import { WikiPanel } from "./wiki-panel";
+import { MahnwesenPanel } from "./mahnwesen-panel";
+import { mahnKonfig } from "@/lib/domain/mahnung";
 import { ZaehlerPanel } from "./zaehler-panel";
 import { ZahlungenPanel } from "./zahlungen-panel";
 
@@ -30,6 +32,7 @@ const BASE_TABS: readonly TabItem[] = [
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
   { key: "zaehler", label: "Belegnummern" },
   { key: "textbausteine", label: "Textbausteine" },
+  { key: "mahnwesen", label: "Mahnwesen" },
   { key: "themes", label: "Themes" },
   { key: "wiki", label: "Wiki" },
 ];
@@ -67,6 +70,7 @@ export default async function EinstellungenPage({
       {active === "arbeitsschritte" && <ArbeitsschrittePanel rows={await listArbeitsschrittVorrat()} />}
       {active === "zaehler" && <ZaehlerPanel rows={await listZaehler()} />}
       {active === "textbausteine" && <TextbausteinePanel rows={await listMailVorlagen()} />}
+      {active === "mahnwesen" && <MahnwesenPanel cfg={await mahnKonfig()} />}
       {active === "themes" && (
         <ThemesPanel
           rows={(await listThemes()).map((t) => ({ ...t, updatedAt: t.updatedAt.toISOString() }))}
