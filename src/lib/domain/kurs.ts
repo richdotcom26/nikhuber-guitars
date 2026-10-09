@@ -12,11 +12,21 @@ export interface UsdEurKurs {
  * Aktueller Umrechnungskurs USD → EUR: Referenzkurs der Europäischen Zentralbank (tagesaktuell,
  * 6 h gecacht). Fällt der Abruf aus, gilt der Faktor aus Einstellungen → Firma.
  */
+// Prozess-Cache: EZB-Kurs nur alle 6 h holen (der Abruf hat die Rechnungsliste spürbar verzögert).
+let cache: { wert: UsdEurKurs; bis: number } | null = null;
+
 export async function usdEurKurs(): Promise<UsdEurKurs> {
+  if (cache && cache.bis > Date.now()) return cache.wert;
+  const wert = await holeKurs();
+  cache = { wert, bis: Date.now() + (wert.quelle === "EZB" ? 6 * 3600_000 : 10 * 60_000) };
+  return wert;
+}
+
+async function holeKurs(): Promise<UsdEurKurs> {
   try {
     const res = await fetch("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", {
       next: { revalidate: 6 * 3600 },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(1500),
     });
     if (res.ok) {
       const xml = await res.text();
