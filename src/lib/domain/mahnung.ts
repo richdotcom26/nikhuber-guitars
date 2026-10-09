@@ -15,6 +15,8 @@ import { getFirmaSetting } from "./stammdaten";
  * Offen = gebuchte Rechnung/Anzahlungsrechnung ohne Zahlungsdatum.
  */
 
+const POS_NETTO = sql`(select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant)`;
+
 export const MAHN_STUFE_LABEL: Record<number, string> = {
   1: "1. Erinnerung", 2: "2. Erinnerung", 3: "Letzte Mahnung",
 };
@@ -51,7 +53,9 @@ export async function listMahnvorschlaege(opts: { alle?: boolean } = {}) {
       nummer: rechnung.nummer,
       belegart: rechnung.belegart,
       rechnungsdatum: rechnung.rechnungsdatum,
-      betrag: sql<string>`coalesce(${rechnung.rechnungsbetrag}, ${rechnung.summeBrutto})`,
+      // offener Betrag (brutto, abzgl. Anzahlung) für die Mail; Netto für die Liste. Altbestand: aus Positionen.
+      betrag: sql<string>`coalesce(${rechnung.rechnungsbetrag}, ${rechnung.summeBrutto}, round(${POS_NETTO} * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`,
+      netto: sql<string>`coalesce(${rechnung.summeNetto}, round(${POS_NETTO}, 2))`,
       waehrung: rechnung.kdWaehrung,
       kdFirma: rechnung.kdFirma, kdVorname: rechnung.kdVorname, kdNachname: rechnung.kdNachname,
       email: kunde.email,

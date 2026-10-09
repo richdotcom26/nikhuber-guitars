@@ -30,7 +30,7 @@ export default async function MahnungenPage({ searchParams }: { searchParams: Pr
       <MahnListe
         rows={rows.map((r) => ({
           id: r.id, nummer: r.nummer, rechnungsdatum: r.rechnungsdatum, tage: r.tage,
-          betrag: r.betrag, waehrung: r.waehrung, kunde: r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || "–",
+          betrag: r.betrag, netto: r.netto, waehrung: r.waehrung, kunde: r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || "–",
           email: r.email, pdf: !!r.pdf, letzteStufe: r.letzteStufe, letzteAm: r.letzteAm,
           naechsteStufe: r.naechsteStufe, faellig: r.faellig, gebuehr: r.gebuehr,
         }))}

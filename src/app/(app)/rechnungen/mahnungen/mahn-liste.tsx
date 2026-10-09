@@ -14,6 +14,7 @@ interface Row {
   rechnungsdatum: string | null;
   tage: number;
   betrag: string | null;
+  netto: string | null;
   waehrung: string | null;
   kunde: string;
   email: string | null;
@@ -63,7 +64,7 @@ export function MahnListe({ rows }: { rows: Row[] }) {
               <th className="px-3 py-2">RG-Datum</th>
               <th className="px-3 py-2 text-right">Tage</th>
               <th className="px-3 py-2">Kunde</th>
-              <th className="px-3 py-2 text-right">Betrag</th>
+              <th className="px-3 py-2 text-right">Netto</th>
               <th className="px-3 py-2">Bisher</th>
               <th className="px-3 py-2">Nächste Stufe</th>
               <th className="px-3 py-2 text-right">Gebühr</th>
@@ -90,7 +91,7 @@ export function MahnListe({ rows }: { rows: Row[] }) {
                     {r.kunde}
                     {!r.email ? <span className="ml-1 text-xs text-red-600">keine E-Mail</span> : null}
                   </td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatMoney(r.betrag, wg)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{formatMoney(r.netto, wg)}</td>
                   <td className="px-3 py-1.5 text-muted">
                     {r.letzteStufe ? `${STUFE[r.letzteStufe]} (${formatDate(r.letzteAm)})` : "–"}
                   </td>
