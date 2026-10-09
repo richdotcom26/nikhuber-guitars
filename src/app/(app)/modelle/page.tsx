@@ -53,8 +53,8 @@ export default async function ModellePage({
         <Table>
           <THead>
             <TR>
-              <TH>Modell</TH>
               <TH>Modellgruppe</TH>
+              <TH>Modell</TH>
               <TH>Nr</TH>
               <TH className="text-right">VK EUR</TH>
               <TH className="text-right">VK US</TH>
@@ -64,7 +64,6 @@ export default async function ModellePage({
           <TBody>
             {rows.map((r) => (
               <LinkRow key={r.id} href={`/modelle/${r.id}`} className={r.datensatzInaktiv ? "opacity-50" : ""}>
-                <TD>{artikelName(r)}</TD>
                 <TD>
                   {r.modellgruppeName ? (
                     <span
@@ -75,6 +74,7 @@ export default async function ModellePage({
                     </span>
                   ) : <span className="text-neutral-300">–</span>}
                 </TD>
+                <TD>{artikelName(r)}</TD>
                 <TD className="font-mono text-xs text-neutral-500">{r.artikelNr ?? "–"}</TD>
                 <TD className="text-right tabular-nums">{formatMoney(r.vkEur)}</TD>
                 <TD className="text-right tabular-nums">{formatMoney(r.vkUs, "USD")}</TD>
