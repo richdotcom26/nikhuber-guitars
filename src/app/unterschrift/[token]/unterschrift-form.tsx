@@ -20,8 +20,17 @@ const TXT = {
 } as const;
 
 /** Name + Unterschriftsfeld (Canvas) + Zustimmung → Server Action. */
-export function UnterschriftForm({ token, sprache }: { token: string; sprache: "DE" | "EN" }) {
-  const t = TXT[sprache];
+export function UnterschriftForm({
+  token, sprache, art = "VERLEIH", akzeptiert, senden,
+}: {
+  token: string;
+  sprache: "DE" | "EN";
+  /** Was unterschrieben wird: Verleih-Vereinbarung oder Auftragsbestätigung. */
+  art?: "VERLEIH" | "AB";
+  akzeptiert?: string;
+  senden?: string;
+}) {
+  const t = { ...TXT[sprache], ...(akzeptiert ? { akzeptiert } : {}), ...(senden ? { senden } : {}) };
   const [state, action, pending] = useActionState(unterschreibenAction, IDLE);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [leer, setLeer] = useState(true);
@@ -82,6 +91,7 @@ export function UnterschriftForm({ token, sprache }: { token: string; sprache: "
   return (
     <form action={action} className="mt-6 space-y-4 border-t border-line pt-5">
       <input type="hidden" name="token" value={token} />
+      <input type="hidden" name="art" value={art} />
       <input type="hidden" name="unterschrift" value={png} />
       <label className="block text-sm">
         <span className="mb-1 block text-muted">{t.name}</span>

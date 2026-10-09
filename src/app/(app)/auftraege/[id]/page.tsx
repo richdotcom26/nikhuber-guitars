@@ -37,6 +37,7 @@ import {
 import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
 import { AnzahlungForm } from "../anzahlung-form";
 import { CreateRechnungButton } from "../create-rechnung-button";
+import { AbPanel } from "../ab-panel";
 import { AuftragVerlauf } from "../auftrag-verlauf";
 import { KopfForm } from "../kopf-form";
 import { NksDokument } from "../nks-dokumente";
@@ -143,6 +144,23 @@ export default async function AuftragDetailPage({
                   <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
                 </form>
                 {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} /> : null}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Auftragsbestätigung</CardTitle></CardHeader>
+              <CardContent>
+                <AbPanel
+                  auftragId={id}
+                  status={a.status}
+                  stand={{
+                    angefordertAm: a.abAngefordertAm,
+                    unterschriebenAm: a.abUnterschriebenAm,
+                    unterschriebenName: a.abUnterschriebenName,
+                    unterschriftIp: a.abUnterschriftIp,
+                    anhangId: a.abAnhangId,
+                    unterschriebenAnhangId: a.abUnterschriebenAnhangId,
+                  }}
+                />
               </CardContent>
             </Card>
             <Card>

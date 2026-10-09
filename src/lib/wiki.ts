@@ -131,6 +131,37 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "auftrag-status-ab",
+    bereich: "Aufträge",
+    titel: "Auftragseingang: Status Eingang → Bestätigt, Auftragsbestätigung mit Unterschrift",
+    bloecke: [
+      { p: "Ein neuer Auftrag steht auf **Eingang** (früher „Backorder“). Angenommen ist er erst, wenn er **Bestätigt** ist – erst dann darf er in die Werkstatt. Reihenfolge: Eingang → **Bestätigt** → In Werkstatt / Bei Nicl → Produktion fertig → Abgeschlossen." },
+      { p: "**Auftragsbestätigung (AB) mit elektronischer Unterschrift** – Karte „Auftragsbestätigung“ im Reiter Auftrag:" },
+      { ul: [
+        "„AB zur Unterschrift senden …“ öffnet ein Mail-Fenster (Text aus Einstellungen → Textbausteine → Auftragsbestätigung, DE/EN je Kundensprache, änderbar).",
+        "Die Mail enthält die AB als PDF mit dem Feld **„Auftragsannahme“** und einen **persönlichen Link**. Der Kunde öffnet ihn ohne Anmeldung, sieht Positionen und Summen, gibt seinen Namen ein, unterschreibt mit Maus oder Finger und bestätigt verbindlich.",
+        "Danach wird die **unterschriebene AB** (mit Unterschrift, Name, Zeitpunkt, IP) automatisch am Auftrag abgelegt, der Status springt von **Eingang auf Bestätigt**, und wer die AB gesendet hat, bekommt eine Mail mit dem PDF.",
+        "Rechtlich eine einfache elektronische Signatur (wie beim Verleih).",
+      ] },
+      { p: "**Altbestand:** Aufträge, die noch auf „Eingang“ stehen, bitte einzeln prüfen (noch aktuell? wie beauftragt?) und über die Status-Knöpfe auf **Bestätigt** setzen. Arbeitsschritte der Werkstatt lassen sich bei „Eingang“ nicht abhaken; bei „Bestätigt“ setzt der erste erledigte Werkstatt-Schritt den Auftrag automatisch auf „In Werkstatt“." },
+    ],
+  },
+  {
+    id: "auftrag-verlauf",
+    bereich: "Aufträge",
+    titel: "Zeitstempel & Verlauf eines Auftrags",
+    bloecke: [
+      { p: "Im Reiter **Auftrag** zeigt die Karte **„Zeitstempel & Verlauf“** oben die Eckdaten (wie der Ninox-Block „Zeitstempel“) und darunter alle Ereignisse chronologisch:" },
+      { ul: [
+        "**Eckdaten:** erfasst am/von, erstellt und geändert am/von, Bauplan-Monat, Modellvorlage, Seriennummer vergeben, Werkstattbeginn, Endmontage, **Tage Werkstattbeginn → Endmontage** (bzw. Tage seit Werkstattbeginn), Versand-, Rechnungs- und Zahlungsdatum, Work %, Umsatzerwartung und Stand HE.",
+        "**Verlauf:** jeder **Statuswechsel** mit Datum, Uhrzeit und Benutzer, Bauplandatum gesetzt, Auftragsbestätigung gesendet/unterschrieben, dazu Werkstattbeginn, Endmontage, Versand, gebuchte Rechnungen und Zahlungen.",
+        "Statuswechsel werden erst ab jetzt protokolliert; für ältere Aufträge stehen nur die Datumsfelder aus Ninox zur Verfügung.",
+        "**Werkstattbeginn** = Tag, an dem der erste Werkstatt-Arbeitsschritt erledigt wurde.",
+        "**Work %** = Position des letzten erledigten Werkstatt-Schritts unter allen Schritten von Order 10 bis 63 (Montage) = 100 %. **Stand HE** = Umsatzerwartung × Work %.",
+      ] },
+    ],
+  },
+  {
     id: "verleih",
     bereich: "Aufträge",
     titel: "Verleih-/Testgitarren: Übersicht, Vereinbarung, Unterschrift, Erinnerung",

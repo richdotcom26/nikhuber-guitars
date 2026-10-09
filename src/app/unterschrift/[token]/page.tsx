@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import { unterschriftKontext } from "@/lib/domain/verleih";
 import { formatDateTime } from "@/lib/utils";
 import { VEREINBARUNG, zubehoerListe } from "@/lib/verleih-shared";
+import { abKontext } from "@/lib/domain/auftrag-ab";
+import { AbAnsicht } from "./ab-ansicht";
 import { UnterschriftForm } from "./unterschrift-form";
 
 export const metadata: Metadata = { title: "Nik Huber Guitars", robots: { index: false, follow: false } };
 
-/** Öffentliche Seite: Übergabevereinbarung lesen und elektronisch unterschreiben (Link aus der E-Mail). */
+/** Öffentliche Seite: Übergabevereinbarung (Verleih) bzw. Auftragsbestätigung lesen und elektronisch unterschreiben. */
 export default async function UnterschriftPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const ctx = await unterschriftKontext(token);
 
+  if (!ctx) {
+    const ab = await abKontext(token);
+    if (ab) return <Rahmen><AbAnsicht token={token} ab={ab} /></Rahmen>;
+  }
   if (!ctx) {
     return (
       <Rahmen>

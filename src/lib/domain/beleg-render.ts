@@ -73,6 +73,8 @@ export interface BelegRenderData {
   /** Abgezogene Anzahlungsrechnungen (Endrechnung) + verbleibender Zahlbetrag. */
   abzuege: { nummer: string | null; datum: string | null; netto: string; mwst: string; brutto: string }[];
   zahlbetrag: string | null;
+  /** Auftragsbestätigung: Feld „Auftragsannahme" (leer zum Unterschreiben bzw. mit elektronischer Unterschrift). */
+  annahme?: { png: Buffer; name: string; zeit: string; ip: string } | { leer: true } | null;
 }
 
 /** Freitext-Land grob auf ISO-2 abbilden (Firmensitz). Default DE. */
@@ -134,6 +136,18 @@ export async function renderBelegData(
   over: RenderOverrides = {},
 ): Promise<BelegRenderData> {
   await requireUser();
+  return ladeBelegData(art, id, over);
+}
+
+/**
+ * Wie renderBelegData, aber OHNE Anmeldeprüfung — nur für Aufrufer, die selbst berechtigen
+ * (öffentliche Unterschrifts-Seite über geheimen Token, Versand der Auftragsbestätigung).
+ */
+export async function ladeBelegData(
+  art: BelegArt,
+  id: string,
+  over: RenderOverrides = {},
+): Promise<BelegRenderData> {
   const head = HEAD[art];
   const [h] = await db.select().from(head).where(eq(head.id, id));
   if (!h) throw new DomainError("NOT_FOUND", "Beleg nicht gefunden.");

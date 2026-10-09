@@ -19,6 +19,7 @@ import {
   getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition, setVersand,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
+import { isDomainError } from "@/lib/domain/errors";
 import { createEntwurfAusAuftrag } from "@/lib/domain/rechnung";
 import {
   loescheSeriennummer, vergebeSeriennummerAuto, vergebeSeriennummerManuell,
@@ -26,6 +27,7 @@ import {
 import { dezimal } from "@/lib/utils";
 import { createAnzahlungsrechnung } from "@/lib/domain/anzahlung";
 import { erzeugeCitesDokument, erzeugeLaceyDokument } from "@/lib/domain/nks";
+import { abMailSchema, abMailVorschlag, sendeAbZurUnterschrift } from "@/lib/domain/auftrag-ab";
 
 function rev(id: string) {
   revalidatePath(`/auftraege/${id}`);
@@ -330,5 +332,24 @@ export async function nksDokumentAction(_p: ActionState, fd: FormData): Promise<
     else return fail("Unbekannter Beleg.");
     rev(id);
     return ok(art === "LACEY" ? "Lacey-Act-Dokument erzeugt." : "CITES-Dokument erzeugt.");
+  });
+}
+
+/* ---- Auftragsbestätigung mit elektronischer Unterschrift ---- */
+
+export async function abMailVorschlagAction(id: string) {
+  try {
+    return { ok: true as const, werte: await abMailVorschlag(id) };
+  } catch (e) {
+    return { ok: false as const, message: isDomainError(e) ? e.message : "Unerwarteter Fehler." };
+  }
+}
+
+export async function sendeAbAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const input = parseForm(abMailSchema, fd);
+    const res = await sendeAbZurUnterschrift(input);
+    rev(input.id);
+    return res.ok ? ok(res.message) : fail(res.message);
   });
 }

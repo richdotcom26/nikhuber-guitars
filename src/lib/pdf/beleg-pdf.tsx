@@ -1,5 +1,5 @@
 import {
-  Document, Page, Text, View, StyleSheet,
+  Document, Image, Page, Text, View, StyleSheet,
 } from "@react-pdf/renderer";
 import type { BelegRenderData } from "@/lib/domain/beleg-render";
 import { formatDate, formatMoney } from "@/lib/utils";
@@ -18,6 +18,11 @@ const T = {
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
     zahlung: "Zahlungsbedingung", ustId: "USt-IdNr.", steuerNr: "Steuernummer", bank: "Bankverbindung",
     seite: "Seite von",
+    annahme: "Auftragsannahme",
+    annahmeText: "Hiermit bestelle ich verbindlich die oben aufgeführten Leistungen zu den genannten Preisen und Bedingungen.",
+    unterschrift: "Datum, Unterschrift Auftraggeber",
+    elektronisch: "Elektronisch unterschrieben von",
+    am: "am",
   },
   EN: {
     datum: "Date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
@@ -26,6 +31,11 @@ const T = {
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
     zahlung: "Payment terms", ustId: "VAT ID", steuerNr: "Tax number", bank: "Bank details",
     seite: "Page of",
+    annahme: "Order acceptance",
+    annahmeText: "I hereby place a binding order for the items listed above at the stated prices and terms.",
+    unterschrift: "Date, customer signature",
+    elektronisch: "Electronically signed by",
+    am: "on",
   },
 };
 
@@ -175,6 +185,27 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
             </>
           ) : null}
         </View>
+
+        {data.annahme ? (
+          <View wrap={false} style={{ marginTop: 18, borderWidth: 1, borderColor: "#ccc", padding: 8 }}>
+            <Text style={{ fontWeight: 700, marginBottom: 3 }}>{t.annahme}</Text>
+            <Text>{t.annahmeText}</Text>
+            <View style={{ height: 46, marginTop: 6, justifyContent: "flex-end" }}>
+              {"png" in data.annahme ? (
+                // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf-Image hat kein alt
+                <Image src={{ data: data.annahme.png, format: "png" }} style={{ height: 42, width: 180, objectFit: "contain", objectPosition: "left" }} />
+              ) : null}
+            </View>
+            <Text style={{ borderTopWidth: 1, borderColor: "#333", paddingTop: 2, fontSize: 7.5, color: "#555", width: 240 }}>
+              {t.unterschrift}{"png" in data.annahme ? ` · ${data.annahme.name}` : ""}
+            </Text>
+            {"png" in data.annahme ? (
+              <Text style={{ fontSize: 7, color: "#555", marginTop: 2 }}>
+                {t.elektronisch} {data.annahme.name} {t.am} {data.annahme.zeit}{data.annahme.ip ? ` (IP ${data.annahme.ip})` : ""}.
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={s.fuss}>
           {data.steuerHinweis ? <Text>{data.steuerHinweis}</Text> : null}
