@@ -10,12 +10,14 @@ const TXT = {
     akzeptiert: "Ich habe die Vereinbarung gelesen und bin mit den Bedingungen einverstanden.",
     senden: "Verbindlich unterschreiben", sendet: "wird gespeichert …", leer: "Bitte unterschreiben.",
     danke: "Vielen Dank! Die unterschriebene Vereinbarung wurde gespeichert.",
+    upload: "oder Unterschrift als Bild hochladen (PNG/JPG)", uploadFehler: "Bitte ein Bild (PNG oder JPG, max. 5 MB) wählen.",
   },
   EN: {
     name: "Full name", unterschrift: "Signature (with mouse or finger)", loeschen: "Clear",
     akzeptiert: "I have read the agreement and accept its terms.",
     senden: "Sign", sendet: "saving …", leer: "Please sign.",
     danke: "Thank you! The signed agreement has been saved.",
+    upload: "or upload an image of your signature (PNG/JPG)", uploadFehler: "Please choose an image (PNG or JPG, max. 5 MB).",
   },
 } as const;
 
@@ -76,6 +78,28 @@ export function UnterschriftForm({
     zeichnet.current = false;
     if (canvasRef.current && !leer) setPng(canvasRef.current.toDataURL("image/png"));
   };
+  const [uploadFehler, setUploadFehler] = useState(false);
+  /** Bild der eigenen Unterschrift ins Feld zeichnen (eingepasst) — danach wie gezeichnet. */
+  const hochladen = async (file: File | undefined) => {
+    setUploadFehler(false);
+    const c = canvasRef.current;
+    if (!file || !c) return;
+    if (!/^image\/(png|jpe?g)$/.test(file.type) || file.size > 5_000_000) { setUploadFehler(true); return; }
+    try {
+      const bild = await createImageBitmap(file);
+      const ctx = c.getContext("2d")!;
+      const w = c.offsetWidth, h = c.offsetHeight;
+      ctx.clearRect(0, 0, c.width, c.height);
+      const f = Math.min((w - 16) / bild.width, (h - 16) / bild.height, 1);
+      const bw = bild.width * f, bh = bild.height * f;
+      ctx.drawImage(bild, (w - bw) / 2, (h - bh) / 2, bw, bh);
+      setLeer(false);
+      setPng(c.toDataURL("image/png"));
+    } catch {
+      setUploadFehler(true);
+    }
+  };
+
   const loeschen = () => {
     const c = canvasRef.current;
     if (!c) return;
@@ -116,6 +140,16 @@ export function UnterschriftForm({
           onPointerLeave={ende}
           className="h-40 w-full touch-none rounded-md border border-field-border bg-white"
         />
+        <label className="mt-1.5 block text-xs text-muted">
+          {t.upload}
+          <input
+            type="file"
+            accept="image/png,image/jpeg"
+            onChange={(e) => { void hochladen(e.target.files?.[0]); e.target.value = ""; }}
+            className="mt-1 block text-xs file:mr-2 file:rounded file:border-0 file:bg-neutral-200 file:px-2 file:py-1"
+          />
+        </label>
+        {uploadFehler ? <p className="mt-1 text-xs text-red-600">{t.uploadFehler}</p> : null}
       </div>
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="akzeptiert" required className="mt-0.5" />

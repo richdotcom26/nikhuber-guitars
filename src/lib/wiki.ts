@@ -164,7 +164,7 @@ export const WIKI: WikiArtikel[] = [
       { p: "**Auftragsbestätigung (AB) mit elektronischer Unterschrift** – Karte „Auftragsbestätigung“ im Reiter Auftrag:" },
       { ul: [
         "„AB zur Unterschrift senden …“ öffnet ein Mail-Fenster (Text aus Einstellungen → Textbausteine → Auftragsbestätigung, DE/EN je Kundensprache, änderbar).",
-        "Die Mail enthält die AB als PDF mit dem Feld **„Auftragsannahme“** und einen **persönlichen Link**. Der Kunde öffnet ihn ohne Anmeldung, sieht Positionen und Summen, gibt seinen Namen ein, unterschreibt mit Maus oder Finger und bestätigt verbindlich.",
+        "Die Mail enthält die AB als PDF mit dem Feld **„Auftragsannahme“** und einen **persönlichen Link**. Der Kunde öffnet ihn ohne Anmeldung, sieht Positionen und Summen, gibt seinen Namen ein, unterschreibt mit Maus oder Finger (oder lädt ein Bild seiner Unterschrift als PNG/JPG hoch) und bestätigt verbindlich.",
         "Danach wird die **unterschriebene AB** (mit Unterschrift, Name, Zeitpunkt, IP) automatisch am Auftrag abgelegt, der Status springt von **Eingang auf Bestätigt**, und wer die AB gesendet hat, bekommt eine Mail mit dem PDF.",
         "Rechtlich eine einfache elektronische Signatur (wie beim Verleih).",
       ] },
@@ -211,7 +211,7 @@ export const WIKI: WikiArtikel[] = [
       ] },
       { p: "**Neuer Verleih:** Zuerst den **Kontakt** suchen und wählen – der Empfänger muss in den Adressen angelegt sein (Link „Neuen Kontakt anlegen“). Dann Gitarre, Versanddatum, **zur Verfügung bis**, Zweck, **Zubehör** (Standard „Koffer, Gurt“ – mit Komma getrennt, erscheint in der Vereinbarung als Liste) und **Wert** (für die Haftung; vorbelegt mit der Umsatzerwartung) eintragen. Eine Gitarre kann nicht zweimal gleichzeitig verliehen sein." },
       { p: "**Übergabevereinbarung** (zugleich Lieferschein): PDF mit Verleiher, Leihnehmer, Gitarre (Modell, Seriennummer, Zubehör, Wert), Leihdauer und Bedingungen – auf Deutsch oder Englisch je nach Sprache des Kontakts. **Modell und Seriennummer sind Pflicht** – fehlt eine davon, lässt sich die Vereinbarung nicht erzeugen (in der Übersicht steht dann „Seriennummer fehlt“; die Seriennummer wird im Auftrag der Gitarre vergeben). Sie wird als Anhang „Verleih-Vereinbarung“ an der Gitarre (Auftrag) abgelegt." },
-      { p: "**Elektronische Unterschrift:** „Zur Unterschrift senden …“ öffnet ein Mail-Fenster (Text aus den Textbausteinen, änderbar). Die Mail enthält die Vereinbarung als PDF und einen **persönlichen Link**. Der Empfänger öffnet ihn ohne Anmeldung, liest die Vereinbarung, gibt seinen Namen ein, unterschreibt mit Maus oder Finger und bestätigt. Danach:" },
+      { p: "**Elektronische Unterschrift:** „Zur Unterschrift senden …“ öffnet ein Mail-Fenster (Text aus den Textbausteinen, änderbar). Die Mail enthält die Vereinbarung als PDF und einen **persönlichen Link**. Der Empfänger öffnet ihn ohne Anmeldung, liest die Vereinbarung, gibt seinen Namen ein, unterschreibt mit Maus oder Finger (oder lädt ein Bild seiner Unterschrift als PNG/JPG hoch) und bestätigt. Danach:" },
       { ul: [
         "wird das **unterschriebene PDF** (mit Unterschrift, Name, Zeitpunkt und IP-Adresse) automatisch an der Gitarre abgelegt,",
         "steht im Verleih „Unterschrieben von … am …“,",
