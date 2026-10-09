@@ -73,7 +73,7 @@ export function HolzTable({
       ),
     },
     {
-      key: "auftrag", header: "Auftrag", sortable: true, className: "font-mono text-sm text-muted",
+      key: "auftrag", header: "Auftrag", sortable: true, className: "font-mono text-[13px] text-muted",
       cell: (r) => (r.reserviertFuerAuftragId
         ? <Link href={`/auftraege/${r.reserviertFuerAuftragId}`} className="font-semibold hover:underline">{r.auftragNummer}</Link>
         : "–"),

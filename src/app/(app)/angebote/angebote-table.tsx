@@ -33,7 +33,7 @@ export function AngeboteTable({
 }) {
   const columns: Column<AngebotRow>[] = [
     {
-      key: "nummer", header: "Nr", sortable: true, hideable: false, className: "font-mono text-sm",
+      key: "nummer", header: "Nr", sortable: true, hideable: false, className: "font-mono text-[13px]",
       cell: (r) => <span className="font-semibold hover:underline">{r.nummer}</span>,
     },
     {

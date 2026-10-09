@@ -124,8 +124,8 @@ export default async function BauplanungPage({
             <TBody>
               {board.auftraege.map((a) => (
                 <TR key={a.id}>
-                  <TD className="font-mono text-sm">
-                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline font-semibold text-sm">{a.nummer}</Link>
+                  <TD className="font-mono text-[13px]">
+                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline font-semibold text-[13px]">{a.nummer}</Link>
                   </TD>
                   <TD>{a.kunde ?? "–"}</TD>
                   <TD className="text-neutral-500">{a.modellName ?? "–"}</TD>
@@ -168,8 +168,8 @@ export default async function BauplanungPage({
             <TBody>
               {ungeplant.map((a) => (
                 <TR key={a.id}>
-                  <TD className="font-mono text-sm">
-                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline font-semibold text-sm">{a.nummer}</Link>
+                  <TD className="font-mono text-[13px]">
+                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline font-semibold text-[13px]">{a.nummer}</Link>
                   </TD>
                   <TD>{kundeKurz(a)}</TD>
                   <TD className="text-neutral-500">{a.modellName ?? "–"}</TD>

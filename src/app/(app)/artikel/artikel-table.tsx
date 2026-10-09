@@ -39,7 +39,7 @@ export function ArtikelTable({
       cell: (r) => <span className="hover:underline">{artikelName(r)}</span>,
     },
     {
-      key: "nr", header: "Nr", sortable: true, className: "font-mono text-sm text-muted",
+      key: "nr", header: "Nr", sortable: true, className: "font-mono text-[13px] text-muted",
       cell: (r) => r.artikelNr ?? "–",
     },
     {

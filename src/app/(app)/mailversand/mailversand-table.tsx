@@ -56,7 +56,7 @@ export function MailversandTable({
       cell: (r) => <Badge tone="neutral">{MAIL_ART_LABEL[r.art as MailArt]}</Badge>,
     },
     {
-      key: "bezug", header: "Bezug", sortable: false, className: "w-28 font-mono text-sm",
+      key: "bezug", header: "Bezug", sortable: false, className: "w-28 font-mono text-[13px]",
       cell: (r) => {
         const b = bezug(r);
         return b ? <Link href={b.href} className="font-semibold text-brand hover:underline">{b.label}</Link> : "–";
