@@ -72,6 +72,7 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Konto & Anmeldung",
     titel: "Passwort vergessen / Passwort-Link",
     bloecke: [
+      { p: "Auf der Anmeldeseite: E-Mail eintragen und **„Passwort vergessen?“** klicken – die App schickt einen Link per Mail (über den eigenen Mailserver, mit der richtigen Adresse der App)." },
       { p: "Ein Admin kann unter **Einstellungen → Benutzer** für jeden Benutzer einen **Passwort-Link** erzeugen und ihm weitergeben (z. B. per Mail oder Messenger)." },
       { ul: [
         "Der Link führt direkt auf die Seite „Passwort setzen“. Dort das neue Passwort zweimal eingeben, danach geht es zur Anmeldung.",

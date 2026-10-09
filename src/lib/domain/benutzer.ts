@@ -3,6 +3,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { appUser } from "@/lib/db/schema";
+import { getTransport, mailKonfig } from "@/lib/mail/transport";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -126,8 +127,36 @@ export async function benutzerRecoveryLink(id: string): Promise<string> {
   return recoveryLinkFuer(row.email);
 }
 
-async function recoveryLinkFuer(email: string): Promise<string> {
-  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+/**
+ * „Passwort vergessen" (öffentlich, ohne Anmeldung): Reset-Link direkt auf die App erzeugen und per
+ * eigenem SMTP senden — unabhängig von der Supabase-Site-URL. Antwortet immer gleich (keine Konto-Ausforschung).
+ */
+export async function sendePasswortLink(emailRaw: string, base: string): Promise<void> {
+  const email = emailRaw.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+  const [u] = await db.select({ email: appUser.email, name: appUser.name, aktiv: appUser.aktiv })
+    .from(appUser).where(sql`lower(${appUser.email}) = ${email}`);
+  if (!u?.aktiv) return;
+  const cfg = mailKonfig();
+  if (!cfg) {
+    console.warn("[passwort] SMTP nicht konfiguriert — kein Reset-Link gesendet");
+    return;
+  }
+  try {
+    const link = await recoveryLinkFuer(u.email, base);
+    await getTransport().sendMail({
+      from: cfg.from,
+      to: u.email,
+      subject: "Nik Huber Guitars – Passwort zurücksetzen",
+      text: `Hallo ${u.name},\n\nüber diesen Link kannst du ein neues Passwort für die Nik-Huber-App vergeben (einmalig gültig, ca. 1 Stunde):\n\n${link}\n\nFalls du das nicht angefordert hast, ignoriere diese Mail einfach.\n`,
+    });
+  } catch (e) {
+    console.error("[passwort] Reset-Link fehlgeschlagen:", e instanceof Error ? e.message : e);
+  }
+}
+
+async function recoveryLinkFuer(email: string, baseUrl?: string): Promise<string> {
+  const base = (baseUrl || process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
   const { data, error } = await supabaseAdmin().auth.admin.generateLink({ type: "recovery", email });
   const hash = data?.properties?.hashed_token;
   if (error || !hash) {

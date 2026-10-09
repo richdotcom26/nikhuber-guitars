@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { passwortVergessenAction } from "./actions";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,12 +18,10 @@ function LoginForm() {
     if (!email) { setFehler("Bitte zuerst die E-Mail eintragen."); return; }
     setBusy(true);
     setFehler(null);
-    const { error } = await createClient().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset`,
-    });
+    // Versand über die App selbst (Link direkt auf diese Adresse, nicht die Supabase-Site-URL)
+    await passwortVergessenAction(email).catch(() => {});
     setBusy(false);
-    if (error) setFehler(error.message);
-    else setHinweis("Falls ein Konto existiert, wurde ein Link zum Zurücksetzen verschickt.");
+    setHinweis("Falls ein Konto existiert, wurde ein Link zum Zurücksetzen verschickt.");
   }
 
   async function onSubmit(e: React.FormEvent) {
