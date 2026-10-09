@@ -88,7 +88,7 @@ export async function listAuftraege(
       kdWaehrung: auftrag.kdWaehrung,
       fortschrittProzent: auftrag.fortschrittProzent,
       umsatzerwartung: auftrag.umsatzerwartung,
-      modellName: modell.nameBelege,
+      modellName: sql<string | null>`coalesce(${modell.nameKurz}, ${modell.nameLang}, ${modell.nameBelege})`,
       modellgruppeName: modellgruppe.name,
       modellgruppeFarbe: modellgruppe.farbe,
       kurzname: kunde.kurzname,
