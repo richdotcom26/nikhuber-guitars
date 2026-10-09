@@ -131,6 +131,19 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "erechnung",
+    bereich: "Rechnungen",
+    titel: "E-Rechnung (ZUGFeRD EN 16931)",
+    bloecke: [
+      { p: "Beim Buchen erzeugt das Programm die Rechnung als **ZUGFeRD-PDF im Profil EN 16931** (früher „Comfort“): ein normales PDF mit eingebetteten, maschinenlesbaren Rechnungsdaten. Das erfüllt die Anforderungen an eine E-Rechnung nach § 14 UStG – ein externer Dienstleister ist nicht nötig." },
+      { ul: [
+        "Pflicht ist die E-Rechnung nur gegenüber **Geschäftskunden im Inland**; Privat- und Auslandskunden erhalten dasselbe PDF.",
+        "Enthalten u. a.: Verkäufer mit Anschrift und USt-IdNr./Steuernummer, Käufer, Lieferanschrift, **Lieferdatum**, Positionen, Gesamtrabatt, Versand, Steueraufschlüsselung (inkl. steuerfrei EU/Ausfuhr), Zahlungsbedingung, IBAN, abgezogene Anzahlungen.",
+        "**Voraussetzung:** Unter Einstellungen → Firma müssen Straße, PLZ, Ort und Steuernummer oder USt-IdNr. eingetragen sein – sonst lässt sich nicht buchen. IBAN/BIC sollten ebenfalls gepflegt sein.",
+      ] },
+    ],
+  },
+  {
     id: "lieferdatum",
     bereich: "Aufträge",
     titel: "Lieferdatum (Pflichtangabe auf der Rechnung)",

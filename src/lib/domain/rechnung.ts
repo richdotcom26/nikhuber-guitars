@@ -375,6 +375,14 @@ export async function buchen(id: string): Promise<{ nummer: string; anhangId: st
     .from(belegPosition)
     .where(and(eq(belegPosition.rechnungId, id), eq(belegPosition.reRelevant, true)));
   if (n === 0) throw new DomainError("STATE", "Der Entwurf hat keine Positionen.");
+  // § 14 UStG / E-Rechnung: vollständige Anschrift + Steuernummer oder USt-IdNr. des Ausstellers
+  const firma = await getFirmaSetting();
+  if (!firma.strasse?.trim() || !firma.plz?.trim() || !firma.ort?.trim()) {
+    throw new DomainError("STATE", "Firmenanschrift unvollständig – bitte unter Einstellungen → Firma Straße, PLZ und Ort eintragen.");
+  }
+  if (!firma.ustId?.trim() && !firma.steuerNr?.trim()) {
+    throw new DomainError("STATE", "Steuernummer oder USt-IdNr. fehlt – bitte unter Einstellungen → Firma eintragen.");
+  }
   // § 14 UStG: Zeitpunkt der Lieferung/Leistung ist Pflichtangabe. Fehlt er, gilt Lieferdatum = Rechnungsdatum
   // (Abholung/Übergabe am Tag der Rechnung) — kein harter Stopp. Anzahlungsrechnung: Lieferung liegt noch nicht vor.
   if (r0.belegart === "RECHNUNG" && !h0.lieferdatum) {

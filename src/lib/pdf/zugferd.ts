@@ -1,10 +1,11 @@
 import "server-only";
 import { zugferd } from "node-zugferd";
-import { BASIC } from "node-zugferd/profile";
+import { EN16931 } from "node-zugferd/profile";
 import type { BelegRenderData } from "@/lib/domain/beleg-render";
 
 /**
- * ZUGFeRD/Factur-X (Profil BASIC, EN-16931-konform) aus einem Rechnungs-Beleg.
+ * ZUGFeRD/Factur-X (Profil EN 16931 = „COMFORT") aus einem Rechnungs-Beleg — erfüllt die Anforderungen
+ * an eine E-Rechnung nach § 14 UStG (BASIC/MINIMUM reichen dafür nicht sicher aus).
  *
  * `strict: false` → keine XSD-Validierung (die bräuchte eine JRE via
  * `xsd-schema-validator`; auf Vercel nicht verfügbar). Vor produktivem Einsatz
@@ -12,7 +13,7 @@ import type { BelegRenderData } from "@/lib/domain/beleg-render";
  * gegengeprüft werden.
  */
 
-const invoicer = zugferd({ profile: BASIC, strict: false });
+const invoicer = zugferd({ profile: EN16931, strict: false });
 
 const n2 = (v: string | number | null | undefined) => {
   const x = Number(v ?? 0);
@@ -40,7 +41,7 @@ function typeCode(belegart: string | null): string {
   return "380";
 }
 
-/** BelegRenderData -> node-zugferd BASIC-Eingabestruktur. */
+/** BelegRenderData -> node-zugferd EN-16931-Eingabestruktur. */
 export function belegZuZugferd(data: BelegRenderData) {
   const cur = data.waehrung;
   const { categoryCode, rate, exemptionReason } = steuerKategorie(data);
@@ -105,7 +106,13 @@ export function belegZuZugferd(data: BelegRenderData) {
             city: data.firma.ort ?? undefined,
             countryCode: data.firma.landCode,
           },
-          ...(data.firma.ustId ? { taxRegistration: { vatIdentifier: data.firma.ustId } } : {}),
+          // BR-CO-26 / BR-S-02: USt-IdNr. (BT-31) und/oder Steuernummer (BT-32)
+          ...(data.firma.ustId || data.firma.steuerNr ? {
+            taxRegistration: {
+              ...(data.firma.ustId ? { vatIdentifier: data.firma.ustId } : {}),
+              ...(data.firma.steuerNr ? { localIdentifier: data.firma.steuerNr } : {}),
+            },
+          } : {}),
         },
         buyer: {
           name: data.kunde.name,
@@ -119,14 +126,30 @@ export function belegZuZugferd(data: BelegRenderData) {
         },
         ...(data.auftragNummer ? { buyerOrderReference: { issuerAssignedID: data.auftragNummer } } : {}),
       },
-      // BT-72 Liefer-/Leistungsdatum (in DE Pflichtangabe)
-      tradeDelivery: data.lieferdatum ? { information: { deliveryDate: new Date(`${data.lieferdatum}T00:00:00Z`) } } : {},
+      tradeDelivery: {
+        // BG-13 Lieferanschrift (BR-IC-12: bei innergemeinschaftlicher Lieferung Pflicht) = Kundenanschrift
+        shipTo: {
+          name: data.kunde.name,
+          postalAddress: {
+            line1: data.kunde.strasse ?? undefined,
+            postCode: data.kunde.plz ?? undefined,
+            city: data.kunde.ort ?? undefined,
+            countryCode: data.kunde.landCode ?? "DE",
+          },
+        },
+        // BT-72 Liefer-/Leistungsdatum (in DE Pflichtangabe; Fallback Rechnungsdatum)
+        information: { deliveryDate: data.lieferdatum ? new Date(`${data.lieferdatum}T00:00:00Z`) : issue },
+      },
       tradeSettlement: {
         currencyCode: cur,
         ...(data.firma.iban
           ? { paymentMeans: [{ typeCode: "58", payeeAccount: { iban: data.firma.iban, ...(data.firma.bic ? { bic: data.firma.bic } : {}) } }] }
           : {}),
-        ...(data.zahlungsbedingung ? { paymentTerms: { description: data.zahlungsbedingung } } : {}),
+        // BR-CO-25: bei offenem Betrag Zahlungsbedingung (BT-20) oder Fälligkeit (BT-9) Pflicht
+        paymentTerms: {
+          description: data.zahlungsbedingung
+            ?? (data.sprache === "EN" ? "Payable immediately without deduction." : "Zahlbar sofort ohne Abzug."),
+        },
         ...(allowances.length ? { allowances } : {}),
         ...(charges.length ? { charges } : {}),
         vatBreakdown: [{
