@@ -3,12 +3,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { auditCols } from "./_common";
 import { artikelgruppeEnum } from "./_enums";
-import { artikel } from "./artikel";
 
 /**
  * §3.7 Compliance / Holz.
  * `holzart`      = botanische Holz-Stammdaten (ex NKS Holzarten TF).
- * `holz_volumen` = Volumen je Artikel × Artikelgruppe (ex NKS Parts Volumen SF, UI "NKS Gewichte").
+ * `holz_volumen` = Volumen-Klassen je Bauteil (ex NKS Parts Volumen SF, UI "NKS Gewichte"): z. B.
+ *                  „Fretboard" 0,00058 m³, „Headstock Overlay" 0,00018 m³. Der Artikel verweist per
+ *                  `artikel.holz_volumen_id` darauf; Gewicht kg = Volumen × Holzart.Holzdichte (ex WB.DG).
  *
  * `holzposition` ist eine VIEW (User bestätigt: reine Ableitung, 7d) — hier als SQL-Kommentar,
  * kommt in die Drizzle-Migration als `CREATE VIEW`.
@@ -29,8 +30,8 @@ export const holzart = pgTable("holzart", {
 
 export const holzVolumen = pgTable("holz_volumen", {
   id: uuid("id").primaryKey().defaultRandom(),
-  artikelId: uuid("artikel_id").notNull().references(() => artikel.id, { onDelete: "cascade" }),
-  artikelgruppe: artikelgruppeEnum("artikelgruppe"),
+  bezeichnung: text("bezeichnung").notNull(),        // Bauteil, z. B. "Body", "Headstock Overlay"
+  artikelgruppe: artikelgruppeEnum("artikelgruppe"), // Vorschlag für neue Artikel dieser Gruppe
   volumenM3: numeric("volumen_m3", { precision: 12, scale: 7 }),
   ...auditCols,
 });

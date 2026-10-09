@@ -25,6 +25,7 @@ import {
 } from "@/lib/domain/seriennummer";
 import { dezimal } from "@/lib/utils";
 import { createAnzahlungsrechnung } from "@/lib/domain/anzahlung";
+import { erzeugeCitesDokument, erzeugeLaceyDokument } from "@/lib/domain/nks";
 
 function rev(id: string) {
   revalidatePath(`/auftraege/${id}`);
@@ -316,4 +317,18 @@ export async function createAnzahlungsrechnungAction(_p: ActionState, fd: FormDa
   });
   if (neuId) redirect(`/rechnungen/${neuId}`);
   return res;
+}
+
+/* ---- NKS: Lacey Act / CITES ---- */
+
+export async function nksDokumentAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const art = String(fd.get("art") ?? "");
+    if (art === "LACEY") await erzeugeLaceyDokument(id);
+    else if (art === "CITES") await erzeugeCitesDokument(id);
+    else return fail("Unbekannter Beleg.");
+    rev(id);
+    return ok(art === "LACEY" ? "Lacey-Act-Dokument erzeugt." : "CITES-Dokument erzeugt.");
+  });
 }

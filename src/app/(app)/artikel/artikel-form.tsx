@@ -11,6 +11,11 @@ import { createArtikelAction, updateArtikelAction } from "./actions";
 import { formatBetrag } from "@/lib/utils";
 
 interface LieferantOpt { id: string; label: string }
+/** Auswahllisten für Holzart / Volumen-Klasse (nur Artikel, nicht Modelle). */
+export interface NksOpt {
+  holzarten: Array<{ id: string; label: string; dichte: string | null }>;
+  volumen: Array<{ id: string; label: string; m3: string | null }>;
+}
 
 export interface ArtikelFormValues {
   id?: string;
@@ -38,6 +43,8 @@ export interface ArtikelFormValues {
   bestandMin?: string | null;
   bestandMax?: string | null;
   geschuetztesHolzCites?: boolean;
+  holzartId?: string | null;
+  holzVolumenId?: string | null;
   gewichtKg?: string | null;
   datensatzInaktiv?: boolean;
   schreibgeschuetzt?: boolean;
@@ -48,11 +55,13 @@ export function ArtikelForm({
   values,
   lieferanten,
   isModell = false,
+  nks,
 }: {
   mode: "neu" | "edit";
   values: ArtikelFormValues;
   lieferanten: LieferantOpt[];
   isModell?: boolean;
+  nks?: NksOpt;
 }) {
   const [state, action] = useActionState(
     mode === "neu" ? createArtikelAction : updateArtikelAction,
@@ -186,8 +195,24 @@ export function ArtikelForm({
             <input type="checkbox" name="geschuetztesHolzCites" defaultChecked={!!values.geschuetztesHolzCites} />
             Geschütztes Holz (CITES)
           </label>
-          <Field label="Gewicht (kg)" htmlFor="gewichtKg" errors={err.gewichtKg}>
-            <Input id="gewichtKg" name="gewichtKg" inputMode="decimal" defaultValue={v(values.gewichtKg)} />
+          {nks ? (
+            <>
+              <Field label="NKS Holzart" htmlFor="holzartId" errors={err.holzartId}>
+                <Select id="holzartId" name="holzartId" defaultValue={v(values.holzartId)}>
+                  <option value="">– keine –</option>
+                  {nks.holzarten.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
+                </Select>
+              </Field>
+              <Field label="NKS Volumen (Bauteil)" htmlFor="holzVolumenId" errors={err.holzVolumenId}>
+                <Select id="holzVolumenId" name="holzVolumenId" defaultValue={v(values.holzVolumenId)}>
+                  <option value="">– keines –</option>
+                  {nks.volumen.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+                </Select>
+              </Field>
+            </>
+          ) : null}
+          <Field label="Gewicht (kg) – nur falls abweichend" htmlFor="gewichtKg" errors={err.gewichtKg}>
+            <Input id="gewichtKg" name="gewichtKg" inputMode="decimal" defaultValue={v(values.gewichtKg)} placeholder="sonst Volumen × Holzdichte" />
           </Field>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="datensatzInaktiv" defaultChecked={!!values.datensatzInaktiv} />

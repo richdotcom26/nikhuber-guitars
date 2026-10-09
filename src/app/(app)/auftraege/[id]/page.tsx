@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import {
   AUFTRAGSART_LABEL, fortschrittFarbe,
@@ -19,6 +20,7 @@ import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { abrechnungsStand } from "@/lib/domain/abrechnung";
 import { getFirmaSetting } from "@/lib/domain/stammdaten";
+import { listHolzpositionen, nksStand } from "@/lib/domain/nks";
 import { rechnungenZuAuftrag } from "@/lib/domain/rechnung";
 import {
   RG_BELEGART_LABEL, RG_STATUS_LABEL, RG_STATUS_TONE, type RgBelegart, type RgStatus,
@@ -36,6 +38,7 @@ import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
 import { AnzahlungForm } from "../anzahlung-form";
 import { CreateRechnungButton } from "../create-rechnung-button";
 import { KopfForm } from "../kopf-form";
+import { NksDokument } from "../nks-dokumente";
 import { SetKundeButton } from "../set-kunde-form";
 import { StatusChanger } from "../status-changer";
 
@@ -44,6 +47,7 @@ const TABS: readonly TabItem[] = [
   { key: "details", label: "Details (Specs)" },
   { key: "positionen", label: "Positionen" },
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
+  { key: "nks", label: "NKS" },
   { key: "rechnung", label: "Rechnung" },
 ];
 
@@ -244,6 +248,8 @@ export default async function AuftragDetailPage({
         />
       ) : null}
 
+      {active === "nks" ? <NksTab id={id} /> : null}
+
       {active === "rechnung" ? (
         <RechnungTab
           auftragId={id}
@@ -404,5 +410,132 @@ async function RechnungTab({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+const fmtZahl = (n: number | null, stellen: number) =>
+  n == null ? "–" : n.toLocaleString("de-DE", { minimumFractionDigits: stellen, maximumFractionDigits: stellen });
+
+/**
+ * NKS („nerviger Kack-Scheiß"): Holz-Compliance — Lacey Act (USA), CITES (geschütztes Holz),
+ * Ausfuhrantrag (außerhalb EU) + Holzpositionen aus den Specs (Artikeltyp „Holz / Fertigung").
+ */
+async function NksTab({ id }: { id: string }) {
+  const [pos, stand] = await Promise.all([listHolzpositionen(id), nksStand(id)]);
+  const cites = pos.filter((p) => p.cites);
+  const sumVol = pos.reduce((s, p) => s + (p.volumenM3 ?? 0), 0);
+  const sumGew = pos.reduce((s, p) => s + (p.gewichtKg ?? 0), 0);
+  const sumCites = cites.reduce((s, p) => s + (p.gewichtKg ?? 0), 0);
+  const SCHRITTE = [
+    { nr: 93, label: "Cites", wann: "geschütztes Holz in den Specs" },
+    { nr: 94, label: "Fish&Wildlife", wann: "Kunde in den USA" },
+    { nr: 96, label: "Ausfuhrantrag", wann: "Kunde außerhalb der EU" },
+  ];
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <NksDokument
+          auftragId={id}
+          art="LACEY"
+          titel="Lacey Act (PPQ 505)"
+          hinweis={stand.region === "USA" ? "Kunde in den USA — wird für die Einfuhr benötigt." : "Nur für Lieferungen in die USA nötig."}
+          aktiv={pos.length > 0}
+          dok={stand.lacey}
+        />
+        <NksDokument
+          auftragId={id}
+          art="CITES"
+          titel="CITES-Antrag"
+          hinweis={cites.length ? `${cites.length} Holzposition(en) mit geschütztem Holz.` : "Kein geschütztes Holz (CITES) im Auftrag."}
+          aktiv={cites.length > 0}
+          dok={stand.cites}
+        />
+        <Card>
+          <CardHeader><CardTitle>Arbeitsschritte</CardTitle></CardHeader>
+          <CardContent className="space-y-1.5 text-sm">
+            {SCHRITTE.map((x) => {
+              const st = stand.schritte.find((y) => y.nr === x.nr);
+              return (
+                <div key={x.nr} className="flex items-center justify-between gap-2">
+                  <span>
+                    <span className="font-mono text-xs text-muted">#{x.nr}</span> {x.label}
+                    <span className="block text-xs text-muted">wenn {x.wann}</span>
+                  </span>
+                  {st ? (
+                    <Badge tone={st.status === "ERLEDIGT" ? "green" : "amber"}>{st.status === "ERLEDIGT" ? "erledigt" : "offen"}</Badge>
+                  ) : <span className="text-xs text-muted">nicht nötig</span>}
+                </div>
+              );
+            })}
+            <p className="pt-1 text-xs text-muted">
+              Werden automatisch eingefügt bzw. entfernt (Kundenwahl, Specs, Status).
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Holzpositionen ({pos.length})</CardTitle></CardHeader>
+        <CardContent>
+          {pos.length === 0 ? (
+            <p className="text-sm text-muted">Keine Holzartikel in den Specs (Artikeltyp „Holz / Fertigung“).</p>
+          ) : (
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Artikelgruppe</TH>
+                  <TH>Artikelname</TH>
+                  <TH>CITES</TH>
+                  <TH>Holz</TH>
+                  <TH>Botanischer Name</TH>
+                  <TH>Herkunft</TH>
+                  <TH className="text-right">Volumen m³</TH>
+                  <TH className="text-right">Gewicht kg</TH>
+                  <TH>Nr</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {pos.map((p) => (
+                  <TR key={p.slotKey + p.artikelId} className={p.cites ? "bg-red-50" : ""}>
+                    <TD>{p.artikelgruppe}</TD>
+                    <TD>{p.name}</TD>
+                    <TD>{p.cites ? <Badge tone="red">CITES</Badge> : null}</TD>
+                    <TD>{p.holz ?? <span className="text-amber-700">fehlt</span>}</TD>
+                    <TD className="italic">{p.botanischerName ?? "–"}</TD>
+                    <TD>{p.herkunft ?? "–"}</TD>
+                    <TD className="text-right tabular-nums" title={p.volumenKlasse ?? undefined}>
+                      {p.volumenM3 == null ? <span className="text-amber-700">fehlt</span> : fmtZahl(p.volumenM3, 7)}
+                    </TD>
+                    <TD className="text-right tabular-nums">{fmtZahl(p.gewichtKg, 3)}</TD>
+                    <TD>
+                      <Link href={`/artikel/${p.artikelId}`} className="font-mono text-[13px] font-semibold text-blue-700 hover:underline">
+                        {p.artikelNr ?? "–"}
+                      </Link>
+                    </TD>
+                  </TR>
+                ))}
+                <TR className="font-semibold">
+                  <TD colSpan={6} className="text-right text-muted">Summe</TD>
+                  <TD className="text-right tabular-nums">{fmtZahl(sumVol, 7)}</TD>
+                  <TD className="text-right tabular-nums">{fmtZahl(sumGew, 3)}</TD>
+                  <TD />
+                </TR>
+                {cites.length ? (
+                  <TR>
+                    <TD colSpan={7} className="text-right text-muted">davon geschütztes Holz (CITES, Nettomasse)</TD>
+                    <TD className="text-right tabular-nums text-red-700">{fmtZahl(sumCites, 3)}</TD>
+                    <TD />
+                  </TR>
+                ) : null}
+              </TBody>
+            </Table>
+          )}
+          <p className="mt-3 text-xs text-muted">
+            Gewicht = Volumen des Bauteils („NKS Gewichte“) × Holzdichte der Holzart. Holzart, Volumen und
+            „Geschütztes Holz (CITES)“ werden am Artikel gepflegt.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

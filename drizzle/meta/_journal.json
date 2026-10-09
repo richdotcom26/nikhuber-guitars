@@ -71,6 +71,20 @@
       "when": 1791497790449,
       "tag": "0009_anzahlungsrechnung",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791538787383,
+      "tag": "0010_nks_volumen",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791538792327,
+      "tag": "0011_nks_volumen_bezeichnung",
+      "breakpoints": true
     }
   ]
 }

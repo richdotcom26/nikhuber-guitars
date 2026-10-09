@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { artikelName, gruppeLabel } from "@/lib/artikel-shared";
-import { getArtikel, listLieferanten } from "@/lib/domain/artikel";
+import { getArtikel, listLieferanten, nksOptionen } from "@/lib/domain/artikel";
 import { isDomainError } from "@/lib/domain/errors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArtikelActionsBar } from "../artikel-actions-bar";
@@ -28,7 +28,7 @@ export default async function ArtikelDetailPage({
   // Modelle haben ihre eigene Detailseite mit Specs-Tabs.
   if (data.artikel.artikelgruppe === "MODEL") redirect(`/modelle/${id}`);
 
-  const lieferanten = await listLieferanten();
+  const [lieferanten, nks] = await Promise.all([listLieferanten(), nksOptionen()]);
   const a = data.artikel;
   const formValues = { ...a };
 
@@ -54,6 +54,7 @@ export default async function ArtikelDetailPage({
         <p className="text-sm text-neutral-500">Lieferant: {data.lieferantName}</p>
       ) : null}
       <ArtikelForm
+        nks={nks}
         mode="edit"
         values={formValues}
         lieferanten={lieferanten.map((l) => ({

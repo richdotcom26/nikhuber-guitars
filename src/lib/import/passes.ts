@@ -387,10 +387,35 @@ const KONFIG_GRUPPEN = new Set<string>([
 ]);
 const ARTIKELGRUPPE_ENUM = new Set<string>(s.artikelgruppeEnum.enumValues);
 
+// ============================================ holz_volumen (ex SF „NKS Parts Volumen")
+/** Ninox-IDs der importierten Volumen-Klassen (Artikel verweist nur auf vorhandene). */
+const holzVolumenImportiert = new Set<number>();
+
+export async function importHolzVolumen(ctx: Ctx) {
+  const tid = ctx.dump.typeIdByCaption("NKS Parts Volumen");
+  if (!tid) return ctx.log("Typ nicht gefunden");
+  const gruppeVals = ctx.dump.choiceMap(tid, "Artikelgruppe");
+  const rows = ctx.dump.rows(tid).flatMap(({ id, f: rec }) => {
+    const caption = gruppeVals[String(f(ctx, tid, rec, "Artikelgruppe"))];
+    const vol = ninoxNum(f(ctx, tid, rec, "Volumen m^3"));
+    if (!caption && vol == null) return [];           // leerer Datensatz
+    holzVolumenImportiert.add(id);
+    const gruppe = gruppeEnum(caption);
+    return [{
+      id: ctx.ids.get(tid, id),
+      bezeichnung: caption ?? `#${id}`,
+      artikelgruppe: (ARTIKELGRUPPE_ENUM.has(gruppe) ? gruppe : null) as never,
+      volumenM3: vol,
+    }];
+  });
+  ctx.log(`${await upsert(s.holzVolumen, rows, s.holzVolumen.id)}`);
+}
+
 export async function importArtikel(ctx: Ctx) {
   const tid = ctx.dump.typeIdByCaption("Artikel");
   if (!tid) return ctx.log("Typ 'Artikel' nicht gefunden");
   const tf = ctx.dump.typeIdByCaption("NKS Holzarten");
+  const sf = ctx.dump.typeIdByCaption("NKS Parts Volumen");
   const mc = ctx.dump.typeIdByCaption("Adressen");
   const gruppeVals = ctx.dump.choiceMap(tid, "Artikelgruppe");   // ninoxValue -> caption
   const typVals = ctx.dump.choiceMap(tid, "Artikeltyp");
@@ -407,6 +432,9 @@ export async function importArtikel(ctx: Ctx) {
 
     const holzartRaw = f(ctx, tid, rec, "NKS Holzart");
     const holzartId = tf && holzartRaw != null ? ctx.ids.lookup(tf, holzartRaw as number) : undefined;
+    const volRaw = f(ctx, tid, rec, "NKS Gewichte");
+    const holzVolumenId = sf && volRaw != null && holzVolumenImportiert.has(Number(volRaw))
+      ? ctx.ids.lookup(sf, volRaw as number) : undefined;
     const lieferantRaw = f(ctx, tid, rec, "LIEFERANT");
     const lieferantId = mc && lieferantRaw != null ? ctx.ids.lookup(mc, lieferantRaw as number) : undefined;
     const bestandMin = ninoxNum(f(ctx, tid, rec, "Bestand min"));
@@ -448,6 +476,7 @@ export async function importArtikel(ctx: Ctx) {
       bestandMax,
       geschuetztesHolzCites: num1(f(ctx, tid, rec, "Geschütztes Holz (Cites)")),
       holzartId: holzartId ?? null,
+      holzVolumenId: holzVolumenId ?? null,
       gewichtKg: ninoxNum(f(ctx, tid, rec, "Gewicht kg")),
       datensatzInaktiv: ninoxBool(f(ctx, tid, rec, "Datensatz inaktiv")),
       schreibgeschuetzt: ninoxBool(f(ctx, tid, rec, "Datensatz schreibgeschützt")),

@@ -129,6 +129,34 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
 
+  {
+    id: "nks",
+    bereich: "Aufträge",
+    titel: "NKS: Lacey Act, CITES, Fish&Wildlife und Ausfuhrantrag",
+    bloecke: [
+      { p: "Der Reiter **NKS** im Auftrag bündelt alles rund um Holz-Compliance (der Name ist ein Phantasiename aus Ninox-Zeiten). Er zeigt die **Holzpositionen**, die Belege **Lacey Act** und **CITES** und den Stand der zugehörigen Arbeitsschritte." },
+      { p: "**Holzpositionen** sind alle Artikel aus den Specs (Tab Details) mit Artikeltyp **„Holz / Fertigung“** – mit Holzart, botanischem Namen, Herkunft, Volumen und Gewicht. Geschütztes Holz (CITES) ist rot markiert; darunter stehen die Summen und die CITES-Nettomasse." },
+      { ul: [
+        "**Volumen** = Volumen des Bauteils („NKS Gewichte“, z. B. Fretboard 0,00058 m³, Headstock Overlay 0,00018 m³). Es wird am Artikel als **„NKS Volumen (Bauteil)“** gewählt.",
+        "**Gewicht kg** = Volumen × **Holzdichte** der Holzart (Holzbestand → Holzarten). Nur wenn am Artikel ein Gewicht eingetragen ist, gilt dieses.",
+        "Holzart, Volumen und **„Geschütztes Holz (CITES)“** werden im **Artikel** unter „NKS / Sonstiges“ gepflegt. Fehlt etwas, steht in der Tabelle „fehlt“.",
+      ] },
+      { p: "**Belege erzeugen** (Knopf „Erzeugen“ bzw. „Neu erzeugen“): Das PDF wird auf dem Original-Formular ausgefüllt, als Anhang am Auftrag gespeichert (Art „Lacey Act“ bzw. „CITES“, auch unter Dokumente & Bilder) und lässt sich per Klick öffnen." },
+      { ul: [
+        "**Lacey Act (PPQ Form 505)** – für Lieferungen in die **USA**. Enthält alle Holzpositionen (HTS-Code, Bauteil, botanischer Name, Herkunft, Volumen in m³), Kundenadresse als Importer und Consignee, Seriennummer, Bruttobetrag, voraussichtliche Ankunft (heute + 3 Tage) sowie Unterzeichner und Datum. **HTS-Code** und **Unterzeichner** stehen unter Einstellungen → Firma.",
+        "**CITES-Antrag** (Regierungspräsidium Darmstadt) – nur möglich, wenn geschütztes Holz im Auftrag ist. Enthält die CITES-Bauteile („… für elektr. Gitarre“), die Nettomasse in kg (eine Nachkommastelle), Stempel, Unterschrift und Datum.",
+        "Vor dem Erzeugen prüft das Programm, ob jede Holzposition Holzart und Volumen hat.",
+      ] },
+      { p: "**Arbeitsschritte** werden automatisch eingefügt bzw. entfernt – beim Wählen des Kunden, beim Ändern der Specs und beim Statuswechsel:" },
+      { ul: [
+        "**#93 Cites** – wenn ein Spec-Artikel mit Artikeltyp „Holz / Fertigung“ als geschütztes Holz (CITES) markiert ist.",
+        "**#94 Fish&Wildlife** – wenn der Kunde in den **USA** ist.",
+        "**#96 Ausfuhrantrag** – wenn der Kunde **außerhalb der EU** ist (nicht Deutschland, nicht EU).",
+        "Entfallen die Voraussetzungen, wird der Schritt entfernt – aber nur, solange er noch **offen** ist. Bereits bearbeitete Schritte bleiben erhalten.",
+      ] },
+    ],
+  },
+
   /* ------------------------------------------------- Angebot & Auftrag */
   {
     id: "modellvorlage",

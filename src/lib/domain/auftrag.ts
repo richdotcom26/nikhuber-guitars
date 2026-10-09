@@ -5,14 +5,14 @@ import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { orderByFor } from "./_sort";
 import {
-  arbeitsschritt, artikel, auftrag, belegPosition, kunde, modellgruppe, rechnung, specBelegung,
+  arbeitsschritt, artikel, auftrag, belegPosition, kunde, modellgruppe, rechnung,
 } from "@/lib/db/schema";
 import {
   AUFTRAG_STATUS_VALUES as STATUS_VALUES, AUFTRAGSART_VALUES as ART_VALUES,
   type Auftragsart, type AuftragStatus,
 } from "@/lib/auftrag-shared";
 import {
-  addSchritt, clearSchritte, computeFortschritt, recomputeComplianceSteps,
+  addSchritt, clearSchritte, computeFortschritt, hatCitesHolzImAuftrag, recomputeComplianceSteps,
   seedStandardSchritte, VORRAT_NR,
 } from "./arbeitsschritt";
 import { allocateNummer, kdSnapshot, recomputeSummen } from "./belege";
@@ -186,14 +186,7 @@ export async function setAuftragKunde(id: string, kundeId: string) {
   await recomputeComplianceSteps(id, snap.kdRegion ?? null, await hatCitesHolz(id));
 }
 
-async function hatCitesHolz(auftragId: string): Promise<boolean> {
-  const [{ n }] = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(specBelegung)
-    .innerJoin(artikel, eq(artikel.id, specBelegung.artikelId))
-    .where(and(eq(specBelegung.auftragId, auftragId), eq(artikel.geschuetztesHolzCites, true)));
-  return n > 0;
-}
+const hatCitesHolz = hatCitesHolzImAuftrag;
 
 /* --------------------------------------------------------------- Status (7g) */
 

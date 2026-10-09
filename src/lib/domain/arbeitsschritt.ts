@@ -296,13 +296,21 @@ export async function recomputeComplianceSteps(
   );
 }
 
-/** Ob irgendein Holz-Spec-Artikel des Auftrags als geschütztes Holz (CITES) markiert ist (7d). */
+/**
+ * Ob ein Spec-Artikel des Auftrags mit Artikeltyp „Holz / Fertigung" als geschütztes Holz (CITES)
+ * markiert ist (7d) — hält nebenbei `auftrag.cites_artikelanzahl` aktuell.
+ */
 export async function hatCitesHolzImAuftrag(auftragId: string): Promise<boolean> {
   const [{ n }] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(specBelegung)
     .innerJoin(artikel, eq(artikel.id, specBelegung.artikelId))
-    .where(and(eq(specBelegung.auftragId, auftragId), eq(artikel.geschuetztesHolzCites, true)));
+    .where(and(
+      eq(specBelegung.auftragId, auftragId),
+      eq(artikel.artikeltyp, "HOLZ"),
+      eq(artikel.geschuetztesHolzCites, true),
+    ));
+  await db.update(auftrag).set({ citesArtikelanzahl: n }).where(eq(auftrag.id, auftragId));
   return n > 0;
 }
 

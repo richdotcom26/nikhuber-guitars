@@ -66,7 +66,8 @@ export const artikel = pgTable("artikel", {
   // NKS / Holz:
   geschuetztesHolzCites: boolean("geschuetztes_holz_cites").default(false).notNull(), // ex WB.LE
   holzartId: uuid("holzart_id"),               // -> holzart.id (relations); "NKS Holzart"
-  gewichtKg: numeric("gewicht_kg", { precision: 10, scale: 3 }),
+  holzVolumenId: uuid("holz_volumen_id"),      // -> holz_volumen.id (FK via raw SQL); "NKS Gewichte"
+  gewichtKg: numeric("gewicht_kg", { precision: 10, scale: 3 }), // optionaler Override; sonst Volumen × Holzdichte
 
   datensatzInaktiv: boolean("datensatz_inaktiv").default(false).notNull(), // Archiv (Modell-Liste-Filter, 7x)
   schreibgeschuetzt: boolean("schreibgeschuetzt").default(false).notNull(),

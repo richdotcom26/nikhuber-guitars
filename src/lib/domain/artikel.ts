@@ -3,7 +3,7 @@ import { and, asc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
-import { artikel, kunde, modellgruppe } from "@/lib/db/schema";
+import { artikel, holzart, holzVolumen, kunde, modellgruppe } from "@/lib/db/schema";
 import { ARTIKELGRUPPE_VALUES } from "@/lib/artikel-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -95,6 +95,11 @@ const decimalOrNull = z.preprocess(
   z.coerce.number().transform((n) => n.toString()).nullable(),
 );
 const uuidOrNull = z.preprocess((v) => (v === "" || v == null ? null : v), z.uuid().nullable());
+/** Wie uuidOrNull, aber Feld fehlt im Formular → undefined (Spalte bleibt unverändert). */
+const uuidOptional = z.preprocess(
+  (v) => (v === undefined ? undefined : v === "" || v == null ? null : v),
+  z.uuid().nullable().optional(),
+);
 const boolFlag = z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean());
 
 export const artikelSchema = z.object({
@@ -124,6 +129,8 @@ export const artikelSchema = z.object({
   bestandMax: decimalOrNull,
 
   geschuetztesHolzCites: boolFlag,
+  holzartId: uuidOptional,       // nur im Artikel-Formular (NKS), nicht bei Modellen
+  holzVolumenId: uuidOptional,
   gewichtKg: decimalOrNull,
 
   datensatzInaktiv: boolFlag,
@@ -248,6 +255,21 @@ export async function listLieferanten() {
     .where(and(eq(kunde.kontaktart, "LIEFERANT"), isNull(kunde.deletedAt)))
     .orderBy(asc(sql`lower(coalesce(${kunde.firma}, ${kunde.nachname}, ${kunde.kurzname}, ''))`));
 }
+
+/** Auswahllisten für die NKS-Felder im Artikel-Formular (Holzart, Volumen-Klasse). */
+export async function nksOptionen() {
+  const [ha, hv] = await Promise.all([
+    db.select({ id: holzart.id, holz: holzart.holz, botanischerName: holzart.botanischerName, holzdichte: holzart.holzdichte })
+      .from(holzart).orderBy(asc(holzart.holz)),
+    db.select({ id: holzVolumen.id, bezeichnung: holzVolumen.bezeichnung, volumenM3: holzVolumen.volumenM3 })
+      .from(holzVolumen).orderBy(asc(holzVolumen.bezeichnung)),
+  ]);
+  return {
+    holzarten: ha.map((h) => ({ id: h.id, label: h.botanischerName ? `${h.holz} (${h.botanischerName})` : h.holz, dichte: h.holzdichte })),
+    volumen: hv.map((v) => ({ id: v.id, label: `${v.bezeichnung} – ${Number(v.volumenM3 ?? 0).toLocaleString("de-DE", { maximumFractionDigits: 7 })} m³`, m3: v.volumenM3 })),
+  };
+}
+export type NksOptionen = Awaited<ReturnType<typeof nksOptionen>>;
 
 /* ------------------------------------------------------------------ mutationen */
 

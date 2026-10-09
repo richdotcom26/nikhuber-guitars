@@ -15,7 +15,7 @@ import { IdMap } from "../src/lib/import/idmap";
 import { parseNinoxDump } from "../src/lib/import/ninox";
 import type { Ctx } from "../src/lib/import/passes";
 import {
-  importZahlungsbedingung, importStaat, importHolzart, importHolzVokabeln, importLagerort,
+  importZahlungsbedingung, importStaat, importHolzart, importHolzVolumen, importHolzVokabeln, importLagerort,
   importKunde, importArtikel, importArtikelModell, importModellSpecs,
   importAngebote, importAuftraege, importArbeitsschritte, importRechnungen, importHolzInventar,
   importSeriennummer, importBetriebsmittel, importMitarbeiter, importTodo, importMailversand,
@@ -46,6 +46,7 @@ async function main() {
     ["Zahlungsbedingungen", importZahlungsbedingung],
     ["Staaten", importStaat],
     ["Holzarten", importHolzart],
+    ["NKS Volumen", importHolzVolumen],
     ["Holz-Vokabeln", importHolzVokabeln],
     ["Lagerorte", importLagerort],
     ["Kunden", importKunde],

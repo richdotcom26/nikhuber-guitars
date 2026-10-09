@@ -75,7 +75,7 @@ export const artikelRelations = relations(artikel, ({ one, many }) => ({
   // Spec-Belegungen: als gewählter Spec-Artikel vs. als Modell-Default-Träger:
   specVerwendungen: many(specBelegung, { relationName: "spec_artikel" }),
   modellSpecs: many(specBelegung, { relationName: "spec_modell" }),
-  holzVolumen: many(holzVolumen),
+  holzVolumen: one(holzVolumen, { fields: [artikel.holzVolumenId], references: [holzVolumen.id] }),
   kalkulation: one(modellKalkulation),
   belegPositionen: many(belegPosition),
   lagerbestand: one(lagerbestand),
@@ -189,12 +189,11 @@ export const arbeitsschrittRelations = relations(arbeitsschritt, ({ one }) => ({
 // ---------------------------------------------------------------- Compliance / Holz
 export const holzartRelations = relations(holzart, ({ many }) => ({
   artikel: many(artikel),
-  volumen: many(holzVolumen),
   inventar: many(holzInventar),
 }));
 
-export const holzVolumenRelations = relations(holzVolumen, ({ one }) => ({
-  artikel: one(artikel, { fields: [holzVolumen.artikelId], references: [artikel.id] }),
+export const holzVolumenRelations = relations(holzVolumen, ({ many }) => ({
+  artikel: many(artikel),
 }));
 
 // ---------------------------------------------------------------- Lager
