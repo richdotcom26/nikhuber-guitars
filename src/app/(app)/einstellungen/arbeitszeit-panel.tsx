@@ -57,7 +57,7 @@ export function ArbeitszeitPanel({ rows }: { rows: ArbeitstagRow[] }) {
         <CardContent className="space-y-3">
           <p className="text-xs text-muted">
             Wird nach jeder Claude-Antwort automatisch aktualisiert. Arbeitstag endet um 4:00 Uhr; Pausen über 30 Minuten
-            zählen nicht. „Git (geschätzt)“ = Sitzungsprotokoll nicht mehr vorhanden, Zeit aus Commits geschätzt.
+            zählen nicht; je Arbeitsblock +10 Minuten fürs Testen im Frontend. „Git (geschätzt)“ = Sitzungsprotokoll nicht mehr vorhanden, Zeit aus Commits geschätzt.
           </p>
           <Table>
             <THead>

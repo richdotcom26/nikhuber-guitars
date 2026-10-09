@@ -11,6 +11,7 @@
  *  - Arbeitstag = Europe/Berlin, Tagesgrenze 04:00 Uhr (nicht Mitternacht).
  *  - Aktive Zeit = Summe der Abstände zwischen Ereignissen; Pausen > 30 min zählen nicht.
  *    Nur-Commit-Strecken (Protokoll fehlt): Abstände bis 60 min, Vorlauf 30 min vor einem Block.
+ *  - Nachlauf: am Ende jedes Arbeitsblocks (vor einer Pause und am Tagesende) +10 min fürs Testen im Frontend.
  *  - Ein gespeicherter Tag wird nur überschrieben, wenn mindestens so viele Ereignisse vorliegen
  *    (Claude Code löscht alte Protokolle → Werte sollen nie schrumpfen).
  *  - Manuell bearbeitete Beschreibungen bleiben unangetastet.
@@ -41,6 +42,8 @@ const PROJEKT_ORDNER = ["C--Users-W-li-Claude-nikhuber-guitars"];
 const PAUSE_MIN = 30;
 const PAUSE_GIT_MIN = 60;
 const VORLAUF_MIN = 30;
+/** Nach jedem Arbeitsblock: Änderungen im Frontend testen (nicht im Protokoll sichtbar). */
+const NACHLAUF_MIN = 10;
 
 const tagVon = (ms) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date(ms - 4 * 3600e3));
 
@@ -115,8 +118,12 @@ function auswerten(ev) {
       const d = l[i].t - l[i - 1].t;
       const nurGit = l[i].q === "g" && l[i - 1].q === "g";
       if (d <= (nurGit ? PAUSE_GIT_MIN : PAUSE_MIN) * 60e3) ms += d;
-      else if (l[i].q === "g") ms += VORLAUF_MIN * 60e3;
+      else {
+        ms += Math.min(NACHLAUF_MIN * 60e3, d); // Block endet → Nachlauf
+        if (l[i].q === "g") ms += VORLAUF_MIN * 60e3;
+      }
     }
+    ms += NACHLAUF_MIN * 60e3; // Tagesende
     const p = l.filter((e) => e.q === "p").length;
     const g = l.length - p;
     const minuten = Math.round(ms / 60e3);
