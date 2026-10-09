@@ -17,6 +17,7 @@ import {
 import { rechnungMailSchema, sendeRechnungMail } from "@/lib/domain/rechnung-mail";
 import { dezimal } from "@/lib/utils";
 import { anzahlungenUebernehmen, entferneAbzug } from "@/lib/domain/anzahlung";
+import { sendeDatevExport } from "@/lib/domain/datev";
 
 /** Entwurf buchen: Nummer, Datum, Sperre, E-Rechnung — in einer Transaktion. */
 export async function buchenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -251,5 +252,17 @@ export async function entferneAbzugAction(_p: ActionState, fd: FormData): Promis
     await entferneAbzug(id, String(fd.get("abzugId") ?? ""));
     rev(id);
     return ok("Abzug entfernt.");
+  });
+}
+
+/** DATEV-Export eines Monats ans Steuerbüro mailen. */
+export async function datevSendenAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const r = await sendeDatevExport(Number(fd.get("jahr")), Number(fd.get("monat")), fd.get("pdfs") === "on");
+    revalidatePath("/mailversand");
+    return ok(
+      `DATEV-Export gesendet an ${r.an.join(", ")}: ${r.anzahl} Buchungen` +
+      (r.pdfs ? `, ${r.pdfs} PDF(s)` : "") + (r.warnungen.length ? ` – Hinweise: ${r.warnungen.join("; ")}` : ""),
+    );
   });
 }

@@ -222,6 +222,21 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "datev-export",
+    bereich: "Rechnungen",
+    titel: "DATEV-Export Rechnungsausgang (Monat ans Steuerbüro)",
+    bloecke: [
+      { p: "**Rechnungen → „DATEV-Export“**: Monat und Jahr wählen (vorbelegt: Vormonat), dann **„An Steuerbüro senden“** oder **„Nur herunterladen“**." },
+      { ul: [
+        "Erzeugt wird ein **DATEV-Buchungsstapel** (Format EXTF 700, CSV in Windows-1252), den das Steuerbüro direkt in DATEV einliest: eine Buchung je gebuchtem Beleg des Monats (Rechnungen, Anzahlungs-, Storno- und Korrekturrechnungen; Entwürfe nicht).",
+        "Buchung: Soll Debitor (Sammeldebitor), Haben Erlöskonto je Steuerfall – Inland (steuerpflichtig), EU (steuerfreie innergemeinschaftliche Lieferung, mit USt-IdNr. des Kunden), Drittland (Ausfuhr); Anzahlungsrechnungen auf das Anzahlungskonto. Stornos als Haben-Buchung. Belegfeld 1 = Rechnungsnummer, Buchungstext = Kunde.",
+        "USD-Rechnungen: Betrag in USD mit Kurs und EUR-Basisbetrag (aktueller EZB-Kurs).",
+        "Die Mail geht an die Empfänger aus **Einstellungen → DATEV** (Vorgabe: c.rothe@sattler-sommer.de, johannes@nikhuber-guitars.com), auf Wunsch mit allen Rechnungs-PDFs (ZUGFeRD) des Monats. Sie steht danach im Mailversand.",
+        "**Einrichtung (einmalig):** In Einstellungen → DATEV **Beraternummer** und **Mandantennummer** eintragen und die Konten mit dem Steuerbüro abstimmen (Vorgaben SKR03: 8400 / 8125 / 8120 / 1718, Debitor 10000). Ohne Berater-/Mandantennummer ist kein Export möglich.",
+      ] },
+    ],
+  },
+  {
     id: "textbausteine-zweispaltig",
     bereich: "Einstellungen",
     titel: "Textbausteine: Deutsch/Englisch nebeneinander, Übersetzen per Knopf",

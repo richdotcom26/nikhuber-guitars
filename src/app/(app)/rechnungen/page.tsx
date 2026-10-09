@@ -9,6 +9,8 @@ import { reportJahre } from "@/lib/domain/report";
 import { RechnungenTable } from "./rechnungen-table";
 import { RechnungSummen } from "./summen";
 import { AutoSelect } from "./auto-select";
+import { DatevExport } from "./datev-export";
+import { getFirmaSetting } from "@/lib/domain/stammdaten";
 import { heuteBerlin } from "@/lib/utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -40,9 +42,10 @@ export default async function RechnungenPage({
   const monat = jahr && monatNr >= 1 && monatNr <= 12 ? String(monatNr) : "";
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
-  const [{ rows, faktor, kurs, summen, total, pageCount }, jahre] = await Promise.all([
+  const [{ rows, faktor, kurs, summen, total, pageCount }, jahre, fs] = await Promise.all([
     listRechnungen({ q, status, belegart, jahr: jahr ? Number(jahr) : undefined, monat: monat ? Number(monat) : undefined, page, sort, mitSummen: sp.summen === "1" && !!jahr }),
     reportJahre(),
+    getFirmaSetting(),
   ]);
 
   const query = { q, status, belegart, jahr: jahr || "alle", monat: monat || "alle", sort: sort.key, dir: sort.dir };
@@ -60,6 +63,7 @@ export default async function RechnungenPage({
         count={`${total} Belege`}
         actions={(
           <div className="flex gap-2">
+            <DatevExport jahre={jahre} vorJahr={vorJahr} vorMonat={vorMonat} empfaenger={fs.datevEmpfaenger} />
             <Link href="/rechnungen/mahnungen" className={buttonClasses("outline")}>Mahnvorschläge</Link>
             <Link href="/rechnungen/neu" className={buttonClasses()}>Neue Rechnung ohne Auftrag</Link>
           </div>

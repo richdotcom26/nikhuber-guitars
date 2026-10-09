@@ -51,6 +51,18 @@ export const firmaSetting = pgTable("firma_setting", {
   mahnGebuehr2: numeric("mahn_gebuehr_2", { precision: 12, scale: 2 }).default("5").notNull(),
   mahnGebuehr3: numeric("mahn_gebuehr_3", { precision: 12, scale: 2 }).default("10").notNull(),
 
+  // DATEV-Export (Buchungsstapel, Rechnungsausgang) — Werte vom Steuerbüro
+  datevBeraterNr: text("datev_berater_nr"),
+  datevMandantNr: text("datev_mandant_nr"),
+  datevSachkontenlaenge: integer("datev_sachkontenlaenge").default(4).notNull(),
+  datevWjBeginnMonat: integer("datev_wj_beginn_monat").default(1).notNull(),
+  datevDebitor: text("datev_debitor").default("10000").notNull(),            // Sammeldebitor
+  datevKontoInland: text("datev_konto_inland").default("8400").notNull(),     // SKR03 Erlöse 19 %
+  datevKontoEu: text("datev_konto_eu").default("8125").notNull(),             // stfr. ig. Lieferung
+  datevKontoDrittland: text("datev_konto_drittland").default("8120").notNull(), // stfr. Ausfuhr
+  datevKontoAnzahlung: text("datev_konto_anzahlung").default("1718").notNull(), // erhaltene Anzahlungen 19 %
+  datevEmpfaenger: text("datev_empfaenger").default("c.rothe@sattler-sommer.de, johannes@nikhuber-guitars.com").notNull(),
+
   todoHinweis: text("todo_hinweis"),                         // Aushang oben im ToDo-Reiter (an alle)
   todoHinweisAm: timestamp("todo_hinweis_am", { withTimezone: true }),
   ...auditCols,

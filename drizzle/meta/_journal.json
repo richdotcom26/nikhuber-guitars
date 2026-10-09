@@ -141,6 +141,13 @@
       "when": 1791576926767,
       "tag": "0019_mahnwesen",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791582069194,
+      "tag": "0020_datev_export",
+      "breakpoints": true
     }
   ]
 }

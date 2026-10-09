@@ -17,6 +17,7 @@ import {
 } from "@/lib/domain/theme";
 import { arbeitstagSchema, deleteArbeitstag, saveArbeitstag } from "@/lib/domain/arbeitszeit";
 import { updateMahnKonfig } from "@/lib/domain/mahnung";
+import { updateDatevKonfig } from "@/lib/domain/datev";
 import { uebersetzeDeEn } from "@/lib/domain/uebersetzen";
 
 const BASE = "/einstellungen";
@@ -265,4 +266,12 @@ export async function uebersetzeTextbausteinAction(
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export async function saveDatevKonfigAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await updateDatevKonfig(Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)])));
+    revalidatePath(BASE);
+    return ok("DATEV-Einstellungen gespeichert.");
+  });
 }
