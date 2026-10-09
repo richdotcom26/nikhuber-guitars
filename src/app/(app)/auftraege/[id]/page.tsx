@@ -106,6 +106,7 @@ export default async function AuftragDetailPage({
             <Link href="/auftraege" className={buttonClasses("outline")}>Zurück</Link>
             <a href={`/druck/auftrag/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
             <a href={`/druck/auftrag/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>PDF</a>
+            <a href={`/druck/lieferschein/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Lieferschein</a>
           </div>
         }
       />

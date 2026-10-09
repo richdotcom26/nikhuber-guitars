@@ -115,9 +115,9 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
           <Text style={s.cPos}>{t.pos}</Text>
           <Text style={s.cBez}>{t.bez}</Text>
           <Text style={s.cMenge}>{t.menge}</Text>
-          <Text style={s.cEinzel}>{t.einzel}</Text>
-          <Text style={s.cRabatt}>{t.rabatt}</Text>
-          <Text style={s.cGesamt}>{t.gesamt}</Text>
+          {!data.ohnePreise ? <Text style={s.cEinzel}>{t.einzel}</Text> : null}
+          {!data.ohnePreise ? <Text style={s.cRabatt}>{t.rabatt}</Text> : null}
+          {!data.ohnePreise ? <Text style={s.cGesamt}>{t.gesamt}</Text> : null}
         </View>
         {data.positionen.map((p, i) => (
           <View style={s.td} key={i} wrap={false}>
@@ -127,12 +127,13 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
               {p.beschreibung ? <Text style={s.muted}>{p.beschreibung}</Text> : null}
             </View>
             <Text style={s.cMenge}>{Number(p.anzahl)}</Text>
-            <Text style={s.cEinzel}>{money(p.einzelpreis)}</Text>
-            <Text style={s.cRabatt}>{Number(p.rabattProzent) ? `${Number(p.rabattProzent)} %` : "–"}</Text>
-            <Text style={s.cGesamt}>{money(p.gesamt)}</Text>
+            {!data.ohnePreise ? <Text style={s.cEinzel}>{money(p.einzelpreis)}</Text> : null}
+            {!data.ohnePreise ? <Text style={s.cRabatt}>{Number(p.rabattProzent) ? `${Number(p.rabattProzent)} %` : "–"}</Text> : null}
+            {!data.ohnePreise ? <Text style={s.cGesamt}>{money(p.gesamt)}</Text> : null}
           </View>
         ))}
 
+        {!data.ohnePreise ? (
         <View style={s.sumWrap}>
           <View style={s.sumRow}><Text>{t.summePos}</Text><Text>{money(data.summen.positionen)}</Text></View>
           {data.summen.gesamtrabattAktiv && Number(data.summen.gesamtrabattWert) ? (
@@ -185,6 +186,7 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
             </>
           ) : null}
         </View>
+        ) : null}
 
         {data.annahme ? (
           <View wrap={false} style={{ marginTop: 18, borderWidth: 1, borderColor: "#ccc", padding: 8 }}>

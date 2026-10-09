@@ -1,10 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { BelegDokument } from "@/components/beleg-dokument";
-import { type BelegArt, renderBelegData } from "@/lib/domain/beleg-render";
+import { type BelegArt, renderBelegData, renderLieferscheinData } from "@/lib/domain/beleg-render";
 import { isDomainError } from "@/lib/domain/errors";
 import { PrintButton } from "./print-button";
 
-const ARTEN: BelegArt[] = ["angebot", "auftrag", "rechnung"];
+const ARTEN: string[] = ["angebot", "auftrag", "rechnung", "lieferschein"];
 
 export default async function DruckPage({
   params,
@@ -12,11 +12,11 @@ export default async function DruckPage({
   params: Promise<{ art: string; id: string }>;
 }) {
   const { art, id } = await params;
-  if (!ARTEN.includes(art as BelegArt)) notFound();
+  if (!ARTEN.includes(art)) notFound();
 
   let data;
   try {
-    data = await renderBelegData(art as BelegArt, id);
+    data = art === "lieferschein" ? await renderLieferscheinData(id) : await renderBelegData(art as BelegArt, id);
   } catch (e) {
     if (isDomainError(e)) {
       if (e.code === "UNAUTHENTICATED") redirect("/login");
@@ -41,7 +41,7 @@ export default async function DruckPage({
           PDF herunterladen
         </a>
         <a
-          href={art === "auftrag" ? `/auftraege/${id}` : `/${art}e/${id}`}
+          href={art === "auftrag" || art === "lieferschein" ? `/auftraege/${id}` : `/${art}e/${id}`}
           style={{ fontSize: 13, color: "#2563eb", alignSelf: "center" }}
         >
           ← zurück zum Beleg

@@ -131,6 +131,18 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "lieferschein",
+    bereich: "Aufträge",
+    titel: "Lieferschein drucken",
+    bloecke: [
+      { p: "Oben rechts im Auftrag öffnet **„Lieferschein“** den Lieferschein in einem neuen Tab – zum Drucken oder als PDF herunterladen." },
+      { ul: [
+        "Inhalt wie die Auftragsbestätigung (Kunde, Auftragsnummer, alle Positionen mit Menge und Beschreibung), aber **ohne Preise, Rabatte und Summen** und ohne Zahlungsbedingung.",
+        "Überschrift **„Lieferschein“** (bei englischsprachigen Kunden „Delivery Note“), Datum = heute.",
+      ] },
+    ],
+  },
+  {
     id: "auftrag-status-ab",
     bereich: "Aufträge",
     titel: "Auftragseingang: Status Eingang → Bestätigt, Auftragsbestätigung mit Unterschrift",

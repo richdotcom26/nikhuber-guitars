@@ -1,25 +1,25 @@
 import { NextResponse } from "next/server";
-import { type BelegArt, renderBelegData } from "@/lib/domain/beleg-render";
+import { type BelegArt, renderBelegData, renderLieferscheinData } from "@/lib/domain/beleg-render";
 import { isDomainError } from "@/lib/domain/errors";
 import { renderBelegPdf } from "@/lib/pdf/render";
 import { embedZugferd } from "@/lib/pdf/zugferd";
 
 export const runtime = "nodejs";
 
-const ARTEN: BelegArt[] = ["angebot", "auftrag", "rechnung"];
+const ARTEN: string[] = ["angebot", "auftrag", "rechnung", "lieferschein"];
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ art: string; id: string }> },
 ) {
   const { art, id } = await params;
-  if (!ARTEN.includes(art as BelegArt)) {
+  if (!ARTEN.includes(art)) {
     return NextResponse.json({ error: "unbekannte Belegart" }, { status: 404 });
   }
   const zugferd = art === "rechnung" && new URL(req.url).searchParams.get("zugferd") === "1";
 
   try {
-    const data = await renderBelegData(art as BelegArt, id);
+    const data = art === "lieferschein" ? await renderLieferscheinData(id) : await renderBelegData(art as BelegArt, id);
     const base = await renderBelegPdf(data);
     const out = zugferd ? await embedZugferd(base, data) : base;
     const body = Buffer.from(out);

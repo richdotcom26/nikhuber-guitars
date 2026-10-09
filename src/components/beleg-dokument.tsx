@@ -79,9 +79,9 @@ export function BelegDokument({ data }: { data: BelegRenderData }) {
               <th style={{ width: "6%" }}>{t.pos}</th>
               <th>{t.bez}</th>
               <th className="r" style={{ width: "10%" }}>{t.menge}</th>
-              <th className="r" style={{ width: "16%" }}>{t.einzel}</th>
-              <th className="r" style={{ width: "10%" }}>{t.rabatt}</th>
-              <th className="r" style={{ width: "16%" }}>{t.gesamt}</th>
+              {!data.ohnePreise ? <th className="r" style={{ width: "16%" }}>{t.einzel}</th> : null}
+              {!data.ohnePreise ? <th className="r" style={{ width: "10%" }}>{t.rabatt}</th> : null}
+              {!data.ohnePreise ? <th className="r" style={{ width: "16%" }}>{t.gesamt}</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -93,14 +93,15 @@ export function BelegDokument({ data }: { data: BelegRenderData }) {
                   {p.beschreibung ? <div className="muted">{p.beschreibung}</div> : null}
                 </td>
                 <td className="r">{Number(p.anzahl)}</td>
-                <td className="r">{money(p.einzelpreis)}</td>
-                <td className="r">{Number(p.rabattProzent) ? `${Number(p.rabattProzent)} %` : "–"}</td>
-                <td className="r">{money(p.gesamt)}</td>
+                {!data.ohnePreise ? <td className="r">{money(p.einzelpreis)}</td> : null}
+                {!data.ohnePreise ? <td className="r">{Number(p.rabattProzent) ? `${Number(p.rabattProzent)} %` : "–"}</td> : null}
+                {!data.ohnePreise ? <td className="r">{money(p.gesamt)}</td> : null}
               </tr>
             ))}
           </tbody>
         </table>
 
+        {!data.ohnePreise ? (
         <table className="sum" style={{ marginTop: 12, marginLeft: "auto", width: "50%" }}>
           <tbody>
             <tr><td>{t.summePos}</td><td className="r">{money(data.summen.positionen)}</td></tr>
@@ -151,6 +152,7 @@ export function BelegDokument({ data }: { data: BelegRenderData }) {
             ) : null}
           </tbody>
         </table>
+        ) : null}
 
         <div style={{ marginTop: 24, fontSize: 10 }} className="muted">
           {data.steuerHinweis ? <p style={{ margin: "0 0 4px" }}>{data.steuerHinweis}</p> : null}

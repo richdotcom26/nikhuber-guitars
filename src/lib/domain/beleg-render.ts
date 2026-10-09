@@ -9,6 +9,7 @@ const azRechnung = alias(rechnung, "az_rechnung");
 import { alias } from "drizzle-orm/pg-core";
 import { berechneBriefkopf } from "@/lib/adressen-shared";
 import { requireUser } from "./context";
+import { heuteBerlin } from "@/lib/utils";
 import { DomainError } from "./errors";
 import { getFirmaSetting } from "./stammdaten";
 
@@ -73,6 +74,8 @@ export interface BelegRenderData {
   /** Abgezogene Anzahlungsrechnungen (Endrechnung) + verbleibender Zahlbetrag. */
   abzuege: { nummer: string | null; datum: string | null; netto: string; mwst: string; brutto: string }[];
   zahlbetrag: string | null;
+  /** Lieferschein: Positionen ohne Preise, ohne Summenblock. */
+  ohnePreise?: boolean;
   /** Auftragsbestätigung: Feld „Auftragsannahme" (leer zum Unterschreiben bzw. mit elektronischer Unterschrift). */
   annahme?: { png: Buffer; name: string; zeit: string; ip: string } | { leer: true } | null;
 }
@@ -137,6 +140,23 @@ export async function renderBelegData(
 ): Promise<BelegRenderData> {
   await requireUser();
   return ladeBelegData(art, id, over);
+}
+
+/** Lieferschein zum Auftrag: wie die Auftragsbestätigung, aber ohne Preise; Datum = heute. */
+export async function renderLieferscheinData(auftragId: string): Promise<BelegRenderData> {
+  await requireUser();
+  const d = await ladeBelegData("auftrag", auftragId);
+  return {
+    ...d,
+    titel: d.sprache === "DE" ? "Lieferschein" : "Delivery Note",
+    datum: heuteBerlin(),
+    ohnePreise: true,
+    zahlungsbedingung: null,
+    steuerHinweis: null,
+    anzahlung: null,
+    abzuege: [],
+    zahlbetrag: null,
+  };
 }
 
 /**
