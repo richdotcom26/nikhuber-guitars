@@ -316,6 +316,7 @@ export const WIKI: WikiArtikel[] = [
       { p: "Rechnungen entstehen in zwei Stufen – so verlangen es § 14 UStG (fortlaufende, einmalige Nummer) und die GoBD (Unveränderbarkeit):" },
       { ul: [
         "**Entwurf:** Im Auftrag unter **Rechnung → „Rechnungsentwurf erstellen“** (oder unter Rechnungen → „Neue Rechnung ohne Auftrag“). Der Entwurf hat **noch keine Nummer und kein Datum**, ist frei änderbar und kann **gelöscht** werden – es entsteht keine Lücke.",
+        "**Nachfrage vor dem Entwurf:** Fehlt im Auftrag der **Kunde**, sind **keine Versandkosten** eingetragen oder hat ein Gitarren-Auftrag (Produktion) **kein Modell**, listet das Programm die fehlenden Punkte auf und fragt, ob der Entwurf trotzdem erstellt werden soll.",
         "**Vorschau** prüfen (oben rechts) – das Dokument ist dort als „ENTWURF“ gekennzeichnet.",
         "**Buchen:** In einem Schritt wird die **Rechnungsnummer** vergeben, das **Rechnungsdatum auf heute** gesetzt, die Rechnung **gesperrt** und die **E-Rechnung (ZUGFeRD-PDF)** erzeugt und unveränderbar abgelegt. Schlägt ein Teil fehl, passiert gar nichts (keine Nummer verbraucht).",
         "**„Buchen und per E-Mail versenden“** öffnet danach direkt das E-Mail-Fenster; nach einfachem „Buchen“ fragt das Programm nach.",

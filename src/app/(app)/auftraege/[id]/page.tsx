@@ -266,6 +266,11 @@ export default async function AuftragDetailPage({
           auftragBrutto={a.summeBrutto == null ? null : Number(a.summeBrutto)}
           waehrung={a.kdWaehrung === "USD" ? "USD" : "EUR"}
           steuerpflichtig={!!a.kdSteuerpflichtig}
+          hinweise={[
+            ...(!a.kundeId ? ["Es ist kein Kunde gewählt."] : []),
+            ...(!(Number(a.versandkosten) > 0) ? ["Es sind keine Versandkosten eingetragen."] : []),
+            ...(a.auftragsart === "PRODUKTION" && !a.modellArtikelId ? ["Gitarren-Auftrag ohne Modell (Details → Modellvorlage)."] : []),
+          ]}
         />
       ) : null}
     </div>
@@ -365,12 +370,14 @@ async function SeriennummerCard({
 
 /** Rechnungs-Tab: Abrechnungsstand + Rechnungen (Entwürfe, gebuchte Belege, Storno/Korrektur). */
 async function RechnungTab({
-  auftragId, auftragBrutto, waehrung, steuerpflichtig,
+  auftragId, auftragBrutto, waehrung, steuerpflichtig, hinweise,
 }: {
   auftragId: string;
   auftragBrutto: number | null;
   waehrung: "EUR" | "USD";
   steuerpflichtig: boolean;
+  /** Fehlende Angaben → Nachfrage vor dem Erstellen des Rechnungsentwurfs. */
+  hinweise: string[];
 }) {
   const [stand, rechnungen, fs] = await Promise.all([
     abrechnungsStand(auftragId), rechnungenZuAuftrag(auftragId), getFirmaSetting(),
@@ -389,7 +396,11 @@ async function RechnungTab({
               : "Noch nicht berechnet."}
         </p>
         {!stand.vollstaendig ? (
-          <CreateRechnungButton auftragId={auftragId} label={hatEntwurf ? "Rechnungsentwurf öffnen" : "Rechnungsentwurf erstellen"} />
+          <CreateRechnungButton
+            auftragId={auftragId}
+            label={hatEntwurf ? "Rechnungsentwurf öffnen" : "Rechnungsentwurf erstellen"}
+            hinweise={hatEntwurf ? [] : hinweise}
+          />
         ) : null}
         {!stand.vollstaendig ? (
           <AnzahlungForm
