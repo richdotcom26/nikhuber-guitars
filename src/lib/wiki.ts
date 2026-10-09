@@ -114,6 +114,7 @@ export const WIKI: WikiArtikel[] = [
     titel: "Aufbau des Auftrag-Tabs",
     bloecke: [
       { p: "Links: **Kunde**, darunter **Seriennummer**, darunter **Dokumente & Bilder**. Rechts: **Status**, darunter der **Kopf** (Auftragsart, Priorität, Produktionsort, Bauplan-Monat, Umsatzerwartung, Anzahlung …)." },
+      { p: "Im Block **Status** gibt es unter den Status-Knöpfen ein Feld **Bemerkung** (wie der Freitext Body, aus Ninox „Bemerkung“ übernommen): speichert beim Verlassen des Feldes; ist es befüllt, ist der Hintergrund **gelb**." },
       { p: "**Bauplan-Monat:** Die Monats-Buttons setzen per Klick den Monatsersten; ein zweiter Klick entfernt ihn. Über das Datumsfeld ist jedes Datum möglich. Danach „Kopf speichern“." },
     ],
   },

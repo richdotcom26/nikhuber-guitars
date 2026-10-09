@@ -361,3 +361,15 @@ export async function kundenPickerListe(q: string, limit = 15) {
     .orderBy(sql`lower(coalesce(${kunde.firma}, ${kunde.nachname}, ${kunde.kurzname}, ''))`)
     .limit(limit);
 }
+
+/** Bemerkung im Status-Block (Freitext, leer → null). */
+export async function setAuftragStatusBemerkung(id: string, text: string) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const res = await db
+    .update(auftrag)
+    .set({ statusBemerkung: text.trim() || null, updatedAt: new Date(), updatedBy: user.id })
+    .where(eq(auftrag.id, id))
+    .returning({ id: auftrag.id });
+  if (res.length === 0) throw new DomainError("NOT_FOUND", "Auftrag nicht gefunden.");
+}

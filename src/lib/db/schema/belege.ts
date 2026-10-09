@@ -94,6 +94,7 @@ export const auftrag = pgTable("auftrag", {
   prio: integer("prio"),
   besonderes: text("besonderes"),                          // ex GF (nur 1 Satz) → Freitext/Enum, TODO
   spezialauftrag: text("spezialauftrag"),                  // TODO: Enum?
+  statusBemerkung: text("status_bemerkung"),               // Bemerkung im Status-Block (gelb, wenn befüllt)
   produktionsort: produktionsortEnum("produktionsort"),
 
   bauplandatum: date("bauplandatum"),                      // Monatserster (7i)

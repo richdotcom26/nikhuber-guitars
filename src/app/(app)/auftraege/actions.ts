@@ -11,7 +11,7 @@ import {
   setSchrittBemerkung, setSchrittStatus, setSchrittWartenAuf, VORRAT_NR,
 } from "@/lib/domain/arbeitsschritt";
 import {
-  auftragKopfSchema, changeAuftragStatus, convertAuftragsart, createAuftrag,
+  auftragKopfSchema, changeAuftragStatus, setAuftragStatusBemerkung, convertAuftragsart, createAuftrag,
   refreshFortschritt, setAuftragKunde, updateAuftragKopf,
 } from "@/lib/domain/auftrag";
 import {
@@ -351,5 +351,14 @@ export async function sendeAbAction(_p: ActionState, fd: FormData): Promise<Acti
     const res = await sendeAbZurUnterschrift(input);
     rev(input.id);
     return res.ok ? ok(res.message) : fail(res.message);
+  });
+}
+
+export async function statusBemerkungAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    await setAuftragStatusBemerkung(id, String(fd.get("text") ?? ""));
+    rev(id);
+    return ok("Bemerkung gespeichert.");
   });
 }

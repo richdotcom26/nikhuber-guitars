@@ -44,6 +44,7 @@ import { KopfForm } from "../kopf-form";
 import { NksDokument } from "../nks-dokumente";
 import { SetKundeButton } from "../set-kunde-form";
 import { StatusChanger } from "../status-changer";
+import { StatusBemerkung } from "../status-bemerkung";
 
 const TABS: readonly TabItem[] = [
   { key: "auftrag", label: "Auftrag" },
@@ -164,7 +165,10 @@ export default async function AuftragDetailPage({
           <div className="space-y-5">
             <Card>
               <CardHeader><CardTitle>Status</CardTitle></CardHeader>
-              <CardContent><StatusChanger id={id} status={a.status} /></CardContent>
+              <CardContent>
+                <StatusChanger id={id} status={a.status} />
+                <StatusBemerkung key={`sb:${a.statusBemerkung ?? ""}`} id={id} value={a.statusBemerkung ?? ""} />
+              </CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Kopf</CardTitle></CardHeader>

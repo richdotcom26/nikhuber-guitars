@@ -127,6 +127,13 @@
       "when": 1791552572311,
       "tag": "0017_docart_auftrag",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791574750311,
+      "tag": "0018_auftrag_status_bemerkung",
+      "breakpoints": true
     }
   ]
 }
