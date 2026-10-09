@@ -58,6 +58,24 @@ export function FirmaForm({ setting }: { setting: Setting }) {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle>Kontakt</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Telefon" htmlFor="telefon" errors={err.telefon}>
+            <Input id="telefon" name="telefon" defaultValue={v(setting.telefon)} />
+          </Field>
+          <Field label="Fax" htmlFor="fax" errors={err.fax}>
+            <Input id="fax" name="fax" defaultValue={v(setting.fax)} />
+          </Field>
+          <Field label="E-Mail" htmlFor="email" errors={err.email}>
+            <Input id="email" name="email" type="email" defaultValue={v(setting.email)} />
+          </Field>
+          <Field label="Webseite" htmlFor="webseite" errors={err.webseite}>
+            <Input id="webseite" name="webseite" defaultValue={v(setting.webseite)} placeholder="www.…" />
+          </Field>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Steuer &amp; Währung</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="MwSt-Satz (%)" htmlFor="mwstSatz" errors={err.mwstSatz}>

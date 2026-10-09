@@ -23,6 +23,10 @@ export const firmaSetting = pgTable("firma_setting", {
   iban: text("iban"),
   bic: text("bic"),
   bank: text("bank"),
+  telefon: text("telefon"),
+  fax: text("fax"),
+  email: text("email"),
+  webseite: text("webseite"),
 
   mwstSatz: numeric("mwst_satz", { precision: 6, scale: 3 }).default("19.0").notNull(),
   usdEurFaktor: numeric("usd_eur_faktor", { precision: 8, scale: 4 }).default("0.92").notNull(), // ex 3× hartkodiert + WB.A6
