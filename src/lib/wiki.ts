@@ -130,6 +130,19 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "besonderes",
+    bereich: "Aufträge",
+    titel: "Besonderes und Spezialauftrag",
+    bloecke: [
+      { p: "Im Kopf des Auftrags sind **Besonderes** und **Spezialauftrag** Auswahllisten (wie in Ninox):" },
+      { ul: [
+        "**Besonderes**: (leer), **★ Promotion Gitarre** (lachsrot) oder **↻ Verleih-/Testgitarre** (rot). Die Auswahl wird farbig angezeigt und erscheint zusätzlich als farbiges Kennzeichen oben im Auftrag neben Datum, Kunde und Modell.",
+        "**Spezialauftrag**: (leer), Marketing, Sponsoring, Demoware oder Sonstiges.",
+        "Speichern mit **„Kopf speichern“**.",
+      ] },
+    ],
+  },
+  {
     id: "umsatzerwartung",
     bereich: "Aufträge",
     titel: "Umsatzerwartung (wird berechnet)",

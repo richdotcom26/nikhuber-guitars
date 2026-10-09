@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import {
-  AUFTRAGSART_LABEL, fortschrittFarbe,
+  AUFTRAGSART_LABEL, BESONDERES, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
 import { listArtikel } from "@/lib/domain/artikel";
 import { getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
@@ -82,6 +82,14 @@ export default async function AuftragDetailPage({
             <span>{formatDate(a.auftragsdatum)}</span>
             {kdName ? <span>· {kdName}</span> : null}
             {data.modellName ? <span>· {data.modellName}</span> : null}
+            {(() => {
+              const b = BESONDERES.find((x) => x.value === a.besonderes);
+              return b ? (
+                <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: b.bg, color: b.fg }}>
+                  <span style={{ color: b.symbolFarbe }}>{b.symbol}</span> {b.value}
+                </span>
+              ) : null;
+            })()}
             <span
               className="rounded px-1.5 py-0.5 text-xs tabular-nums"
               style={{ background: fortschrittFarbe(a.fortschrittProzent) }}

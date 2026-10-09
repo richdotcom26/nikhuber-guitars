@@ -755,6 +755,8 @@ export async function importAuftraege(ctx: Ctx) {
       zahlungsdatum: ninoxDateOnly(f(ctx, a, rec, "Zahlungsdatum")),
       sernrVergebenAm: ninoxDateOnly(f(ctx, a, rec, "SerNr vergeben")),
       umsatzerwartung: ninoxNum(f(ctx, a, rec, "Umsatzerwartung")),
+      besonderes: ctx.dump.choiceMap(a, "Besonderes")[String(f(ctx, a, rec, "Besonderes"))] ?? null,
+      spezialauftrag: ctx.dump.choiceMap(a, "Spezialauftrag")[String(f(ctx, a, rec, "Spezialauftrag"))] ?? null,
       citesArtikelanzahl: Number(ninoxNum(f(ctx, a, rec, "Cites-Artikelanzahl")) ?? 0),
       citesDokumentnr: ninoxStr(f(ctx, a, rec, "CITES Dokumentennummer")),
       wiederausfuhrNoneeu: ((): boolean | null => {

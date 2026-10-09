@@ -8,8 +8,8 @@ import {
   arbeitsschritt, artikel, auftrag, belegPosition, kunde, modellgruppe, rechnung,
 } from "@/lib/db/schema";
 import {
-  AUFTRAG_STATUS_VALUES as STATUS_VALUES, AUFTRAGSART_VALUES as ART_VALUES,
-  type Auftragsart, type AuftragStatus,
+  AUFTRAG_STATUS_VALUES as STATUS_VALUES, AUFTRAGSART_VALUES as ART_VALUES, BESONDERES_VALUES,
+  SPEZIALAUFTRAG_VALUES, type Auftragsart, type AuftragStatus,
 } from "@/lib/auftrag-shared";
 import {
   addSchritt, clearSchritte, computeFortschritt, hatCitesHolzImAuftrag, recomputeComplianceSteps,
@@ -273,10 +273,6 @@ export async function refreshFortschritt(id: string) {
 
 /* ----------------------------------------------------------------- Kopf-Form */
 
-const nullableText = z.preprocess(
-  (v) => (v == null || (typeof v === "string" && v.trim() === "") ? null : v),
-  z.string().trim().nullable(),
-);
 const dateOrNull = z.preprocess(
   (v) => (v === "" || v == null ? null : v),
   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Datum YYYY-MM-DD").nullable(),
@@ -296,8 +292,8 @@ export const auftragKopfSchema = z.object({
     (v) => (v === "" || v == null ? null : v),
     z.enum(["RODGAU", "HAMBURG"]).nullable(),
   ),
-  besonderes: nullableText,
-  spezialauftrag: nullableText,
+  besonderes: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(BESONDERES_VALUES).nullable()),
+  spezialauftrag: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(SPEZIALAUFTRAG_VALUES).nullable()),
   bauplandatum: dateOrNull,
   anzahlung: decimalOrNull,
 });

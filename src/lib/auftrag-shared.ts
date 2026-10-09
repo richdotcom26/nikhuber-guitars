@@ -9,6 +9,16 @@ export const AUFTRAGSART_LABEL: Record<Auftragsart, string> = {
 };
 export const AUFTRAGSART = AUFTRAGSART_VALUES.map((value) => ({ value, label: AUFTRAGSART_LABEL[value] }));
 
+/** „Besonderes" (ex Ninox A.UY, Auswahl mit Farbe + Symbol). */
+export const BESONDERES = [
+  { value: "Promotion Gitarre", symbol: "★", bg: "#F3766D", fg: "#FFFFFF", symbolFarbe: "#FFEB52" },
+  { value: "Verleih-/Testgitarre", symbol: "↻", bg: "#CB2010", fg: "#FFFFFF", symbolFarbe: "#FFFFFF" },
+] as const;
+export const BESONDERES_VALUES = BESONDERES.map((b) => b.value) as unknown as readonly [string, ...string[]];
+
+/** „Spezialauftrag" (ex Ninox A.YU, Auswahl). */
+export const SPEZIALAUFTRAG_VALUES = ["Marketing", "Sponsoring", "Demoware", "Sonstiges"] as const;
+
 export const AUFTRAG_STATUS_VALUES = [
   "BACKORDER", "WERKSTATT", "BEI_NICL", "PROD_FERTIG", "SERVICE",
   "NONE_GUITAR", "ABGESCHLOSSEN", "ABGESCHL_OHNE_BEFUND", "STORNIERT",

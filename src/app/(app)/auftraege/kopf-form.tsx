@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select } from "@/components/ui/input";
-import { AUFTRAGSART, PRODUKTIONSORT_VALUES } from "@/lib/auftrag-shared";
+import { AUFTRAGSART, BESONDERES, PRODUKTIONSORT_VALUES, SPEZIALAUFTRAG_VALUES } from "@/lib/auftrag-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import { saveKopfAction } from "./actions";
 import { formatBetrag } from "@/lib/utils";
@@ -104,14 +104,39 @@ export function KopfForm({ v }: { v: KopfValues }) {
           <Input id="anzahlung" name="anzahlung" inputMode="decimal" defaultValue={formatBetrag(v.anzahlung)} />
         </Field>
         <Field label="Besonderes" htmlFor="besonderes">
-          <Input id="besonderes" name="besonderes" defaultValue={v.besonderes ?? ""} />
+          <BesonderesSelect wert={v.besonderes} />
         </Field>
         <Field label="Spezialauftrag" htmlFor="spezialauftrag">
-          <Input id="spezialauftrag" name="spezialauftrag" defaultValue={v.spezialauftrag ?? ""} />
+          <Select id="spezialauftrag" name="spezialauftrag" defaultValue={v.spezialauftrag ?? ""}>
+            <option value="">(leer)</option>
+            {SPEZIALAUFTRAG_VALUES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </Select>
         </Field>
       </div>
 
       <SubmitButton>Kopf speichern</SubmitButton>
     </form>
+  );
+}
+
+/** Auswahl „Besonderes" in den Ninox-Farben (Promotion = Lachsrot mit Stern, Verleih = Rot mit Pfeil). */
+function BesonderesSelect({ wert }: { wert: string | null }) {
+  const [v, setV] = useState(wert ?? "");
+  const b = BESONDERES.find((x) => x.value === v);
+  return (
+    <Select
+      id="besonderes"
+      name="besonderes"
+      value={v}
+      onChange={(e) => setV(e.target.value)}
+      style={b ? { background: b.bg, color: b.fg, fontWeight: 600 } : undefined}
+    >
+      <option value="" style={{ background: "#fff", color: "#111" }}>(leer)</option>
+      {BESONDERES.map((x) => (
+        <option key={x.value} value={x.value} style={{ background: x.bg, color: x.fg }}>
+          {x.symbol} {x.value}
+        </option>
+      ))}
+    </Select>
   );
 }
