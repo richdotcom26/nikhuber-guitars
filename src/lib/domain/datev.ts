@@ -14,7 +14,7 @@ import { getFirmaSetting } from "./stammdaten";
  * DATEV-Export Rechnungsausgang: Buchungsstapel im DATEV-Format (EXTF, Version 700, Kategorie 21),
  * eine Buchung je gebuchtem Beleg des Monats (Rechnung, Anzahlungs-, Storno-, Korrekturrechnung).
  * Soll: Debitor, Haben: Erlöskonto je Steuerfall (Inland / EU / Drittland) bzw. Anzahlungskonto.
- * Kontenrahmen-Werte kommen aus Einstellungen → DATEV (mit dem Steuerbüro abstimmen).
+ * Kontenrahmen-Werte kommen aus Einstellungen → Buchhaltung (mit dem Steuerbüro abstimmen).
  */
 
 const SPALTEN = [
@@ -69,7 +69,7 @@ export async function erzeugeDatevExport(jahr: number, monat: number) {
   if (!(jahr > 2000 && monat >= 1 && monat <= 12)) throw new DomainError("VALIDATION", "Ungültiger Monat.");
   const s = await getFirmaSetting();
   if (!s.datevBeraterNr || !s.datevMandantNr) {
-    throw new DomainError("STATE", "Beraternummer und Mandantennummer fehlen (Einstellungen → DATEV).");
+    throw new DomainError("STATE", "Beraternummer und Mandantennummer fehlen (Einstellungen → Buchhaltung).");
   }
   const belege = await datevMonatsBelege(jahr, monat);
   const kurs = await usdEurKurs();
@@ -142,7 +142,7 @@ export async function sendeDatevExport(jahr: number, monat: number, mitPdfs: boo
   const exp = await erzeugeDatevExport(jahr, monat);
   const s = await getFirmaSetting();
   const an = splitEmails(s.datevEmpfaenger);
-  if (an.length === 0 || !an.every(istEmail)) throw new DomainError("VALIDATION", "Empfänger ungültig (Einstellungen → DATEV).");
+  if (an.length === 0 || !an.every(istEmail)) throw new DomainError("VALIDATION", "Empfänger ungültig (Einstellungen → Buchhaltung).");
   const cfg = mailKonfig();
   if (!cfg) throw new DomainError("STATE", "SMTP nicht konfiguriert.");
 

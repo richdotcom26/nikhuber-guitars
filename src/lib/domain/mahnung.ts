@@ -11,7 +11,7 @@ import { getFirmaSetting } from "./stammdaten";
 
 /**
  * Mahnwesen: Stufe 1 + 2 = freundliche Zahlungserinnerung, Stufe 3 = letzte Mahnung.
- * Fristen (Tage seit Rechnungsdatum) und Gebühren: Einstellungen → Mahnwesen.
+ * Fristen (Tage seit Rechnungsdatum) und Gebühren: Einstellungen → Buchhaltung.
  * Offen = gebuchte Rechnung/Anzahlungsrechnung ohne Zahlungsdatum.
  */
 

@@ -33,8 +33,7 @@ const BASE_TABS: readonly TabItem[] = [
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
   { key: "zaehler", label: "Belegnummern" },
   { key: "textbausteine", label: "Textbausteine" },
-  { key: "mahnwesen", label: "Mahnwesen" },
-  { key: "datev", label: "DATEV" },
+  { key: "buchhaltung", label: "Buchhaltung" },
   { key: "themes", label: "Themes" },
   { key: "wiki", label: "Wiki" },
 ];
@@ -72,8 +71,12 @@ export default async function EinstellungenPage({
       {active === "arbeitsschritte" && <ArbeitsschrittePanel rows={await listArbeitsschrittVorrat()} />}
       {active === "zaehler" && <ZaehlerPanel rows={await listZaehler()} />}
       {active === "textbausteine" && <TextbausteinePanel rows={await listMailVorlagen()} />}
-      {active === "mahnwesen" && <MahnwesenPanel cfg={await mahnKonfig()} />}
-      {active === "datev" && <DatevPanel s={await getFirmaSetting()} />}
+      {active === "buchhaltung" && (
+        <div className="space-y-5">
+          <DatevPanel s={await getFirmaSetting()} />
+          <MahnwesenPanel cfg={await mahnKonfig()} />
+        </div>
+      )}
       {active === "themes" && (
         <ThemesPanel
           rows={(await listThemes()).map((t) => ({ ...t, updatedAt: t.updatedAt.toISOString() }))}

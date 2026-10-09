@@ -18,7 +18,7 @@ export default async function MahnungenPage({ searchParams }: { searchParams: Pr
         description={
           `1. Erinnerung ab ${cfg.tage[0]} Tagen (${formatMoney(cfg.gebuehr[0])}) · ` +
           `2. Erinnerung ab ${cfg.tage[1]} Tagen (${formatMoney(cfg.gebuehr[1])}) · ` +
-          `letzte Mahnung ab ${cfg.tage[2]} Tagen (${formatMoney(cfg.gebuehr[2])}) – Einstellungen → Mahnwesen`
+          `letzte Mahnung ab ${cfg.tage[2]} Tagen (${formatMoney(cfg.gebuehr[2])}) – Einstellungen → Buchhaltung`
         }
         actions={<Link href="/rechnungen" className={buttonClasses("outline")}>Zurück zu Rechnungen</Link>}
       />
