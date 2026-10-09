@@ -193,11 +193,17 @@ export async function getRechnung(id: string) {
 }
 
 /** Rechnungen eines Auftrags (für den Auftrag-Tab). */
+const POS_SUM_ID = sql`(select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = "rechnung"."id")`;
+
 export async function rechnungenZuAuftrag(auftragId: string) {
   return db
     .select({
       id: rechnung.id, nummer: rechnung.nummer, belegart: rechnung.belegart, status: rechnung.status,
       rechnungsdatum: rechnung.rechnungsdatum, summeBrutto: rechnung.summeBrutto, kdWaehrung: rechnung.kdWaehrung,
+      zahlungsdatum: rechnung.zahlungsdatum, zahlbetrag: rechnung.zahlbetrag,
+      // ohne gespeicherte Summen (Altbestand) aus den Positionen; "rechnung"."id" explizit (Einzeltabellen-Select)
+      netto: sql<string | null>`coalesce(${rechnung.summeNetto}, round(${POS_SUM_ID}, 2))`,
+      brutto: sql<string | null>`coalesce(${rechnung.summeBrutto}, round(${POS_SUM_ID} * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`,
     })
     .from(rechnung)
     .where(eq(rechnung.auftragId, auftragId))

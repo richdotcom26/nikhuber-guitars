@@ -439,21 +439,45 @@ async function RechnungTab({
         {rechnungen.length === 0 ? (
           <p className="text-neutral-400">Noch keine Rechnung.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100">
-            {rechnungen.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-2 py-1.5">
-                <Link href={`/rechnungen/${r.id}`} className="font-mono hover:underline">
-                  {r.nummer ?? <span className="font-sans italic text-muted">Entwurf</span>}
-                </Link>
-                <span className="flex items-center gap-2">
-                  <span className="text-xs text-muted">{formatDate(r.rechnungsdatum)}</span>
-                  <span className="tabular-nums">{formatMoney(r.summeBrutto, r.kdWaehrung === "USD" ? "USD" : "EUR")}</span>
-                  <Badge>{RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}</Badge>
-                  <Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>{RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}</Badge>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-x-auto rounded-lg border border-line">
+            <table className="w-full text-sm">
+              <thead className="border-b border-line bg-card-head text-left text-[11px] font-semibold uppercase tracking-wide text-navy">
+                <tr>
+                  <th className="px-3 py-2">RG-Nr</th>
+                  <th className="px-3 py-2">Datum</th>
+                  <th className="px-3 py-2">Art</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2 text-right">Netto</th>
+                  <th className="px-3 py-2 text-right">Brutto</th>
+                  <th className="px-3 py-2">Zahlung</th>
+                  <th className="px-3 py-2 text-right">Zahlbetrag</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {rechnungen.map((r) => {
+                  const wg = r.kdWaehrung === "USD" ? "USD" : "EUR";
+                  return (
+                    <tr key={r.id} className="hover:bg-brand-soft/50">
+                      <td className="px-3 py-1.5">
+                        <Link href={`/rechnungen/${r.id}`} className="font-mono text-[13px] font-semibold text-blue-700 hover:underline">
+                          {r.nummer ?? <span className="font-sans italic text-muted">Entwurf</span>}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-1.5 text-muted">{formatDate(r.rechnungsdatum)}</td>
+                      <td className="px-3 py-1.5"><Badge>{RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}</Badge></td>
+                      <td className="px-3 py-1.5">
+                        <Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>{RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}</Badge>
+                      </td>
+                      <td className="px-3 py-1.5 text-right tabular-nums">{formatMoney(r.netto, wg)}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums">{formatMoney(r.brutto, wg)}</td>
+                      <td className="px-3 py-1.5 text-muted">{r.zahlungsdatum ? formatDate(r.zahlungsdatum) : "–"}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums">{r.zahlbetrag != null ? formatMoney(r.zahlbetrag, wg) : "–"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </CardContent>
     </Card>
