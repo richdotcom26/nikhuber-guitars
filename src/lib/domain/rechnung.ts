@@ -77,6 +77,12 @@ export async function listRechnungen(
   if (params.status && (RG_STATUS_VALUES as readonly string[]).includes(params.status)) {
     filters.push(eq(rechnung.status, params.status as RgStatus));
   }
+  // Mahnstufe 1–3: unbezahlte Rechnungen, deren höchste gesendete Mahnung diese Stufe hat
+  const mahnStufe = /^MAHN([123])$/.exec(params.status ?? "")?.[1];
+  if (mahnStufe) {
+    filters.push(sql`${rechnung.zahlungsdatum} is null and ${rechnung.status} in ('GEBUCHT', 'OFFEN')
+      and (select max(m.stufe) from mahnung m where m.rechnung_id = ${rechnung.id}) = ${Number(mahnStufe)}`);
+  }
   if (params.belegart && (RG_BELEGART_VALUES as readonly string[]).includes(params.belegart)) {
     filters.push(eq(rechnung.belegart, params.belegart as RgBelegart));
   }
@@ -113,6 +119,7 @@ export async function listRechnungen(
       zahlbar: sql<string | null>`coalesce(${rechnung.rechnungsbetrag}, ${BETRAG})`,
       sparte: SPARTE,
       produktionsort: auftrag.produktionsort,
+      mahnstufe: sql<number | null>`(select max(m.stufe) from mahnung m where m.rechnung_id = ${rechnung.id} and ${rechnung.zahlungsdatum} is null)`,
     })
     .from(rechnung)
     .leftJoin(kunde, eq(kunde.id, rechnung.kundeId))
@@ -484,6 +491,7 @@ export async function buchen(id: string): Promise<{ nummer: string; anhangId: st
         .set({
           nummer,
           rechnungsdatum: datum,
+          reportMonat: datum.slice(0, 7), // ergibt sich aus dem Rechnungsdatum
           status: "GEBUCHT",
           gebuchtAm: new Date(),
           gebuchtVon: user.id,
@@ -647,7 +655,7 @@ const boolFlag = z.preprocess((v) => v === "on" || v === "true" || v === true, z
 
 export const rechnungKopfSchema = z.object({
   lieferdatum: dateOrNull,
-  reportMonat: nullableText,
+  // Report-Monat wird nicht mehr manuell gepflegt (ergibt sich beim Buchen aus dem Rechnungsdatum)
   bemerkungRechnung: nullableText,
   gebuchtBeimSteuerbuero: boolFlag,
 });
@@ -663,8 +671,8 @@ export async function updateRechnungKopf(id: string, input: RechnungKopfInput) {
   const [r] = await db.select({ status: rechnung.status }).from(rechnung).where(eq(rechnung.id, id));
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
   const set = r.status === "ENTWURF"
-    ? { lieferdatum: input.lieferdatum, bemerkungRechnung: input.bemerkungRechnung, reportMonat: input.reportMonat }
-    : { reportMonat: input.reportMonat, gebuchtBeimSteuerbuero: input.gebuchtBeimSteuerbuero };
+    ? { lieferdatum: input.lieferdatum, bemerkungRechnung: input.bemerkungRechnung }
+    : { gebuchtBeimSteuerbuero: input.gebuchtBeimSteuerbuero };
   await db
     .update(rechnung)
     .set({ ...set, updatedAt: new Date(), updatedBy: user.id })

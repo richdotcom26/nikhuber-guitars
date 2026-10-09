@@ -34,6 +34,7 @@ export interface RechnungRow {
   sparte: string;
   produktionsort: string | null;
   familie: string[] | null;
+  mahnstufe: number | null;
 }
 
 const ORT: Record<string, string> = { RODGAU: "Rodgau", HAMBURG: "Hamburg" };
@@ -84,6 +85,9 @@ export function RechnungenTable({
           <Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>
             {RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}
           </Badge>
+          {r.mahnstufe ? (
+            <Badge tone={r.mahnstufe === 3 ? "red" : "amber"} className="ml-1">Mahnstufe {r.mahnstufe}</Badge>
+          ) : null}
         </div>
       ),
     },

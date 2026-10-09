@@ -53,6 +53,7 @@ export async function sendeRechnungMailAction(_p: ActionState, fd: FormData): Pr
       betreff: fd.get("betreff") ?? "",
       text: fd.get("text") ?? "",
       bildIds: fd.getAll("bildId").map(String),
+      mahnStufe: fd.get("mahnStufe") ? Number(fd.get("mahnStufe")) : undefined,
     });
     const r = await sendeRechnungMail(input);
     rev(input.id);

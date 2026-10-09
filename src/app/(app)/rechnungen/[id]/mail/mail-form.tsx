@@ -13,6 +13,7 @@ import { sendeRechnungMailAction } from "../../actions";
 
 interface Vorlage {
   id: string;
+  belegart: string;
   sprache: string;
   name: string | null;
   istStandard: boolean;
@@ -36,22 +37,33 @@ export interface MailKontext {
   vorlagen: Vorlage[];
   pdf: { id: string; dateiname: string | null; groesse: number | null } | null;
   bilder: Bild[];
+  /** Mahnung: nächste Stufe + Platzhalterwerte je Stufe (Betrag, Gebühr, Gesamt). */
+  mahnung?: { naechste: number; jeStufe: Record<number, Record<string, string>> } | null;
 }
 
 export function RechnungMailForm({ ctx }: { ctx: MailKontext }) {
   const [state, action] = useActionState(sendeRechnungMailAction, IDLE);
 
   // Standard-Textbaustein in Kundensprache (Fallback: erster der Sprache, dann irgendeiner)
+  const stufeVon = (v?: Vorlage | null) => (v?.belegart.startsWith("MAHNUNG_") ? Number(v.belegart.slice(8)) : null);
+  const werteFuer = (v?: Vorlage | null): MailPlatzhalterWerte => {
+    const st = stufeVon(v);
+    return st && ctx.mahnung ? ({ ...ctx.werte, ...ctx.mahnung.jeStufe[st] } as MailPlatzhalterWerte) : ctx.werte;
+  };
   const start = useMemo(
-    () => ctx.vorlagen.find((v) => v.istStandard && v.sprache === ctx.sprache)
+    () => (ctx.mahnung
+      ? ctx.vorlagen.find((v) => v.belegart === `MAHNUNG_${ctx.mahnung!.naechste}` && v.sprache === ctx.sprache)
+        ?? ctx.vorlagen.find((v) => v.belegart === `MAHNUNG_${ctx.mahnung!.naechste}`)
+      : undefined)
+      ?? ctx.vorlagen.find((v) => v.istStandard && v.sprache === ctx.sprache)
       ?? ctx.vorlagen.find((v) => v.sprache === ctx.sprache)
       ?? ctx.vorlagen[0]
       ?? null,
     [ctx],
   );
   const [vorlageId, setVorlageId] = useState(start?.id ?? "");
-  const [betreff, setBetreff] = useState(fuelleVorlage(start?.betreff, ctx.werte));
-  const [text, setText] = useState(fuelleVorlage(start?.text, ctx.werte));
+  const [betreff, setBetreff] = useState(fuelleVorlage(start?.betreff, werteFuer(start)));
+  const [text, setText] = useState(fuelleVorlage(start?.text, werteFuer(start)));
   const [an, setAn] = useState(ctx.an);
   const [cc, setCc] = useState("");
   const [bilder, setBilder] = useState<Set<string>>(
@@ -62,8 +74,8 @@ export function RechnungMailForm({ ctx }: { ctx: MailKontext }) {
     setVorlageId(id);
     const v = ctx.vorlagen.find((x) => x.id === id);
     if (!v) return;
-    setBetreff(fuelleVorlage(v.betreff, ctx.werte));
-    setText(fuelleVorlage(v.text, ctx.werte));
+    setBetreff(fuelleVorlage(v.betreff, werteFuer(v)));
+    setText(fuelleVorlage(v.text, werteFuer(v)));
   }
 
   const reEmail = ctx.rechnungsEmpfaenger?.trim() || null;
@@ -89,6 +101,9 @@ export function RechnungMailForm({ ctx }: { ctx: MailKontext }) {
   return (
     <form action={action} className="grid gap-5 lg:grid-cols-[1fr_22rem]">
       <input type="hidden" name="id" value={ctx.rechnung.id} />
+      {ctx.mahnung && stufeVon(ctx.vorlagen.find((v) => v.id === vorlageId)) ? (
+        <input type="hidden" name="mahnStufe" value={stufeVon(ctx.vorlagen.find((v) => v.id === vorlageId))!} />
+      ) : null}
       {[...bilder].map((id) => <input key={id} type="hidden" name="bildId" value={id} />)}
 
       <Card>

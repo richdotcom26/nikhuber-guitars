@@ -213,6 +213,12 @@ export const WIKI: WikiArtikel[] = [
         "Texte kommen aus **Einstellungen → Textbausteine** (Mahnwesen 1/2/letzte, DE und EN, passend zur Kundensprache). Platzhalter: {{rechnungsnummer}}, {{rechnungsdatum}}, {{betrag}}, {{mahngebuehr}}, {{gesamtbetrag}}, {{briefanrede}}.",
         "Jede gesendete Mahnung wird protokolliert (Stufe, Gebühr, Mail im Mailversand); die Rechnung bekommt den Zahlungsstatus „angemahnt“. Wird eine Zahlung erfasst, verschwindet sie aus der Liste.",
       ] },
+      { p: "**Einzelne Mahnung von Hand:** In der geöffneten Rechnung steht in der Box „Beleg“ (statt des früheren Report-Monats) der **Status**. Ist die Rechnung unbezahlt, dazu **„seit X Tagen offen“**, die bisherige **Mahnstufe** und der Knopf **„Mahnung senden“**. Er öffnet das Mailfenster mit den Mahn-Textbausteinen – vorausgewählt ist die nächste Stufe in Kundensprache; Betrag, Gebühr und Gesamtbetrag sind eingesetzt, das Rechnungs-PDF hängt an. Nach dem Versand gilt die Rechnung als gemahnt mit dieser Stufe." },
+      { ul: [
+        "Rechnungsliste: Statusfilter **„Mahnstufe 1 / 2 / 3“**; in der Spalte Art/Status erscheint die Mahnstufe als Kennzeichen (bis die Zahlung erfasst ist).",
+        "**Verlauf** der Rechnung: jede Mahnung mit Stufe, Datum/Uhrzeit, Empfänger, Gebühr und Link zum Mail-Protokoll.",
+        "Der **Report-Monat** wird nicht mehr von Hand gepflegt – er ergibt sich beim Buchen aus dem Rechnungsdatum.",
+      ] },
       { p: "**Vor dem ersten Versand prüfen:**" },
       { ul: [
         "Aus dem Ninox-Bestand erscheinen viele alte Rechnungen als offen (älteste 2022) – vermutlich fehlt dort nur das Zahlungsdatum. Bitte prüfen bzw. Zahlung nachtragen, sonst werden bezahlte Rechnungen gemahnt.",

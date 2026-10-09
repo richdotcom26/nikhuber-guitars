@@ -1,9 +1,10 @@
 import "server-only";
 import { and, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { appUser, auftrag, mailversand, rechnung, rechnungAnzahlung } from "@/lib/db/schema";
+import { appUser, auftrag, mahnung, mailversand, rechnung, rechnungAnzahlung } from "@/lib/db/schema";
 import { RG_BELEGART_LABEL, type RgBelegart } from "@/lib/rechnung-shared";
 import { requireUser } from "./context";
+import { formatMoney } from "@/lib/utils";
 
 /**
  * Verlauf einer Rechnung (Startseite der Rechnung): alle Ereignisse zur Rechnung selbst und zu
@@ -159,7 +160,27 @@ export async function rechnungVerlauf(id: string): Promise<VerlaufEreignis[]> {
     .select({ id: mailversand.id, an: mailversand.an, gesendetAm: mailversand.gesendetAm, status: mailversand.status, createdAt: mailversand.createdAt })
     .from(mailversand)
     .where(and(eq(mailversand.rechnungId, id), or(isNotNull(mailversand.gesendetAm), eq(mailversand.status, "FEHLER"))));
+  // Mahnvorgänge (Stufe, Gebühr, Empfänger)
+  const mahnungen = await db
+    .select({ stufe: mahnung.stufe, gebuehr: mahnung.gebuehr, waehrung: mahnung.waehrung, createdAt: mahnung.createdAt, mailId: mahnung.mailversandId })
+    .from(mahnung)
+    .where(eq(mahnung.rechnungId, id));
+  const mahnMails = new Set(mahnungen.map((m) => m.mailId).filter(Boolean));
+  for (const m of mahnungen) {
+    const an = mails.find((x) => x.id === m.mailId)?.an;
+    const geb = Number(m.gebuehr) ? ` · Gebühr ${formatMoney(m.gebuehr, m.waehrung === "USD" ? "USD" : "EUR")}` : "";
+    ev.push({
+      zeit: m.createdAt.toISOString(),
+      nurDatum: false,
+      text: `${m.stufe === 3 ? "Letzte Mahnung" : `${m.stufe}. Zahlungserinnerung`} (Mahnstufe ${m.stufe}) gesendet${an ? ` an ${an}` : ""}${geb}`,
+      link: m.mailId ? { href: `/mailversand/${m.mailId}`, label: "Protokoll" } : undefined,
+      eigen: true,
+      ton: m.stufe === 3 ? "red" : "amber",
+    });
+  }
+
   for (const m of mails) {
+    if (mahnMails.has(m.id)) continue;
     ev.push({
       zeit: (m.gesendetAm ?? m.createdAt).toISOString(),
       nurDatum: false,

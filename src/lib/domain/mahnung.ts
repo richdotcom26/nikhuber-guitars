@@ -199,3 +199,50 @@ export async function updateMahnKonfig(input: { tage: number[]; gebuehr: number[
     updatedAt: new Date(), updatedBy: user.id,
   }).where(eq(firmaSetting.id, s.id));
 }
+
+/** Letzte gesendete Mahnstufe einer Rechnung (0 = noch nicht gemahnt) + Datum. */
+export async function letzteMahnung(rechnungId: string) {
+  await requireUser();
+  const [m] = await db.select({ stufe: mahnung.stufe, am: mahnung.createdAt }).from(mahnung)
+    .where(eq(mahnung.rechnungId, rechnungId)).orderBy(desc(mahnung.stufe)).limit(1);
+  return { stufe: m?.stufe ?? 0, am: m?.am ?? null };
+}
+
+/** Nach erfolgreichem Versand (Mailfenster der Rechnung): Mahnstufe mit Gebühr protokollieren. */
+export async function mahnungProtokollieren(rechnungId: string, stufe: number, mailversandId: string) {
+  const user = await requireUser();
+  const cfg = await mahnKonfig();
+  const [r] = await db.select({
+    wg: rechnung.kdWaehrung,
+    betrag: sql<string | null>`coalesce(${rechnung.rechnungsbetrag}, ${rechnung.summeBrutto})`,
+  }).from(rechnung).where(eq(rechnung.id, rechnungId));
+  await db.insert(mahnung).values({
+    rechnungId, stufe, gebuehr: String(cfg.gebuehr[stufe - 1] ?? 0), waehrung: r?.wg === "USD" ? "USD" : "EUR",
+    offenerBetrag: r?.betrag ?? null, mailversandId, createdBy: user.id, updatedBy: user.id,
+  });
+  await db.update(rechnung).set({ zahlungsstatus: "ANGEMAHNT" }).where(eq(rechnung.id, rechnungId));
+}
+
+/** Platzhalterwerte je Mahnstufe für das Mailfenster (Betrag, Gebühr, Gesamt). */
+export async function mahnWerte(rechnungId: string) {
+  await requireUser();
+  const cfg = await mahnKonfig();
+  const [r] = await db.select({
+    wg: rechnung.kdWaehrung, datum: rechnung.rechnungsdatum,
+    betrag: sql<string | null>`coalesce(${rechnung.rechnungsbetrag}, ${rechnung.summeBrutto}, round((select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = "rechnung"."id") * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`,
+  }).from(rechnung).where(eq(rechnung.id, rechnungId));
+  const wg = r?.wg === "USD" ? "USD" : "EUR";
+  const betrag = Number(r?.betrag ?? 0);
+  const { stufe } = await letzteMahnung(rechnungId);
+  const jeStufe: Record<number, Record<string, string>> = {};
+  for (const s of [1, 2, 3]) {
+    const g = cfg.gebuehr[s - 1];
+    jeStufe[s] = {
+      rechnungsdatum: formatDate(r?.datum ?? null),
+      betrag: formatMoney(betrag, wg),
+      mahngebuehr: formatMoney(g, wg),
+      gesamtbetrag: formatMoney(betrag + g, wg),
+    };
+  }
+  return { naechste: Math.min(stufe + 1, 3), jeStufe };
+}

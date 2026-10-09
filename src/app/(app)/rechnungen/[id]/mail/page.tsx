@@ -7,11 +7,15 @@ import { mailKonfig } from "@/lib/mail/transport";
 import { rechnungMailKontext } from "@/lib/domain/rechnung-mail";
 import { RechnungMailForm } from "./mail-form";
 
-export default async function RechnungMailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RechnungMailPage({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ mahnung?: string }>;
+}) {
+  const mahnung = (await searchParams).mahnung === "1";
   const { id } = await params;
   let ctx: Awaited<ReturnType<typeof rechnungMailKontext>>;
   try {
-    ctx = await rechnungMailKontext(id);
+    ctx = await rechnungMailKontext(id, { mahnung });
   } catch (e) {
     if (isDomainError(e) && e.code === "NOT_FOUND") notFound();
     if (isDomainError(e) && e.code === "STATE") redirect(`/rechnungen/${id}`);
@@ -21,7 +25,7 @@ export default async function RechnungMailPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-5">
       <PageHeader
-        title={`${ctx.titel} ${ctx.rechnung.nummer} per E-Mail senden`}
+        title={mahnung ? `Mahnung zu ${ctx.rechnung.nummer} senden` : `${ctx.titel} ${ctx.rechnung.nummer} per E-Mail senden`}
         description="Die archivierte E-Rechnung (PDF) wird immer angehängt. Fotos optional."
         actions={<Link href={`/rechnungen/${id}`} className={buttonClasses("outline")}>Abbrechen</Link>}
       />

@@ -13,7 +13,8 @@ import { listAbzuege } from "@/lib/domain/anzahlung";
 import { rechnungVerlauf } from "@/lib/domain/rechnung-verlauf";
 import { rechnungsFamilien } from "@/lib/domain/rechnung-familie";
 import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
-import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
+import { formatDate, formatDateTime, formatMoney, heuteBerlin } from "@/lib/utils";
+import { letzteMahnung } from "@/lib/domain/mahnung";
 import { AnhangCard } from "../../_components/anhang-card";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
@@ -202,7 +203,7 @@ export default async function RechnungDetailPage({
                   entwurf={entwurf}
                   rechnungsdatum={r.rechnungsdatum}
                   lieferdatum={r.lieferdatum}
-                  reportMonat={r.reportMonat}
+                  statusSlot={<RechnungStatusInfo id={id} status={r.status} belegart={r.belegart} rechnungsdatum={r.rechnungsdatum} zahlungsdatum={r.zahlungsdatum} />}
                   bemerkungRechnung={r.bemerkungRechnung}
                   gebuchtBeimSteuerbuero={r.gebuchtBeimSteuerbuero}
                 />
@@ -375,6 +376,37 @@ export default async function RechnungDetailPage({
             </CardContent>
           </Card>
         )
+      ) : null}
+    </div>
+  );
+}
+
+/** Statt Report-Monat: Status; bei unbezahlten Rechnungen offene Tage, Mahnstufe und „Mahnung senden“. */
+async function RechnungStatusInfo({ id, status, belegart, rechnungsdatum, zahlungsdatum }: {
+  id: string; status: string; belegart: string; rechnungsdatum: string | null; zahlungsdatum: string | null;
+}) {
+  const unbezahlt = (status === "GEBUCHT" || status === "OFFEN") && !zahlungsdatum && !!rechnungsdatum
+    && (belegart === "RECHNUNG" || belegart === "ANZAHLUNGSRECHNUNG");
+  const m = unbezahlt ? await letzteMahnung(id) : null;
+  const tage = rechnungsdatum
+    ? Math.round((Date.parse(heuteBerlin()) - Date.parse(rechnungsdatum)) / 86_400_000)
+    : null;
+  return (
+    <div>
+      <div className="mb-1 text-sm font-medium text-ink/80">Status</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge tone={RG_STATUS_TONE[status as RgStatus] ?? "neutral"}>{RG_STATUS_LABEL[status as RgStatus] ?? status}</Badge>
+        {m?.stufe ? <Badge tone={m.stufe === 3 ? "red" : "amber"}>Mahnstufe {m.stufe}</Badge> : null}
+      </div>
+      {unbezahlt ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted">seit <b className="text-ink">{tage}</b> Tagen offen</span>
+          {m && m.stufe < 3 ? (
+            <Link href={`/rechnungen/${id}/mail?mahnung=1`} className={buttonClasses("outline", "sm")}>
+              Mahnung senden{m.stufe ? ` (Stufe ${m.stufe + 1})` : ""}
+            </Link>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

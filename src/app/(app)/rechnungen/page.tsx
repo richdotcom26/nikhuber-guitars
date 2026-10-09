@@ -77,6 +77,7 @@ export default async function RechnungenPage({
           <AutoSelect name="status" defaultValue={status} className="h-8 w-32 py-0 text-xs" aria-label="Status">
             <option value="">Alle Status</option>
             {RG_STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {[1, 2, 3].map((n) => <option key={n} value={`MAHN${n}`}>Mahnstufe {n}</option>)}
           </AutoSelect>
           <AutoSelect name="jahr" defaultValue={jahr || "alle"} className="h-8 w-28 py-0 text-xs" aria-label="Jahr">
             <option value="alle">Alle Jahre</option>

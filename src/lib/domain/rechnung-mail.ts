@@ -9,12 +9,13 @@ import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { sendeMailversand } from "./mailversand";
 import { listMailVorlagen } from "./textbausteine";
+import { mahnungProtokollieren, mahnWerte } from "./mahnung";
 
 /**
  * Kontext für das Mail-Fenster einer erstellten (festgeschriebenen) Rechnung:
  * Empfänger aus dem Kunden, Textbausteine, archiviertes PDF und Fotos von Auftrag/Rechnung.
  */
-export async function rechnungMailKontext(id: string) {
+export async function rechnungMailKontext(id: string, opts: { mahnung?: boolean } = {}) {
   await requireUser();
   const [r] = await db.select().from(rechnung).where(eq(rechnung.id, id));
   if (!r) throw new DomainError("NOT_FOUND", "Rechnung nicht gefunden.");
@@ -74,7 +75,10 @@ export async function rechnungMailKontext(id: string) {
       model: modell,
       kunde: kundeName,
     },
-    vorlagen: await listMailVorlagen("RECHNUNG"),
+    vorlagen: opts.mahnung
+      ? (await listMailVorlagen()).filter((v) => v.belegart.startsWith("MAHNUNG_"))
+      : await listMailVorlagen("RECHNUNG"),
+    mahnung: opts.mahnung ? await mahnWerte(id) : null,
     pdf: pdf ?? null,
     bilder: await Promise.all(
       bilder.map(async (b) => ({ ...b, previewUrl: await anhangUrl(b.id, false).catch(() => null) })),
@@ -89,6 +93,7 @@ export const rechnungMailSchema = z.object({
   betreff: z.string().trim().min(1, "Betreff fehlt."),
   text: z.string().trim().min(1, "Text fehlt."),
   bildIds: z.array(z.uuid()).default([]),
+  mahnStufe: z.number().int().min(1).max(3).optional(),
 });
 export type RechnungMailInput = z.infer<typeof rechnungMailSchema>;
 
@@ -126,7 +131,7 @@ export async function sendeRechnungMail(input: RechnungMailInput) {
   const [m] = await db
     .insert(mailversand)
     .values({
-      art: r.belegart === "RECHNUNG" ? "RECHNUNG" : "GUTSCHRIFT",
+      art: input.mahnStufe ? "ZAHLUNGSERINNERUNG" : r.belegart === "RECHNUNG" ? "RECHNUNG" : "GUTSCHRIFT",
       status: "ENTWURF",
       rechnungId: r.id,
       auftragId: r.auftragId,
@@ -142,5 +147,6 @@ export async function sendeRechnungMail(input: RechnungMailInput) {
     .returning({ id: mailversand.id });
 
   const res = await sendeMailversand(m.id);
+  if (res.ok && input.mahnStufe) await mahnungProtokollieren(r.id, input.mahnStufe, m.id);
   return { ...res, mailId: m.id };
 }

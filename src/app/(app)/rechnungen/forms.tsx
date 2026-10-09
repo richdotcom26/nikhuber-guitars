@@ -19,13 +19,14 @@ import { dezimal, formatBetrag, formatMoney } from "@/lib/utils";
  * Gebucht: Inhalt gesperrt — nur Report-Monat und „beim Steuerbüro gebucht".
  */
 export function KopfForm({
-  id, entwurf, rechnungsdatum, lieferdatum, reportMonat, bemerkungRechnung, gebuchtBeimSteuerbuero,
+  id, entwurf, rechnungsdatum, lieferdatum, bemerkungRechnung, gebuchtBeimSteuerbuero, statusSlot,
 }: {
+  /** Ersetzt den früheren Report-Monat: Status, offene Tage, Mahnung. */
+  statusSlot?: React.ReactNode;
   id: string;
   entwurf: boolean;
   rechnungsdatum: string | null;
   lieferdatum: string | null;
-  reportMonat: string | null;
   bemerkungRechnung: string | null;
   gebuchtBeimSteuerbuero: boolean;
 }) {
@@ -41,9 +42,7 @@ export function KopfForm({
         <Field label="Lieferdatum" htmlFor="lieferdatum" hint={entwurf && !lieferdatum ? "Leer = beim Buchen wird das Rechnungsdatum als Lieferdatum gesetzt." : undefined}>
           <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={lieferdatum ?? ""} disabled={!entwurf} />
         </Field>
-        <Field label="Report-Monat" htmlFor="reportMonat" hint="YYYY-MM">
-          <Input id="reportMonat" name="reportMonat" placeholder="2026-09" defaultValue={reportMonat ?? ""} />
-        </Field>
+        {statusSlot}
       </div>
       <Field label="Bemerkung (steht auf der Rechnung)" htmlFor="bemerkungRechnung">
         <Textarea id="bemerkungRechnung" name="bemerkungRechnung" defaultValue={bemerkungRechnung ?? ""} rows={2} disabled={!entwurf} />
