@@ -11,6 +11,7 @@ import {
 import { isDomainError } from "@/lib/domain/errors";
 import { listAbzuege } from "@/lib/domain/anzahlung";
 import { rechnungVerlauf } from "@/lib/domain/rechnung-verlauf";
+import { rechnungsFamilien } from "@/lib/domain/rechnung-familie";
 import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { AnhangCard } from "../../_components/anhang-card";
@@ -51,6 +52,7 @@ export default async function RechnungDetailPage({
     throw e;
   }
   const r = data.rechnung;
+  const familie = (await rechnungsFamilien([r.id])).get(r.id) ?? [];
   const kdName = r.kdFirma || [r.kdVorname, r.kdNachname].filter(Boolean).join(" ") || null;
   const cur = r.kdWaehrung === "USD" ? "USD" : "EUR";
   const entwurf = r.status === "ENTWURF";
@@ -216,7 +218,8 @@ export default async function RechnungDetailPage({
           <div className="space-y-5">
             <Card>
               <CardHeader><CardTitle>Bezug</CardTitle></CardHeader>
-              <CardContent className="space-y-1 text-sm">
+              <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+               <div className="space-y-1">
                 {data.auftragInfo ? (
                   <>
                     <div>
@@ -237,6 +240,28 @@ export default async function RechnungDetailPage({
                 {!entwurf && r.zahlungsbedingungText ? (
                   <div className="pt-1 text-xs text-muted">Zahlungsbedingung: {r.zahlungsbedingungText}</div>
                 ) : null}
+               </div>
+               <div className="space-y-1 md:border-l md:border-line md:pl-4">
+                <div className="text-xs font-medium text-muted">Vorgangsfamilie</div>
+                {familie.length ? (
+                  <ul className="space-y-0.5">
+                    {familie.map((g) => {
+                      const [nr, ...rest] = g.text.split(" · ");
+                      const ich = g.id === r.id;
+                      return (
+                        <li key={g.id} className={ich ? "font-semibold" : ""}>
+                          {ich ? (
+                            <span className="font-mono text-[13px]">▸ {nr}</span>
+                          ) : (
+                            <Link href={`/rechnungen/${g.id}`} className="font-mono text-[13px] text-blue-700 hover:underline">{nr}</Link>
+                          )}
+                          <span className="text-xs text-muted"> · {rest.join(" · ")}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : <span className="text-xs text-neutral-400">Keine verbundenen Belege.</span>}
+               </div>
               </CardContent>
             </Card>
             {istEndrechnung || abzuege.length ? (
