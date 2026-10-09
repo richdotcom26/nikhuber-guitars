@@ -12,7 +12,6 @@ import { AutoSelect } from "./auto-select";
 import { heuteBerlin } from "@/lib/utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { FilterMerken } from "./filter-merken";
 
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 
@@ -25,7 +24,7 @@ export default async function RechnungenPage({
   // Ohne Parameter: zuletzt benutzte Filter wiederherstellen (Cookie). Erst „Filter zurücksetzen“ (?reset=1) holt die Vorgabe.
   if (Object.keys(sp).length === 0) {
     const gemerkt = (await cookies()).get("rg-filter")?.value;
-    if (gemerkt) redirect(`/rechnungen?${decodeURIComponent(gemerkt)}`);
+    if (gemerkt) redirect(`/rechnungen?${gemerkt}`);
   }
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
@@ -101,7 +100,6 @@ export default async function RechnungenPage({
         </div>
       </div>
 
-      <FilterMerken query={new URLSearchParams(Object.entries(query).filter(([, v]) => v) as [string, string][]).toString()} />
       <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 
       {pageCount > 1 ? (

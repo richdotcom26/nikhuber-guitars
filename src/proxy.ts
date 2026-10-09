@@ -44,6 +44,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Rechnungsliste: zuletzt benutzte Filter merken (die Seite stellt sie beim Aufruf ohne Parameter wieder her)
+  if (pathname === "/rechnungen" && request.nextUrl.search) {
+    const p = new URLSearchParams(request.nextUrl.search);
+    if (p.has("reset")) {
+      response.cookies.delete("rg-filter");
+    } else if (!p.has("_rsc") || p.size > 1) {
+      for (const k of ["summen", "page", "_rsc"]) p.delete(k);
+      if (p.size) {
+        response.cookies.set("rg-filter", p.toString(), { path: "/", maxAge: 60 * 60 * 24 * 90, sameSite: "lax" });
+      }
+    }
+  }
+
   return response;
 }
 
