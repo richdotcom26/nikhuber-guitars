@@ -8,6 +8,8 @@ import { parseSort } from "@/lib/table-sort";
 import { reportJahre } from "@/lib/domain/report";
 import { RechnungenTable } from "./rechnungen-table";
 import { RechnungSummen } from "./summen";
+import { AutoSelect } from "./auto-select";
+import { heuteBerlin } from "@/lib/utils";
 
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 
@@ -20,8 +22,14 @@ export default async function RechnungenPage({
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
   const belegart = sp.belegart ?? "";
-  const jahr = /^\d{4}$/.test(sp.jahr ?? "") ? sp.jahr! : "";
-  const monatNr = Number(sp.monat);
+  // Vorgabe ohne Parameter: Vormonat (im Januar: Dezember des Vorjahres). „alle“ = kein Filter.
+  const [hj, hm] = heuteBerlin().split("-").map(Number);
+  const vorJahr = hm === 1 ? hj - 1 : hj;
+  const vorMonat = hm === 1 ? 12 : hm - 1;
+  const jahrParam = sp.jahr ?? String(vorJahr);
+  const monatParam = sp.monat ?? (sp.jahr ? "alle" : String(vorMonat));
+  const jahr = /^\d{4}$/.test(jahrParam) ? jahrParam : "";
+  const monatNr = Number(monatParam);
   const monat = jahr && monatNr >= 1 && monatNr <= 12 ? String(monatNr) : "";
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
@@ -30,7 +38,7 @@ export default async function RechnungenPage({
     reportJahre(),
   ]);
 
-  const query = { q, status, belegart, jahr, monat, sort: sort.key, dir: sort.dir };
+  const query = { q, status, belegart, jahr: jahr || "alle", monat: monat || "alle", sort: sort.key, dir: sort.dir };
   const chip = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries({ ...query, ...patch })) if (v) p.set(k, v);
@@ -52,13 +60,22 @@ export default async function RechnungenPage({
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <form method="get" className="flex items-center gap-2">
-        {status ? <input type="hidden" name="status" value={status} /> : null}
-        {belegart ? <input type="hidden" name="belegart" value={belegart} /> : null}
-        {jahr ? <input type="hidden" name="jahr" value={jahr} /> : null}
-        {monat ? <input type="hidden" name="monat" value={monat} /> : null}
-        <Input name="q" defaultValue={q} placeholder="Suche Nr / Kunde" className="h-8 w-64" />
-        <Button size="sm" variant="outline" type="submit">Suchen</Button>
+        <form method="get" className="flex flex-wrap items-center gap-2">
+          {belegart ? <input type="hidden" name="belegart" value={belegart} /> : null}
+          <Input name="q" defaultValue={q} placeholder="Suche Nr / Kunde" className="h-8 w-56" />
+          <AutoSelect name="status" defaultValue={status} className="h-8 w-32 py-0 text-xs" aria-label="Status">
+            <option value="">Alle Status</option>
+            {RG_STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </AutoSelect>
+          <AutoSelect name="jahr" defaultValue={jahr || "alle"} className="h-8 w-28 py-0 text-xs" aria-label="Jahr">
+            <option value="alle">Alle Jahre</option>
+            {jahre.map((j) => <option key={j} value={String(j)}>{j}</option>)}
+          </AutoSelect>
+          <AutoSelect name="monat" defaultValue={monat || "alle"} disabled={!jahr} className="h-8 w-32 py-0 text-xs" aria-label="Monat">
+            <option value="alle">Ganzes Jahr</option>
+            {MONATE.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
+          </AutoSelect>
+          <Button size="sm" variant="outline" type="submit">Suchen</Button>
         </form>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {summen ? (
@@ -75,29 +92,6 @@ export default async function RechnungenPage({
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        <ChipLink href={chip({ status: undefined })} active={!status}>Alle</ChipLink>
-        {RG_STATUS.map((s) => (
-          <ChipLink key={s.value} href={chip({ status: s.value })} active={status === s.value}>{s.label}</ChipLink>
-        ))}
-      </div>
-
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        <ChipLink href={chip({ jahr: undefined, monat: undefined, page: undefined })} active={!jahr}>Alle Jahre</ChipLink>
-        {jahre.map((j) => (
-          <ChipLink key={j} href={chip({ jahr: String(j), monat: undefined, page: undefined })} active={jahr === String(j)}>{j}</ChipLink>
-        ))}
-      </div>
-
-      {jahr ? (
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          <ChipLink href={chip({ monat: undefined, page: undefined })} active={!monat}>Ganzes Jahr</ChipLink>
-          {MONATE.map((m, i) => (
-            <ChipLink key={m} href={chip({ monat: String(i + 1), page: undefined })} active={monat === String(i + 1)}>{m}</ChipLink>
-          ))}
-        </div>
-      ) : null}
-
       <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 
       {pageCount > 1 ? (
@@ -110,19 +104,5 @@ export default async function RechnungenPage({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function ChipLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <Link prefetch={false}
-      href={href}
-      className={
-        "rounded-full border px-2.5 py-1 text-xs transition-colors " +
-        (active ? "border-button bg-button text-primary-fg" : "border-line text-muted hover:bg-brand-soft hover:text-brand")
-      }
-    >
-      {children}
-    </Link>
   );
 }
