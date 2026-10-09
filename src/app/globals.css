@@ -30,6 +30,7 @@
 
   --color-page: #f2f4f8;
   --color-surface: #ffffff;
+  --color-card-head: var(--color-surface); /* Kopfbereich der Karten (Überschrift) */
   --color-line: #d8dee9;
   --color-ink: #123a6e;
   --color-muted: #6b7280;

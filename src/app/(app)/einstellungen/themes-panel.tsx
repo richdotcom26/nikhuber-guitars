@@ -138,7 +138,11 @@ function ThemeEditor({
 }) {
   const [state, action] = useActionState(saveThemeAction, IDLE);
   const [name, setName] = useState(start.name);
-  const [farben, setFarben] = useState<Record<string, string>>({ ...start.farben });
+  const [farben, setFarben] = useState<Record<string, string>>({
+    ...start.farben,
+    // neu hinzugekommenes Farbfeld bei älteren Themes vorbelegen
+    kartenKopf: start.farben.kartenKopf || start.farben.karte || "#FFFFFF",
+  });
 
   useEffect(() => {
     if (state?.ok) onDone();

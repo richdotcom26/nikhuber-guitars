@@ -16,6 +16,7 @@ export const THEME_FELDER = [
   { key: "schriftGedaempft", label: "Schrift gedämpft", gruppe: "Text & Flächen", cssVar: "--color-muted" },
   { key: "seite", label: "Seitenhintergrund", gruppe: "Text & Flächen", cssVar: "--color-page" },
   { key: "karte", label: "Kartenfläche", gruppe: "Text & Flächen", cssVar: "--color-surface" },
+  { key: "kartenKopf", label: "Kartenkopf (Überschrift)", gruppe: "Text & Flächen", cssVar: "--color-card-head" },
   { key: "linie", label: "Linien & Rahmen", gruppe: "Text & Flächen", cssVar: "--color-line" },
 
   { key: "akzent", label: "Akzent", gruppe: "Akzent & Schaltflächen", cssVar: "--color-brand" },
@@ -44,7 +45,7 @@ export const THEME_VORLAGEN: { name: string; farben: ThemeFarben }[] = [
     name: "Navy & Petrol",
     farben: {
       schriftDunkel: "#001957", schriftMittel: "#123A6E", schriftGedaempft: "#6B7280",
-      seite: "#F2F4F8", karte: "#FFFFFF", linie: "#D8DEE9",
+      seite: "#F2F4F8", karte: "#FFFFFF", kartenKopf: "#FFFFFF", linie: "#D8DEE9",
       akzent: "#109DA8", akzentDunkel: "#0F7C87", schaltflaeche: "#001957", schaltflaecheHover: "#123A6E",
       akzentHell: "#E3F5F7", schein: "rgba(16,157,168,.24)",
       haupt: "#001957", hauptHover: "#123A6E", hauptSchrift: "#FFFFFF",
@@ -55,7 +56,7 @@ export const THEME_VORLAGEN: { name: string; farben: ThemeFarben }[] = [
     name: "Claude",
     farben: {
       schriftDunkel: "#1F1C15", schriftMittel: "#2E2B24", schriftGedaempft: "#78736A",
-      seite: "#F5F3EC", karte: "#FDFCF9", linie: "#E5E0D3",
+      seite: "#F5F3EC", karte: "#FDFCF9", kartenKopf: "#FDFCF9", linie: "#E5E0D3",
       akzent: "#C96442", akzentDunkel: "#B4552F", schaltflaeche: "#C96442", schaltflaecheHover: "#B4552F",
       akzentHell: "#F4EAE2", schein: "rgba(201,100,66,.22)",
       haupt: "#C96442", hauptHover: "#B4552F", hauptSchrift: "#FFFFFF",
