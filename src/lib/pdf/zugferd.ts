@@ -2,6 +2,7 @@ import "server-only";
 import { zugferd } from "node-zugferd";
 import { EN16931 } from "node-zugferd/profile";
 import type { BelegRenderData } from "@/lib/domain/beleg-render";
+import { pdfaNachbessern } from "./pdfa";
 
 /**
  * ZUGFeRD/Factur-X (Profil EN 16931 = „COMFORT") aus einem Rechnungs-Beleg — erfüllt die Anforderungen
@@ -14,6 +15,27 @@ import type { BelegRenderData } from "@/lib/domain/beleg-render";
  */
 
 const invoicer = zugferd({ profile: EN16931, strict: false });
+
+/**
+ * Workaround node-zugferd 0.1.x: in Nachlässen/Zuschlägen (CategoryTradeTax) steht TypeCode hinter
+ * CategoryCode — laut XSD muss er davor stehen (Mustang: Schema-Fehler). Wir sortieren beim Formatieren um.
+ */
+function ordneCategoryTradeTax(xml: string): string {
+  return xml.replace(/<ram:CategoryTradeTax>([\s\S]*?)<\/ram:CategoryTradeTax>/g, (_m, inner: string) => {
+    const tc = inner.match(/\s*<ram:TypeCode>[^<]*<\/ram:TypeCode>/);
+    if (!tc) return _m;
+    const ohne = inner.replace(tc[0], "");
+    return `<ram:CategoryTradeTax>${tc[0]}${ohne}</ram:CategoryTradeTax>`;
+  });
+}
+{
+  const xmlTools = (invoicer as unknown as { context?: { xml?: { format: (o: unknown) => string } } }).context?.xml;
+  if (!xmlTools) console.warn("[zugferd] node-zugferd-Interna geändert – Reihenfolge-Korrektur nicht aktiv");
+  else {
+    const format = xmlTools.format.bind(xmlTools);
+    xmlTools.format = (o: unknown) => ordneCategoryTradeTax(format(o));
+  }
+}
 
 const n2 = (v: string | number | null | undefined) => {
   const x = Number(v ?? 0);
@@ -158,7 +180,7 @@ export function belegZuZugferd(data: BelegRenderData) {
           categoryCode,
           basisAmount: netto,
           rateApplicablePercent: rate,
-          ...(exemptionReason ? { exemptionReason } : {}),
+          ...(exemptionReason ? { exemptionReasonText: exemptionReason } : {}),
         }],
         monetarySummation: {
           lineTotalAmount: n2(data.summen.positionen ?? netto),
@@ -178,12 +200,17 @@ export function belegZuZugferd(data: BelegRenderData) {
 /** PDF-Bytes + Rechnungsdaten -> PDF/A-3 mit eingebettetem factur-x.xml. */
 export async function embedZugferd(pdf: Uint8Array | Buffer, data: BelegRenderData): Promise<Uint8Array> {
   const doc = invoicer.create(belegZuZugferd(data) as never);
-  return doc.embedInPdf(pdf instanceof Buffer ? new Uint8Array(pdf) : pdf, {
-    metadata: {
-      title: `${data.titel} ${data.nummer}`,
-      author: data.firma.firma,
-      subject: `E-Rechnung ${data.nummer}`,
-    },
+  const meta = {
+    title: `${data.titel} ${data.nummer}`,
+    author: data.firma.firma,
+    subject: `E-Rechnung ${data.nummer}`,
+  };
+  const mitXml = await doc.embedInPdf(pdf instanceof Buffer ? new Uint8Array(pdf) : pdf, { metadata: meta });
+  // PDF/A-3b: korrekte XMP-Metadaten, Info-Abgleich, ICC /N (node-zugferd 0.1.x liefert hier Fehler)
+  const p = EN16931 as unknown as { documentFileName: string; conformanceLevel: string; version: string };
+  return pdfaNachbessern(mitXml, {
+    ...meta,
+    facturX: { documentFileName: p.documentFileName, conformanceLevel: p.conformanceLevel, version: p.version },
   });
 }
 

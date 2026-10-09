@@ -139,6 +139,7 @@ export const WIKI: WikiArtikel[] = [
       { ul: [
         "Pflicht ist die E-Rechnung nur gegenüber **Geschäftskunden im Inland**; Privat- und Auslandskunden erhalten dasselbe PDF.",
         "Enthalten u. a.: Verkäufer mit Anschrift und USt-IdNr./Steuernummer, Käufer, Lieferanschrift, **Lieferdatum**, Positionen, Gesamtrabatt, Versand, Steueraufschlüsselung (inkl. steuerfrei EU/Ausfuhr), Zahlungsbedingung, IBAN, abgezogene Anzahlungen.",
+        "Geprüft mit dem offiziellen ZUGFeRD-Validator (Mustang/veraPDF): XML nach EN 16931 und PDF/A-3 gültig – für Inland mit MwSt, EU steuerfrei, Ausfuhr und Rechnungen mit abgezogener Anzahlung.",
         "**Voraussetzung:** Unter Einstellungen → Firma müssen Straße, PLZ, Ort und Steuernummer oder USt-IdNr. eingetragen sein – sonst lässt sich nicht buchen. IBAN/BIC sollten ebenfalls gepflegt sein.",
       ] },
     ],

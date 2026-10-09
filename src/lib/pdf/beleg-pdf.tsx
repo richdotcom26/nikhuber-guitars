@@ -1,12 +1,14 @@
 import {
-  Document, Image, Page, Text, View, StyleSheet,
+  Document, Font, Image, Page, Text, View, StyleSheet,
 } from "@react-pdf/renderer";
+import path from "node:path";
 import type { BelegRenderData } from "@/lib/domain/beleg-render";
 import { formatDate, formatMoney } from "@/lib/utils";
 
 /**
  * Beleg als echtes PDF (server-seitig via @react-pdf/renderer gerendert).
- * Layout an `components/beleg-dokument.tsx` angelehnt. Font: eingebautes Helvetica.
+ * Layout an `components/beleg-dokument.tsx` angelehnt. Font: Noto Sans (eingebettet, OFL) — PDF/A-3 verlangt
+ * eingebettete Schriften (die PDF-Standardschrift Helvetica wird nicht eingebettet).
  * Für strikte PDF/A-Konformität beim ZUGFeRD-Schritt ggf. eine TTF einbetten.
  */
 
@@ -39,8 +41,18 @@ const T = {
   },
 };
 
+const FONT_DIR = path.join(process.cwd(), "src", "lib", "pdf", "fonts");
+Font.register({
+  family: "NotoSans",
+  fonts: [
+    { src: path.join(FONT_DIR, "NotoSans-Regular.woff"), fontWeight: 400 },
+    { src: path.join(FONT_DIR, "NotoSans-Bold.woff"), fontWeight: 700 },
+  ],
+});
+Font.registerHyphenationCallback((w) => [w]); // keine Silbentrennung
+
 const s = StyleSheet.create({
-  page: { fontSize: 9, color: "#111", padding: "18mm 16mm", lineHeight: 1.45 },
+  page: { fontFamily: "NotoSans", fontSize: 9, color: "#111", padding: "18mm 16mm", lineHeight: 1.45 },
   rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   firma: { fontWeight: 700, fontSize: 11 },
   muted: { color: "#666" },
