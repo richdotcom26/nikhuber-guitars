@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
+import { LinkRow } from "@/components/ui/link-row";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,15 +62,13 @@ export default async function ModellePage({
           </THead>
           <TBody>
             {rows.map((r) => (
-              <TR key={r.id} className={r.datensatzInaktiv ? "opacity-50" : ""}>
-                <TD className="font-medium">
-                  <Link href={`/modelle/${r.id}`} className="hover:underline">{artikelName(r)}</Link>
-                </TD>
+              <LinkRow key={r.id} href={`/modelle/${r.id}`} className={r.datensatzInaktiv ? "opacity-50" : ""}>
+                <TD>{artikelName(r)}</TD>
                 <TD className="font-mono text-xs text-neutral-500">{r.artikelNr ?? "–"}</TD>
                 <TD className="text-right tabular-nums">{formatMoney(r.vkEur)}</TD>
                 <TD className="text-right tabular-nums">{formatMoney(r.vkUs, "USD")}</TD>
                 <TD>{r.datensatzInaktiv ? <Badge tone="amber">inaktiv</Badge> : <Badge tone="green">aktiv</Badge>}</TD>
-              </TR>
+              </LinkRow>
             ))}
             {rows.length === 0 ? (
               <TR><TD colSpan={5} className="py-6 text-center text-neutral-400">Keine Treffer.</TD></TR>
