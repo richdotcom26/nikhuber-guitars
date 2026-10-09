@@ -68,7 +68,7 @@ export const RECHNUNG_SORT: Record<string, unknown> = {
 };
 
 export async function listRechnungen(
-  params: { q?: string; status?: string; belegart?: string; jahr?: number; page?: number; sort?: SortSpec; mitSummen?: boolean } = {},
+  params: { q?: string; status?: string; belegart?: string; jahr?: number; monat?: number; page?: number; sort?: SortSpec; mitSummen?: boolean } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
@@ -84,6 +84,7 @@ export async function listRechnungen(
     filters.push(or(ilike(rechnung.nummer, like), ilike(rechnung.kdFirma, like), ilike(rechnung.kdNachname, like))!);
   }
   if (params.jahr) filters.push(sql`extract(year from ${rechnung.rechnungsdatum}) = ${params.jahr}`);
+  if (params.jahr && params.monat) filters.push(sql`extract(month from ${rechnung.rechnungsdatum}) = ${params.monat}`);
   const where = filters.length ? and(...filters) : undefined;
 
   const rows = await db
