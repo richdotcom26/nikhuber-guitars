@@ -113,7 +113,7 @@ function ViewRow({ r }: { r: ArbeitstagRow }) {
       <TD className="text-right tabular-nums">{hm(r.minuten)}</TD>
       <TD className="text-right tabular-nums text-muted">{hm(r.zusatzMinuten)}</TD>
       <TD className="text-right font-medium tabular-nums">{hm(r.minuten + r.zusatzMinuten)}</TD>
-      <TD className="text-sm">
+      <TD className="whitespace-pre-line text-sm">
         {r.beschreibung ?? <span className="text-muted">–</span>}
         {r.quelle ? (
           <div className="mt-1">
