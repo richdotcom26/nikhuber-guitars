@@ -18,7 +18,7 @@ export default async function RechnungenPage({
   const belegart = sp.belegart ?? "";
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
-  const { rows, total, pageCount } = await listRechnungen({ q, status, belegart, page, sort });
+  const { rows, faktor, total, pageCount } = await listRechnungen({ q, status, belegart, page, sort });
 
   const query = { q, status, belegart, sort: sort.key, dir: sort.dir };
   const chip = (patch: Record<string, string | undefined>) => {
@@ -50,7 +50,7 @@ export default async function RechnungenPage({
         ))}
       </div>
 
-      <RechnungenTable rows={rows} sort={sort} query={query} />
+      <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 
       {pageCount > 1 ? (
         <div className="mt-3 flex items-center justify-between text-sm text-neutral-500">

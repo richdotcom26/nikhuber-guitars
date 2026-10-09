@@ -131,6 +131,19 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "rechnung-liste",
+    bereich: "Rechnungen",
+    titel: "Rechnungsliste: Spalten",
+    bloecke: [
+      { p: "Die Rechnungsliste zeigt wie in Ninox: **RG-Dat, RG-Nr, RG-Count** (laufende Nummer), Kunde, Status, **Zahlungsdatum, Artikelname kurz** (Modell), **Ser#**, Betrag in **EUR** bzw. **USD**, **Erlös in EUR** (USD × USD→EUR-Faktor aus Einstellungen → Firma), **Währung**, **Differenz Zahlung** (gezahlt − zu zahlen; rot = zu wenig, grün = zu viel), **Umsatzsparte** (Guitar / Non-Guitar / Service, aus der Auftragsart) und **Produktionsort**." },
+      { ul: [
+        "Über die **Spaltenauswahl** der Tabelle lassen sich Spalten ein- und ausblenden (die Auswahl wird im Browser gemerkt). „Art“ (Rechnung/Storno/…) ist standardmäßig ausgeblendet.",
+        "Alle Spalten sind per Klick auf die Überschrift sortierbar.",
+        "Beträge: gebuchter Rechnungsbetrag brutto; bei Altrechnungen aus Ninox (ohne gespeicherte Summe) aus den Positionen + MwSt berechnet.",
+      ] },
+    ],
+  },
+  {
     id: "erechnung",
     bereich: "Rechnungen",
     titel: "E-Rechnung (ZUGFeRD EN 16931)",

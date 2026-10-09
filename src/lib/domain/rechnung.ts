@@ -39,7 +39,23 @@ import { dezimal, heuteBerlin } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- liste */
 
+/** Rechnungsbetrag brutto: gespeicherte Summe, sonst (Ninox-Altbestand) aus den Positionen + MwSt. */
+const POS_NETTO = sql`(select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant)`;
+const BETRAG = sql<string | null>`coalesce(${rechnung.summeBrutto}, round(${POS_NETTO} * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`;
+const LAUF_NR = sql<number | null>`nullif(regexp_replace(coalesce(${rechnung.nummer}, ), ^.*-, ), )::int`;
+const SPARTE = sql<string>`case when ${auftrag.auftragsart} = PRODUKTION then Guitar when ${auftrag.auftragsart} = SERVICE then Service else Non-Guitar end`;
+
 export const RECHNUNG_SORT: Record<string, unknown> = {
+  lauf: LAUF_NR,
+  modell: artikel.nameKurz,
+  ser: seriennummer.anzeige,
+  eur: sql`case when ${rechnung.kdWaehrung} = USD then null else ${BETRAG} end`,
+  usd: sql`case when ${rechnung.kdWaehrung} = USD then ${BETRAG} end`,
+  erloes: sql`${BETRAG} * case when ${rechnung.kdWaehrung} = USD then 0.92 else 1 end`,
+  waehrung: rechnung.kdWaehrung,
+  differenz: sql`${rechnung.zahlbetrag} - coalesce(${rechnung.rechnungsbetrag}, ${BETRAG})`,
+  sparte: SPARTE,
+  ort: auftrag.produktionsort,
   nummer: rechnung.nummer,
   art: rechnung.belegart,
   datum: rechnung.rechnungsdatum,
@@ -83,16 +99,28 @@ export async function listRechnungen(
       zahlungsstatus: rechnung.zahlungsstatus,
       kurzname: kunde.kurzname,
       firma: kunde.firma,
+      laufNr: LAUF_NR,
+      modellKurz: sql<string | null>`coalesce(${artikel.nameKurz}, ${artikel.nameLang})`,
+      serNr: seriennummer.anzeige,
+      betrag: BETRAG,
+      zahlbetrag: rechnung.zahlbetrag,
+      zahlbar: sql<string | null>`coalesce(${rechnung.rechnungsbetrag}, ${BETRAG})`,
+      sparte: SPARTE,
+      produktionsort: auftrag.produktionsort,
     })
     .from(rechnung)
     .leftJoin(kunde, eq(kunde.id, rechnung.kundeId))
+    .leftJoin(auftrag, eq(auftrag.id, rechnung.auftragId))
+    .leftJoin(artikel, eq(artikel.id, sql`coalesce(${rechnung.modellArtikelId}, ${auftrag.modellArtikelId})`))
+    .leftJoin(seriennummer, eq(seriennummer.id, auftrag.seriennummerId))
     .where(where)
     .orderBy(...orderByFor(RECHNUNG_SORT, params.sort, rechnung.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
   const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(rechnung).where(where);
-  return { rows, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
+  const faktor = Number((await getFirmaSetting()).usdEurFaktor) || 0.92;
+  return { rows, faktor, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
 }
 
 /* --------------------------------------------------------------------- detail */
