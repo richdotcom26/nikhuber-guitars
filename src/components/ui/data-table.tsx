@@ -43,6 +43,7 @@ export function DataTable<T>({
   empty = "Keine Einträge.",
   rowHref,
   rowClassName,
+  rowTitle,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -54,6 +55,8 @@ export function DataTable<T>({
   empty?: string;
   rowHref?: (row: T) => string;
   rowClassName?: (row: T) => string;
+  /** Tooltip der ganzen Zeile (Hover). */
+  rowTitle?: (row: T) => string | undefined;
 }) {
   const router = useRouter();
   const lsKey = `dt:${storageKey}`;
@@ -161,6 +164,7 @@ export function DataTable<T>({
               return (
                 <tr
                   key={rowKey(row)}
+                  title={rowTitle?.(row)}
                   className={cn(
                     "border-b border-line last:border-0 transition-colors hover:bg-brand-soft/50",
                     href && "cursor-pointer",

@@ -33,6 +33,7 @@ export interface RechnungRow {
   zahlbar: string | null;
   sparte: string;
   produktionsort: string | null;
+  familie: string[] | null;
 }
 
 const ORT: Record<string, string> = { RODGAU: "Rodgau", HAMBURG: "Hamburg" };
@@ -54,9 +55,18 @@ export function RechnungenTable({
     },
     {
       key: "nummer", header: "RG-Nr", sortable: true, hideable: false, className: "whitespace-nowrap font-mono text-[13px]",
-      cell: (r) => (r.nummer
-        ? <span className="font-semibold hover:underline">{r.nummer}</span>
-        : <span className="font-sans italic text-muted hover:underline">Entwurf</span>),
+      cell: (r) => (
+        <>
+          {r.nummer
+            ? <span className="font-semibold hover:underline">{r.nummer}</span>
+            : <span className="font-sans italic text-muted hover:underline">Entwurf</span>}
+          {r.familie ? (
+            <span className="ml-1 rounded bg-brand-soft px-1 font-sans text-[10px] text-brand" title={r.familie.join("\n")}>
+              +{r.familie.length - 1}
+            </span>
+          ) : null}
+        </>
+      ),
     },
     {
       key: "lauf", header: "RG-Count", sortable: true, firstDir: "desc", align: "right", className: "tabular-nums",
@@ -124,6 +134,7 @@ export function RechnungenTable({
       storageKey="rechnungen-v2"
       empty="Keine Rechnungen."
       rowHref={(r) => `/rechnungen/${r.id}`}
+      rowTitle={(r) => (r.familie ? `Vorgangsfamilie:\n${r.familie.join("\n")}` : undefined)}
     />
   );
 }

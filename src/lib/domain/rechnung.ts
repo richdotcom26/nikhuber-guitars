@@ -20,6 +20,7 @@ import { allocateNummer, kdSnapshot, recomputeSummen, renumberPositionen } from 
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { usdEurKurs } from "./kurs";
+import { rechnungsFamilien } from "./rechnung-familie";
 import { getFirmaSetting } from "./stammdaten";
 import { orderByFor } from "./_sort";
 
@@ -138,8 +139,9 @@ export async function listRechnungen(
   const kurs = await usdEurKurs();
   const eur = (summen ?? []).filter((s) => s.waehrung !== "USD").reduce((a, s) => a + Number(s.netto), 0);
   const usd = (summen ?? []).filter((s) => s.waehrung === "USD").reduce((a, s) => a + Number(s.netto), 0);
+  const familien = await rechnungsFamilien(rows.map((r) => r.id));
   return {
-    rows,
+    rows: rows.map((r) => ({ ...r, familie: familien.get(r.id)?.map((g) => (g.id === r.id ? "▸ " : "   ") + g.text) ?? null })),
     faktor: kurs.faktor,
     kurs,
     summen: summen ? { eur, usd, gesamtEur: eur + usd * kurs.faktor } : null,
