@@ -110,7 +110,7 @@ function Row({ label, value, href }: { label: string; value: string | null | und
     <div className="flex gap-2">
       <span className="w-24 shrink-0 text-neutral-500">{label}</span>
       {href ? (
-        <Link href={href} className="text-blue-700 hover:underline">{value}</Link>
+        <Link href={href} className="text-blue-700 hover:underline font-semibold text-sm">{value}</Link>
       ) : (
         <span className="break-all text-neutral-800">{value}</span>
       )}

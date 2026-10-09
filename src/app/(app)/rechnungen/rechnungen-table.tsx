@@ -35,9 +35,9 @@ export function RechnungenTable({
 }) {
   const columns: Column<RechnungRow>[] = [
     {
-      key: "nummer", header: "RG-Nr", sortable: true, hideable: false, className: "font-mono text-xs",
+      key: "nummer", header: "RG-Nr", sortable: true, hideable: false, className: "font-mono text-[13px]",
       cell: (r) => (r.nummer
-        ? <span className="font-medium hover:underline">{r.nummer}</span>
+        ? <span className="font-semibold hover:underline">{r.nummer}</span>
         : <span className="font-sans italic text-muted hover:underline">Entwurf</span>),
     },
     {

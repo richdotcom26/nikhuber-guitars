@@ -141,8 +141,8 @@ async function MonatDetail({ jahr, monat }: { jahr: number; monat: number }) {
           <TBody>
             {rows.map((r) => (
               <TR key={r.id}>
-                <TD className="font-mono text-xs">
-                  <Link href={`/rechnungen/${r.id}`} className="hover:underline">{r.nummer}</Link>
+                <TD className="font-mono text-[13px]">
+                  <Link href={`/rechnungen/${r.id}`} className="font-semibold text-blue-700 hover:underline">{r.nummer}</Link>
                 </TD>
                 <TD className="text-neutral-500">{r.belegart}</TD>
                 <TD className="text-neutral-500">{formatDate(r.rechnungsdatum)}</TD>

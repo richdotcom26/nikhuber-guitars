@@ -115,7 +115,7 @@ export default async function AuftragDetailPage({
                       {a.kdSteuerpflichtig === false ? <Badge tone="green">steuerfrei</Badge> : null}
                     </div>
                     {a.kundeId ? (
-                      <Link href={`/adressen/${a.kundeId}`} className="mt-1 inline-block text-xs text-blue-700 hover:underline">
+                      <Link href={`/adressen/${a.kundeId}`} className="mt-1 inline-block text-blue-700 hover:underline font-semibold text-sm">
                         → Kundendatensatz
                       </Link>
                     ) : null}

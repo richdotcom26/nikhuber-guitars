@@ -51,7 +51,7 @@ export default async function BauplanungPage({
             <span className="min-w-40 text-center text-sm font-medium">{monatLabel(monat)}</span>
             <Link href={navLink(next)} className={buttonClasses("outline", "sm")}>▶</Link>
             {monat !== aktuellerMonat() ? (
-              <Link href={navLink(aktuellerMonat())} className="text-xs text-blue-700 hover:underline">heute</Link>
+              <Link href={navLink(aktuellerMonat())} className="text-blue-700 hover:underline font-semibold text-sm">heute</Link>
             ) : null}
           </div>
         }
@@ -124,8 +124,8 @@ export default async function BauplanungPage({
             <TBody>
               {board.auftraege.map((a) => (
                 <TR key={a.id}>
-                  <TD className="font-mono text-xs">
-                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline">{a.nummer}</Link>
+                  <TD className="font-mono text-[13px]">
+                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline font-semibold text-[13px]">{a.nummer}</Link>
                   </TD>
                   <TD>{a.kunde ?? "–"}</TD>
                   <TD className="text-neutral-500">{a.modellName ?? "–"}</TD>
@@ -168,8 +168,8 @@ export default async function BauplanungPage({
             <TBody>
               {ungeplant.map((a) => (
                 <TR key={a.id}>
-                  <TD className="font-mono text-xs">
-                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline">{a.nummer}</Link>
+                  <TD className="font-mono text-[13px]">
+                    <Link href={`/auftraege/${a.id}`} className="text-blue-700 hover:underline font-semibold text-[13px]">{a.nummer}</Link>
                   </TD>
                   <TD>{kundeKurz(a)}</TD>
                   <TD className="text-neutral-500">{a.modellName ?? "–"}</TD>

@@ -117,7 +117,7 @@ export default async function RechnungDetailPage({
             {r.rechnungsdatum ? <span>{formatDate(r.rechnungsdatum)}</span> : null}
             {kdName ? <span>· {kdName}</span> : null}
             {data.referenz ? (
-              <Link href={`/rechnungen/${data.referenz.id}`} className="text-xs text-blue-700 hover:underline">
+              <Link href={`/rechnungen/${data.referenz.id}`} className="text-blue-700 hover:underline font-semibold text-sm">
                 → zu Rechnung {data.referenz.nummer}
               </Link>
             ) : null}
@@ -178,7 +178,7 @@ export default async function RechnungDetailPage({
           {data.folgebelege.map((f, i) => (
             <span key={f.id}>
               {i > 0 ? " · " : ""}
-              <Link href={`/rechnungen/${f.id}`} className="text-blue-700 hover:underline">
+              <Link href={`/rechnungen/${f.id}`} className="text-blue-700 hover:underline font-semibold text-sm">
                 {RG_BELEGART_LABEL[f.belegart as RgBelegart]} {f.nummer ?? "(Entwurf)"}
               </Link>
             </span>
@@ -221,7 +221,7 @@ export default async function RechnungDetailPage({
                   <>
                     <div>
                       Auftrag:{" "}
-                      <Link href={`/auftraege/${data.auftragInfo.id}`} className="font-mono text-blue-700 hover:underline">
+                      <Link href={`/auftraege/${data.auftragInfo.id}`} className="font-mono text-blue-700 hover:underline font-semibold text-[13px]">
                         {data.auftragInfo.nummer}
                       </Link>
                     </div>
@@ -230,7 +230,7 @@ export default async function RechnungDetailPage({
                   </>
                 ) : <span className="text-neutral-400">Ohne Auftrag (Ad-hoc-Rechnung für Kleinteile / Ersatzteile).</span>}
                 {r.kundeId ? (
-                  <Link href={`/adressen/${r.kundeId}`} className="inline-block text-xs text-blue-700 hover:underline">
+                  <Link href={`/adressen/${r.kundeId}`} className="inline-block text-blue-700 hover:underline font-semibold text-sm">
                     → Kundendatensatz
                   </Link>
                 ) : null}

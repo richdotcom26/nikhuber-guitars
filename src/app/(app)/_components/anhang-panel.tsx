@@ -140,7 +140,7 @@ export function AnhangPanel({
                 type="button"
                 onClick={() => anzeigen(a)}
                 disabled={pending && openId === a.id}
-                className="flex-1 truncate text-left text-blue-700 hover:underline"
+                className="flex-1 truncate text-left text-blue-700 hover:underline font-semibold text-sm"
                 title={a.dateiname ?? ""}
               >
                 {pending && openId === a.id ? "öffne …" : (a.dateiname ?? "(ohne Namen)")}

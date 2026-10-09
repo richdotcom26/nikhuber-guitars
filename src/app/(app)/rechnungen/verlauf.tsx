@@ -27,7 +27,7 @@ export function Verlauf({ ereignisse }: { ereignisse: VerlaufEreignis[] }) {
             {e.link ? (
               <>
                 {" "}
-                <Link href={e.link.href} className="font-medium text-blue-700 hover:underline">{e.link.label}</Link>
+                <Link href={e.link.href} className="text-blue-700 hover:underline font-semibold text-sm">{e.link.label}</Link>
               </>
             ) : null}
           </div>

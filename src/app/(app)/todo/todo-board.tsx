@@ -244,7 +244,7 @@ function TodoLine({
           ) : null}
           {row.auftragNummer ? (
             <div>
-              <Link href={`/auftraege/${row.auftragId}`} className="text-xs text-blue-700 hover:underline">
+              <Link href={`/auftraege/${row.auftragId}`} className="text-blue-700 hover:underline font-semibold text-sm">
                 → {row.auftragNummer}
               </Link>
             </div>

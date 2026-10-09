@@ -39,7 +39,7 @@ export function Abzuege({
         <ul className="divide-y divide-neutral-100 rounded-md border border-line">
           {rows.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-2 px-2 py-1.5">
-              <Link href={`/rechnungen/${a.anzahlungRechnungId}`} className="font-mono text-blue-700 hover:underline">
+              <Link href={`/rechnungen/${a.anzahlungRechnungId}`} className="font-mono text-blue-700 hover:underline font-semibold text-[13px]">
                 {a.nummer ?? "–"}
               </Link>
               <span className="text-xs text-muted">{formatDate(a.datum)}</span>
