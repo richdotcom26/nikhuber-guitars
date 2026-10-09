@@ -113,7 +113,7 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
 
         <View style={[s.rowBetween, { marginBottom: 20 }]}>
           <View style={{ width: "55%" }}>
-            <Text style={[s.muted, { fontSize: 5, marginBottom: 4 }]}>
+            <Text style={[s.muted, { fontSize: 6, marginBottom: 4 }]}>
               {data.firma.firma}{firmaZeile ? ` · ${firmaZeile}` : ""}
             </Text>
             <Text>{kundeBlock}</Text>
