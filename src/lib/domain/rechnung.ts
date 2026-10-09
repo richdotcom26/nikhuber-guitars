@@ -68,7 +68,7 @@ export const RECHNUNG_SORT: Record<string, unknown> = {
 };
 
 export async function listRechnungen(
-  params: { q?: string; status?: string; belegart?: string; jahr?: number; page?: number; sort?: SortSpec } = {},
+  params: { q?: string; status?: string; belegart?: string; jahr?: number; page?: number; sort?: SortSpec; mitSummen?: boolean } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
@@ -126,19 +126,22 @@ export async function listRechnungen(
   // Summen (netto) über alle gebuchten Belege der aktuellen Auswahl — ohne Entwürfe und ohne
   // Anzahlungsrechnungen (deren Betrag steckt bereits in der Endrechnung; sonst doppelt gezählt).
   const summenFilter = and(where, isNotNull(rechnung.nummer), ne(rechnung.belegart, "ANZAHLUNGSRECHNUNG"));
-  const summen = await db
-    .select({ waehrung: rechnung.kdWaehrung, netto: sql<string>`coalesce(sum(${NETTO}), 0)` })
-    .from(rechnung)
-    .where(summenFilter)
-    .groupBy(rechnung.kdWaehrung);
+  // nur auf Anforderung (Knopf „Summen berechnen“) — die Aggregation über alle Belege kostet Zeit
+  const summen = params.mitSummen
+    ? await db
+      .select({ waehrung: rechnung.kdWaehrung, netto: sql<string>`coalesce(sum(${NETTO}), 0)` })
+      .from(rechnung)
+      .where(summenFilter)
+      .groupBy(rechnung.kdWaehrung)
+    : null;
   const kurs = await usdEurKurs();
-  const eur = summen.filter((s) => s.waehrung !== "USD").reduce((a, s) => a + Number(s.netto), 0);
-  const usd = summen.filter((s) => s.waehrung === "USD").reduce((a, s) => a + Number(s.netto), 0);
+  const eur = (summen ?? []).filter((s) => s.waehrung !== "USD").reduce((a, s) => a + Number(s.netto), 0);
+  const usd = (summen ?? []).filter((s) => s.waehrung === "USD").reduce((a, s) => a + Number(s.netto), 0);
   return {
     rows,
     faktor: kurs.faktor,
     kurs,
-    summen: { eur, usd, gesamtEur: eur + usd * kurs.faktor },
+    summen: summen ? { eur, usd, gesamtEur: eur + usd * kurs.faktor } : null,
     total: count,
     page,
     pageCount: Math.max(Math.ceil(count / pageSize), 1),

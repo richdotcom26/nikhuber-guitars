@@ -12,7 +12,7 @@ import { RechnungSummen } from "./summen";
 export default async function RechnungenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; belegart?: string; jahr?: string; page?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; belegart?: string; jahr?: string; page?: string; sort?: string; dir?: string; summen?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
@@ -22,7 +22,7 @@ export default async function RechnungenPage({
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
   const [{ rows, faktor, kurs, summen, total, pageCount }, jahre] = await Promise.all([
-    listRechnungen({ q, status, belegart, jahr: jahr ? Number(jahr) : undefined, page, sort }),
+    listRechnungen({ q, status, belegart, jahr: jahr ? Number(jahr) : undefined, page, sort, mitSummen: sp.summen === "1" }),
     reportJahre(),
   ]);
 
@@ -69,7 +69,13 @@ export default async function RechnungenPage({
         ))}
       </div>
 
-      <RechnungSummen summen={summen} kurs={kurs} />
+      {summen ? (
+        <RechnungSummen summen={summen} kurs={kurs} />
+      ) : (
+        <div className="mb-4">
+          <Link prefetch={false} href={chip({ summen: "1" })} className={buttonClasses("outline", "sm")}>Summen berechnen</Link>
+        </div>
+      )}
 
       <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 

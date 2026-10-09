@@ -140,7 +140,7 @@ export const WIKI: WikiArtikel[] = [
     bloecke: [
       { p: "Über der Liste stehen drei Summen (**netto**): Rechnungen in **EUR**, Rechnungen in **USD** und **Gesamt in EUR** – dabei wird USD mit dem **aktuellen Referenzkurs der Europäischen Zentralbank** umgerechnet (Kurs und Datum stehen unter der Summe; fällt der Abruf aus, gilt der Faktor aus Einstellungen → Firma)." },
       { ul: [
-        "Die Summen beziehen sich auf die aktuelle Auswahl (Jahr, Status, Suche) und zählen nur **gebuchte** Belege. **Anzahlungsrechnungen** zählen nicht mit – ihr Betrag steckt bereits in der Endrechnung. Stornorechnungen werden abgezogen.",
+        "Die Summen werden erst per Knopf **„Summen berechnen“** ermittelt (spart Ladezeit; beim Ändern von Filter/Jahr wieder per Knopf). Sie beziehen sich auf die aktuelle Auswahl (Jahr, Status, Suche) und zählen nur **gebuchte** Belege. **Anzahlungsrechnungen** zählen nicht mit – ihr Betrag steckt bereits in der Endrechnung. Stornorechnungen werden abgezogen.",
         "**Jahresfilter** (Alle Jahre, 2026, 2025 …) über die Knöpfe oberhalb der Summen.",
         "Spalten: RG-Dat, RG-Nr, RG-Count, Kunde, **Art / Status** (untereinander), Artikelname kurz, Ser#, **Netto** (in Rechnungswährung), **Erlös EUR (netto)**, Währung, Umsatzsparte, Produktionsort. **Zahlungsdatum** und **Differenz Zahlung** sind standardmäßig ausgeblendet und lassen sich über „Spalten“ einblenden.",
         "Beträge bei Altrechnungen aus Ninox (ohne gespeicherte Summe) werden aus den Positionen berechnet.",
