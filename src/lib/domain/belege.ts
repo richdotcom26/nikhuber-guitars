@@ -803,3 +803,65 @@ export async function positionArtikelSuche(q: string, limit = 30) {
     .orderBy(asc(sql`lower(coalesce(${artikel.nameBelege}, ${artikel.nameLang}, ''))`))
     .limit(limit);
 }
+
+/* ------------------------------------------------------- Neu bepreisen (Kundenwechsel) */
+
+/** Anzahl Positionen mit Artikel (für die Rückfrage „Preise neu berechnen?“ beim Kundenwechsel). */
+export async function bepreisbarePositionen(traeger: SpecBelegTraeger, traegerId: string): Promise<number> {
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(belegPosition)
+    .where(and(eq(POS_COL[traeger], traegerId), sql`${belegPosition.artikelId} is not null`));
+  return n;
+}
+
+/**
+ * Einzelpreise aller Artikel-Positionen nach Preisstaffel/Währung des (aktuellen) Kunden neu ermitteln —
+ * wie bei „Positionen erzeugen“ (tierPreis). Freitext-Positionen ohne Artikel bleiben unverändert;
+ * Anzahl, Rabatt und Texte bleiben erhalten. Gibt die Anzahl geänderter Positionen zurück.
+ */
+export async function positionenNeuBepreisen(traeger: SpecBelegTraeger, traegerId: string): Promise<number> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const head = HEAD[traeger];
+  const [h] = await db.select().from(head).where(eq(head.id, traegerId));
+  if (!h) throw new DomainError("NOT_FOUND", "Beleg nicht gefunden.");
+  if (traeger === "auftrag") await assertAuftragPositionenAenderbar(traegerId, { art: "ganz" });
+
+  const pos = await db
+    .select({
+      id: belegPosition.id, einzelpreis: belegPosition.einzelpreis, gruppe: artikel.artikelgruppe,
+      vkEur: artikel.vkEur, vkUs: artikel.vkUs,
+      bruttoFuerNetto: artikel.bruttoFuerNetto, nichtRabattierfaehig: artikel.nichtRabattierfaehig,
+    })
+    .from(belegPosition)
+    .innerJoin(artikel, eq(artikel.id, belegPosition.artikelId))
+    .where(eq(POS_COL[traeger], traegerId));
+
+  const margen = await positionMargen();
+  let n = 0;
+  for (const p of pos) {
+    // Versand/Porto: Sonderrabatt gilt dort nicht (wie addPorto)
+    const sr = p.gruppe === "VERSAND" ? null : h.kdSonderrabattProzent;
+    const preis = tierPreis(p, h.kdVertriebsweg, h.kdWaehrung, sr, margen);
+    const neu = preis == null ? null : String(preis);
+    if ((p.einzelpreis == null ? null : Number(p.einzelpreis)) === (preis ?? null)) continue;
+    await db.update(belegPosition)
+      .set({ einzelpreis: neu, updatedAt: new Date(), updatedBy: user.id })
+      .where(eq(belegPosition.id, p.id));
+    n++;
+  }
+  // Versand im Summenblock (aus Porto-Artikel) ebenfalls neu bepreisen
+  if (h.versandArtikelId && Number(h.versandkosten ?? 0) !== 0) {
+    const [va] = await db.select().from(artikel).where(eq(artikel.id, h.versandArtikelId));
+    const vp = va ? tierPreis(va, h.kdVertriebsweg, h.kdWaehrung, null, margen) : null;
+    if (va && vp != null && vp !== Number(h.versandkosten)) {
+      await setVersand(traeger, traegerId, { betrag: vp, bezeichnung: h.versandBezeichnung, artikelId: va.id })
+        .catch(() => {}); // Versand schon berechnet → bleibt
+      n++;
+    }
+  }
+  await recomputeSummen(traeger, traegerId);
+  if (traeger === "auftrag") await recomputeUmsatzerwartung(traegerId);
+  return n;
+}

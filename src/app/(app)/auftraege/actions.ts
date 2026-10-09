@@ -17,6 +17,7 @@ import {
 import {
   addPorto, addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
   getArtikelForPosition, positionMargen, setGesamtrabatt, tierPreis, updatePosition, setVersand,
+  positionenNeuBepreisen,
 } from "@/lib/domain/belege";
 import { requireUser } from "@/lib/domain/context";
 import { isDomainError } from "@/lib/domain/errors";
@@ -52,6 +53,11 @@ export async function setKundeAction(_p: ActionState, fd: FormData): Promise<Act
     const kundeId = String(fd.get("kundeId") ?? "");
     if (!id || !kundeId) return fail("ID / Kunde fehlt.");
     await setAuftragKunde(id, kundeId);
+    if (fd.get("neuPreise") === "1") {
+      const n = await positionenNeuBepreisen("auftrag", id);
+      rev(id);
+      return ok(`Kunde übernommen, ${n} Preis(e) neu berechnet.`);
+    }
     rev(id);
     return ok("Kunde übernommen.");
   });

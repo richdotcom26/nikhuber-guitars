@@ -11,7 +11,8 @@ import {
 } from "@/lib/angebot-shared";
 import { getAngebot, kundenPickerListe } from "@/lib/domain/angebot";
 import { listArtikel } from "@/lib/domain/artikel";
-import { listPositionen } from "@/lib/domain/belege";
+import { bepreisbarePositionen, listPositionen } from "@/lib/domain/belege";
+import { kundeKurz } from "@/lib/adressen-shared";
 import { isDomainError } from "@/lib/domain/errors";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
 import { formatDate } from "@/lib/utils";
@@ -96,7 +97,7 @@ export default async function AngebotDetailPage({
                 <Input name="kundenSuche" defaultValue={kundenSuche ?? ""} placeholder="Kunde suchen …" className="h-8 w-56" />
                 <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
               </form>
-              {kundenSuche ? <KundenTreffer angebotId={id} q={kundenSuche} /> : null}
+              {kundenSuche ? <KundenTreffer angebotId={id} q={kundenSuche} bisher={a.kundeId ? kundeKurz(a) : null} /> : null}
             </CardContent>
           </Card>
 
@@ -167,7 +168,8 @@ export default async function AngebotDetailPage({
   );
 }
 
-async function KundenTreffer({ angebotId, q }: { angebotId: string; q: string }) {
+async function KundenTreffer({ angebotId, q, bisher }: { angebotId: string; q: string; bisher: string | null }) {
+  const positionen = bisher ? await bepreisbarePositionen("angebot", angebotId) : 0;
   const kunden = await kundenPickerListe(q, 15);
   if (kunden.length === 0) return <p className="text-xs text-neutral-400">Kein Treffer.</p>;
   return (
@@ -179,7 +181,7 @@ async function KundenTreffer({ angebotId, q }: { angebotId: string; q: string })
             <span>
               {name} <span className="text-xs text-neutral-400">{k.ort ?? ""} · {k.kontaktart}</span>
             </span>
-            <SetKundeButton angebotId={angebotId} kundeId={k.id} />
+            <SetKundeButton angebotId={angebotId} kundeId={k.id} kundeName={name} bisher={bisher} positionen={positionen} />
           </li>
         );
       })}

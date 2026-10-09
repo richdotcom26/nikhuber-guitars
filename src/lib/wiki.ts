@@ -115,6 +115,7 @@ export const WIKI: WikiArtikel[] = [
     bloecke: [
       { p: "Links: **Kunde**, darunter **Seriennummer**, darunter **Dokumente & Bilder**. Rechts: **Status**, darunter der **Kopf** (Auftragsart, Priorität, Produktionsort, Bauplan-Monat, Umsatzerwartung, Anzahlung …)." },
       { p: "Im Block **Status** gibt es unter den Status-Knöpfen ein Feld **Bemerkung** (wie der Freitext Body, aus Ninox „Bemerkung“ übernommen): speichert beim Verlassen des Feldes; ist es befüllt, ist der Hintergrund **gelb**." },
+      { p: "**Kunde wechseln** (Auftrag und Angebot): Ist schon ein Kunde eingetragen, fragt „Übernehmen“ zuerst, ob der bisherige ersetzt werden soll. Gibt es Positionen, folgt die Frage, ob die **Preise neu berechnet** werden sollen (Währung / Preisstaffel / Sonderrabatt des neuen Kunden, auch der Versand). „Abbrechen“ behält die bisherigen Preise. Bereits berechnete Positionen eines Auftrags lassen sich nicht neu bepreisen." },
       { p: "**Bauplan-Monat:** Die Monats-Buttons setzen per Klick den Monatsersten; ein zweiter Klick entfernt ihn. Über das Datumsfeld ist jedes Datum möglich. Danach „Kopf speichern“." },
     ],
   },

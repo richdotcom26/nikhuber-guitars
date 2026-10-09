@@ -13,7 +13,8 @@ import {
 import { listArtikel } from "@/lib/domain/artikel";
 import { getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
-import { listPositionen } from "@/lib/domain/belege";
+import { bepreisbarePositionen, listPositionen } from "@/lib/domain/belege";
+import { kundeKurz } from "@/lib/adressen-shared";
 import { isDomainError } from "@/lib/domain/errors";
 import { getAuftragSeriennummer } from "@/lib/domain/seriennummer";
 import { candidatesBySlot, getSpecs } from "@/lib/domain/specs";
@@ -130,7 +131,7 @@ export default async function AuftragDetailPage({
                   <Input name="kundenSuche" defaultValue={kundenSuche ?? ""} placeholder="Kunde suchen …" className="h-8 w-56" />
                   <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
                 </form>
-                {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} /> : null}
+                {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} bisher={a.kundeId ? kundeKurz(a) : null} /> : null}
               </CardContent>
             </Card>
             <Card>
@@ -291,7 +292,8 @@ export default async function AuftragDetailPage({
   );
 }
 
-async function KundenTreffer({ auftragId, q }: { auftragId: string; q: string }) {
+async function KundenTreffer({ auftragId, q, bisher }: { auftragId: string; q: string; bisher: string | null }) {
+  const positionen = bisher ? await bepreisbarePositionen("auftrag", auftragId) : 0;
   const kunden = await kundenPickerListe(q, 15);
   if (kunden.length === 0) return <p className="text-xs text-neutral-400">Kein Treffer.</p>;
   return (
@@ -301,7 +303,7 @@ async function KundenTreffer({ auftragId, q }: { auftragId: string; q: string })
         return (
           <li key={k.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
             <span>{name} <span className="text-xs text-neutral-400">{k.ort ?? ""} · {k.kontaktart}</span></span>
-            <SetKundeButton auftragId={auftragId} kundeId={k.id} />
+            <SetKundeButton auftragId={auftragId} kundeId={k.id} kundeName={name} bisher={bisher} positionen={positionen} />
           </li>
         );
       })}
