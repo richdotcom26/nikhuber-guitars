@@ -22,7 +22,7 @@ export default async function RechnungenPage({
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
   const [{ rows, faktor, kurs, summen, total, pageCount }, jahre] = await Promise.all([
-    listRechnungen({ q, status, belegart, jahr: jahr ? Number(jahr) : undefined, page, sort, mitSummen: sp.summen === "1" }),
+    listRechnungen({ q, status, belegart, jahr: jahr ? Number(jahr) : undefined, page, sort, mitSummen: sp.summen === "1" && !!(q || status || belegart || jahr) }),
     reportJahre(),
   ]);
 
@@ -59,7 +59,13 @@ export default async function RechnungenPage({
           {summen ? (
             <RechnungSummen summen={summen} kurs={kurs} />
           ) : (
-            <Link prefetch={false} href={chip({ summen: "1" })} className={buttonClasses("outline", "sm")}>Summen berechnen</Link>
+            q || status || belegart || jahr ? (
+              <Link prefetch={false} href={chip({ summen: "1" })} className={buttonClasses("outline", "sm")}>Summen berechnen</Link>
+            ) : (
+              <span className={buttonClasses("outline", "sm") + " pointer-events-none opacity-50"} title="Erst Jahr, Status oder Suche wählen">
+                Summen berechnen (erst Filter wählen)
+              </span>
+            )
           )}
         </div>
       </div>
