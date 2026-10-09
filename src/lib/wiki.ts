@@ -138,7 +138,8 @@ export const WIKI: WikiArtikel[] = [
       { p: "Im Kopf des Auftrags gibt es das Feld **Lieferdatum**. Es erscheint auf dem **Lieferschein** und auf der **Rechnung** (§ 14 UStG: Zeitpunkt der Lieferung ist Pflichtangabe; in der E-Rechnung als Lieferdatum BT‑72)." },
       { ul: [
         "Beim Erstellen eines Rechnungsentwurfs wird das Lieferdatum aus dem Auftrag übernommen (fehlt es, das Versanddatum). Im Entwurf lässt es sich noch ändern.",
-        "Eine **Rechnung lässt sich ohne Lieferdatum nicht buchen** – das Programm meldet dann „Lieferdatum fehlt“. Anzahlungsrechnungen sind ausgenommen (die Lieferung liegt noch nicht vor).",
+        "Ist im Entwurf **kein Lieferdatum** eingetragen, setzt das Programm beim Buchen das **Rechnungsdatum** als Lieferdatum (z. B. Abholung am Tag der Rechnung) – das Buchen wird dadurch nie blockiert. Anzahlungsrechnungen bekommen kein Lieferdatum (die Lieferung liegt noch nicht vor).",
+        "Automatisch gesetzt wird das Lieferdatum auch, wenn der Arbeitsschritt **„Versendet“** erledigt bzw. der Auftrag **abgeschlossen** wird (falls noch leer) – das gilt ebenso für **persönliche Abholung**.",
         "Aus Ninox übernommen: das Feld „Lieferdatum“ der Aufträge.",
       ] },
     ],

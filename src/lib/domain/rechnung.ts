@@ -375,9 +375,10 @@ export async function buchen(id: string): Promise<{ nummer: string; anhangId: st
     .from(belegPosition)
     .where(and(eq(belegPosition.rechnungId, id), eq(belegPosition.reRelevant, true)));
   if (n === 0) throw new DomainError("STATE", "Der Entwurf hat keine Positionen.");
-  // § 14 UStG: Zeitpunkt der Lieferung/Leistung ist Pflichtangabe (Anzahlungsrechnung: Lieferung liegt noch nicht vor)
+  // § 14 UStG: Zeitpunkt der Lieferung/Leistung ist Pflichtangabe. Fehlt er, gilt Lieferdatum = Rechnungsdatum
+  // (Abholung/Übergabe am Tag der Rechnung) — kein harter Stopp. Anzahlungsrechnung: Lieferung liegt noch nicht vor.
   if (r0.belegart === "RECHNUNG" && !h0.lieferdatum) {
-    throw new DomainError("VALIDATION", "Lieferdatum fehlt — bitte im Entwurf eintragen (Pflichtangabe auf der Rechnung).");
+    await db.update(rechnung).set({ lieferdatum: heuteBerlin() }).where(eq(rechnung.id, id));
   }
 
   await snapshotVorBuchen(id, user.id);

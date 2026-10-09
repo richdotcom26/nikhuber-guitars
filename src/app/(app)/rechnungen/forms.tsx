@@ -38,7 +38,7 @@ export function KopfForm({
         <Field label="Rechnungsdatum" hint={entwurf ? "wird beim Buchen gesetzt" : undefined}>
           <Input value={rechnungsdatum ?? ""} type={rechnungsdatum ? "date" : "text"} placeholder="– beim Buchen –" disabled readOnly />
         </Field>
-        <Field label="Lieferdatum" htmlFor="lieferdatum">
+        <Field label="Lieferdatum" htmlFor="lieferdatum" hint={entwurf && !lieferdatum ? "Leer = beim Buchen wird das Rechnungsdatum als Lieferdatum gesetzt." : undefined}>
           <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={lieferdatum ?? ""} disabled={!entwurf} />
         </Field>
         <Field label="Report-Monat" htmlFor="reportMonat" hint="YYYY-MM">

@@ -174,6 +174,7 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
       .set({
         status: "ABGESCHLOSSEN",
         versanddatum: heuteBerlin(),
+        lieferdatum: a.lieferdatum ?? heuteBerlin(), // versendet bzw. abgeholt = geliefert
         updatedAt: new Date(),
         updatedBy: user.id,
       })

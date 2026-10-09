@@ -240,6 +240,7 @@ export async function changeAuftragStatus(id: string, ziel: AuftragStatus) {
       throw new DomainError("STATE", "Abschluss nicht möglich: keine Rechnung vorhanden.");
     }
     patch.versanddatum = a.versanddatum ?? heute;
+    patch.lieferdatum = a.lieferdatum ?? a.versanddatum ?? heute;
   }
 
   await db.update(auftrag).set(patch).where(eq(auftrag.id, id));
