@@ -181,6 +181,9 @@ export async function createAuftrag(art: Auftragsart, kundeId?: string | null): 
 export async function setAuftragKunde(id: string, kundeId: string) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  if (await auftragHatRechnung(id)) {
+    throw new DomainError("STATE", "Zu diesem Auftrag gibt es schon eine Rechnung – der Kunde kann nicht mehr geändert werden.");
+  }
   const snap = await kdSnapshot(kundeId);
   await db
     .update(auftrag)
@@ -372,4 +375,10 @@ export async function setAuftragStatusBemerkung(id: string, text: string) {
     .where(eq(auftrag.id, id))
     .returning({ id: auftrag.id });
   if (res.length === 0) throw new DomainError("NOT_FOUND", "Auftrag nicht gefunden.");
+}
+
+/** Gibt es zum Auftrag schon eine Rechnung (auch Entwurf)? Dann ist der Kunde fest. */
+export async function auftragHatRechnung(id: string): Promise<boolean> {
+  const [r] = await db.select({ id: rechnung.id }).from(rechnung).where(eq(rechnung.auftragId, id)).limit(1);
+  return !!r;
 }

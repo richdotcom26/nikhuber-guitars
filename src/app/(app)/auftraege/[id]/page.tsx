@@ -11,7 +11,7 @@ import {
   AUFTRAGSART_LABEL, BESONDERES, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
 import { listArtikel } from "@/lib/domain/artikel";
-import { getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
+import { auftragHatRechnung, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
 import { bepreisbarePositionen, listPositionen } from "@/lib/domain/belege";
 import { kundeKurz } from "@/lib/adressen-shared";
@@ -76,6 +76,7 @@ export default async function AuftragDetailPage({
     throw e;
   }
   const a = data.auftrag;
+  const hatRechnung = await auftragHatRechnung(id);
   const kdName = a.kdFirma || [a.kdVorname, a.kdNachname].filter(Boolean).join(" ") || null;
 
   return (
@@ -126,12 +127,20 @@ export default async function AuftragDetailPage({
                 ) : (
                   <p className="text-sm text-neutral-400">Kein Kunde gewählt.</p>
                 )}
-                <form method="get" className="flex items-center gap-2 border-t border-neutral-100 pt-3">
-                  <input type="hidden" name="tab" value="auftrag" />
-                  <Input name="kundenSuche" defaultValue={kundenSuche ?? ""} placeholder="Kunde suchen …" className="h-8 w-56" />
-                  <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
-                </form>
-                {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} bisher={a.kundeId ? kundeKurz(a) : null} /> : null}
+                {hatRechnung ? (
+                  <p className="border-t border-neutral-100 pt-3 text-xs text-muted">
+                    Kunde fest – zu diesem Auftrag gibt es bereits eine Rechnung.
+                  </p>
+                ) : (
+                  <>
+                    <form method="get" className="flex items-center gap-2 border-t border-neutral-100 pt-3">
+                      <input type="hidden" name="tab" value="auftrag" />
+                      <Input name="kundenSuche" defaultValue={kundenSuche ?? ""} placeholder="Kunde suchen …" className="h-8 w-56" />
+                      <button type="submit" className={buttonClasses("outline", "sm")}>Suchen</button>
+                    </form>
+                    {kundenSuche ? <KundenTreffer auftragId={id} q={kundenSuche} bisher={a.kundeId ? kundeKurz(a) : null} /> : null}
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card>
