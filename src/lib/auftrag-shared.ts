@@ -32,7 +32,7 @@ export const AUFTRAG_STATUS_LABEL: Record<AuftragStatus, string> = {
   SERVICE: "Service",
   NONE_GUITAR: "None-Guitar",
   ABGESCHLOSSEN: "Abgeschlossen",
-  ABGESCHL_OHNE_BEFUND: "Abgeschl. ohne Befund",
+  ABGESCHL_OHNE_BEFUND: "Abgeschlossen ohne Berechnung",
   STORNIERT: "Storniert",
 };
 export const AUFTRAG_STATUS = AUFTRAG_STATUS_VALUES.map((value) => ({ value, label: AUFTRAG_STATUS_LABEL[value] }));
