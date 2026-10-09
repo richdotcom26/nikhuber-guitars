@@ -42,7 +42,7 @@ import { dezimal, heuteBerlin } from "@/lib/utils";
 /* ---------------------------------------------------------------------- liste */
 
 /** Rechnungsbetrag brutto: gespeicherte Summe, sonst (Ninox-Altbestand) aus den Positionen + MwSt. */
-const POS_NETTO = sql`(select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant)`;
+const POS_NETTO = sql`(select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = ${rechnung.id})`;
 const BETRAG = sql<string | null>`coalesce(${rechnung.summeBrutto}, round(${POS_NETTO} * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`;
 /** Rechnungsbetrag netto: gespeicherte Summe, sonst (Ninox-Altbestand) Summe der Positionen. */
 const NETTO = sql<string | null>`coalesce(${rechnung.summeNetto}, round(${POS_NETTO}, 2))`;

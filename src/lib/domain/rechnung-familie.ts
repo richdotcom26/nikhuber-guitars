@@ -37,8 +37,9 @@ export async function rechnungsFamilien(ids: string[]): Promise<Map<string, Fami
       id: rechnung.id, nummer: rechnung.nummer, belegart: rechnung.belegart, status: rechnung.status,
       rechnungsdatum: rechnung.rechnungsdatum, auftragId: rechnung.auftragId, referenzRechnungId: rechnung.referenzRechnungId,
       waehrung: rechnung.kdWaehrung,
-      // Brutto; Ninox-Altbestand ohne Summe: aus den Positionen
-      betrag: sql<string | null>`coalesce(${rechnung.summeBrutto}, round((select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant) * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`,
+      // Brutto; ohne gespeicherte Summe aus den Positionen. "rechnung"."id" explizit — Drizzle lässt den
+      // Tabellennamen bei Einzeltabellen-Selects weg, dann griffe die Unterabfrage auf p.id.
+      betrag: sql<string | null>`coalesce(${rechnung.summeBrutto}, round((select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = "rechnung"."id") * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`,
     }).from(rechnung).where(or(...conds));
     const az = await db.select({ a: rechnungAnzahlung.rechnungId, b: rechnungAnzahlung.anzahlungRechnungId })
       .from(rechnungAnzahlung)

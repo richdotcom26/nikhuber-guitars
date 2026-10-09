@@ -15,7 +15,7 @@ import { getFirmaSetting } from "./stammdaten";
  * Offen = gebuchte Rechnung/Anzahlungsrechnung ohne Zahlungsdatum.
  */
 
-const POS_NETTO = sql`(select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant)`;
+const POS_NETTO = sql`(select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = ${rechnung.id})`;
 
 export const MAHN_STUFE_LABEL: Record<number, string> = {
   1: "1. Erinnerung", 2: "2. Erinnerung", 3: "Letzte Mahnung",
