@@ -20,12 +20,13 @@ export const BESONDERES_VALUES = BESONDERES.map((b) => b.value) as unknown as re
 export const SPEZIALAUFTRAG_VALUES = ["Marketing", "Sponsoring", "Demoware", "Sonstiges"] as const;
 
 export const AUFTRAG_STATUS_VALUES = [
-  "BACKORDER", "WERKSTATT", "BEI_NICL", "PROD_FERTIG", "SERVICE",
+  "BACKORDER", "BESTAETIGT", "WERKSTATT", "BEI_NICL", "PROD_FERTIG", "SERVICE",
   "NONE_GUITAR", "ABGESCHLOSSEN", "ABGESCHL_OHNE_BEFUND", "STORNIERT",
 ] as const;
 export type AuftragStatus = (typeof AUFTRAG_STATUS_VALUES)[number];
 export const AUFTRAG_STATUS_LABEL: Record<AuftragStatus, string> = {
-  BACKORDER: "Backorder",
+  BACKORDER: "Eingang",
+  BESTAETIGT: "Bestätigt",
   WERKSTATT: "In Werkstatt",
   BEI_NICL: "Bei Nicl (Hamburg)",
   PROD_FERTIG: "Produktion fertig",
@@ -39,6 +40,7 @@ export const AUFTRAG_STATUS = AUFTRAG_STATUS_VALUES.map((value) => ({ value, lab
 
 export const AUFTRAG_STATUS_TONE: Record<AuftragStatus, "neutral" | "blue" | "green" | "amber" | "red" | "violet"> = {
   BACKORDER: "neutral",
+  BESTAETIGT: "amber",
   WERKSTATT: "blue",
   BEI_NICL: "blue",
   PROD_FERTIG: "violet",

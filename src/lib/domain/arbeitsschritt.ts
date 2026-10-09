@@ -1,10 +1,11 @@
 import "server-only";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
   appUser, arbeitsschritt, arbeitsschrittVorrat, artikel, auftrag, specBelegung,
 } from "@/lib/db/schema";
+import { logAuftrag } from "./auftrag-verlauf";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 import { heuteBerlin } from "@/lib/utils";
@@ -21,6 +22,9 @@ export const VORRAT_NR = {
   KISTE_PACKEN: 86,
 } as const;
 const KISTE_PACKEN_ORDER = 29;
+/** Work-%-Bereich: Order 10 (erster Werkstatt-Schritt) bis 63 (Montage). */
+const WORK_VON = 10;
+const WORK_BIS = 63;
 
 export interface SchrittRow {
   id: string;
@@ -101,6 +105,12 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
     throw new DomainError("VALIDATION", "Status „Kiste vollständig“ ist nur beim Schritt „Kiste packen“ zulässig.");
   }
 
+  // Werkstatt erst nach Bestätigung des Auftrags (unterschriebene AB oder manuell „Bestätigt")
+  const [vorher] = await db.select({ status: auftrag.status }).from(auftrag).where(eq(auftrag.id, row.auftragId));
+  if (vorher?.status === "BACKORDER" && status !== "OFFEN" && row.typ === "WERKSTATT") {
+    throw new DomainError("STATE", "Der Auftrag ist noch nicht bestätigt (Status „Eingang“). Bitte zuerst bestätigen.");
+  }
+
   // „erledigt"-Stempel (MA + Zeitpunkt) nur bei echter Erledigung, nicht bei „Warten auf".
   const done = status === "ERLEDIGT" || status === "KISTE_VOLLSTAENDIG";
   await db
@@ -119,8 +129,8 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
   const [a] = await db.select().from(auftrag).where(eq(auftrag.id, row.auftragId));
   if (!a) return;
 
-  // Backorder -> in Werkstatt beim ersten bearbeiteten Schritt
-  if (a.status === "BACKORDER" && status !== "OFFEN") {
+  // Bestätigt -> in Werkstatt beim ersten bearbeiteten Werkstatt-Schritt
+  if (a.status === "BESTAETIGT" && status !== "OFFEN" && row.typ === "WERKSTATT") {
     await db
       .update(auftrag)
       .set({
@@ -131,6 +141,10 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
         updatedBy: user.id,
       })
       .where(eq(auftrag.id, a.id));
+    await logAuftrag(a.id, "STATUS", { von: a.status, nach: "WERKSTATT", text: "erster Arbeitsschritt" }, user.id);
+  } else if (done && row.typ === "WERKSTATT" && !a.werkstattbeginn) {
+    // Werkstattbeginn = erster erledigter Werkstatt-Schritt
+    await db.update(auftrag).set({ werkstattbeginn: heuteBerlin() }).where(eq(auftrag.id, a.id));
   }
 
   // Montage (nr 81) erledigt -> Produktion fertig + Rest der Werkstatt-Schritte auto-erledigen
@@ -144,6 +158,7 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
         updatedBy: user.id,
       })
       .where(eq(auftrag.id, a.id));
+    await logAuftrag(a.id, "STATUS", { von: a.status, nach: "PROD_FERTIG", text: "Montage erledigt" }, user.id);
     await db.execute(sql`
       update arbeitsschritt s set status = 'ERLEDIGT', erledigt_am = coalesce(s.erledigt_am, now()), updated_at = now()
       from arbeitsschritt_vorrat v
@@ -163,6 +178,7 @@ export async function setSchrittStatus(schrittId: string, statusRaw: string) {
         updatedBy: user.id,
       })
       .where(eq(auftrag.id, a.id));
+    await logAuftrag(a.id, "STATUS", { von: a.status, nach: "ABGESCHLOSSEN", text: "versendet" }, user.id);
   }
 }
 
@@ -351,15 +367,20 @@ export async function addSchritt(auftragId: string, vorratNr: number, userId: st
 /* ------------------------------------------------------------- Fortschritt (7h) */
 
 export async function computeFortschritt(auftragId: string): Promise<number> {
+  // Work % (7h): Schritte von Order 10 bis 63 (Montage) = 100 %; Stand = Position des letzten erledigten Schritts
   const rows = await db
     .select({
       status: arbeitsschritt.status,
       reihenfolge: arbeitsschrittVorrat.reihenfolge,
-      typ: arbeitsschrittVorrat.typ,
     })
     .from(arbeitsschritt)
     .innerJoin(arbeitsschrittVorrat, eq(arbeitsschrittVorrat.id, arbeitsschritt.vorratId))
-    .where(and(eq(arbeitsschritt.auftragId, auftragId), eq(arbeitsschrittVorrat.typ, "WERKSTATT")));
+    .where(and(
+      eq(arbeitsschritt.auftragId, auftragId),
+      eq(arbeitsschrittVorrat.typ, "WERKSTATT"),
+      gte(arbeitsschrittVorrat.reihenfolge, WORK_VON),
+      lte(arbeitsschrittVorrat.reihenfolge, WORK_BIS),
+    ));
 
   const alle = rows.length;
   if (alle === 0) return 0;

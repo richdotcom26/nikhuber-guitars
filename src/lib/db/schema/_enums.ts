@@ -54,7 +54,7 @@ export const auftragsartEnum = pgEnum("auftragsart", [
   "PRODUKTION", "NONE_GUITAR", "SERVICE",
 ]);
 export const auftragStatusEnum = pgEnum("auftrag_status", [
-  "BACKORDER", "WERKSTATT", "BEI_NICL", "PROD_FERTIG", "SERVICE",
+  "BACKORDER", "BESTAETIGT", "WERKSTATT", "BEI_NICL", "PROD_FERTIG", "SERVICE",
   "NONE_GUITAR", "ABGESCHLOSSEN", "ABGESCHL_OHNE_BEFUND", "STORNIERT",
 ]);
 export const produktionsortEnum = pgEnum("produktionsort", ["RODGAU", "HAMBURG"]);

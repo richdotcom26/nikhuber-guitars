@@ -16,6 +16,7 @@ import {
   seedStandardSchritte, VORRAT_NR,
 } from "./arbeitsschritt";
 import { allocateNummer, kdSnapshot, recomputeSummen, recomputeUmsatzerwartung } from "./belege";
+import { logAuftrag } from "./auftrag-verlauf";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
 
@@ -192,8 +193,10 @@ const hatCitesHolz = hatCitesHolzImAuftrag;
 /* --------------------------------------------------------------- Status (7g) */
 
 const ALLOWED: Record<AuftragStatus, AuftragStatus[]> = {
-  BACKORDER: ["WERKSTATT", "BEI_NICL", "STORNIERT", "SERVICE", "NONE_GUITAR"],
-  WERKSTATT: ["BEI_NICL", "PROD_FERTIG", "BACKORDER", "STORNIERT"],
+  // Eingegangen → erst bestätigen (unterschriebene AB oder manuell), dann Werkstatt
+  BACKORDER: ["BESTAETIGT", "STORNIERT", "SERVICE", "NONE_GUITAR"],
+  BESTAETIGT: ["WERKSTATT", "BEI_NICL", "BACKORDER", "STORNIERT"],
+  WERKSTATT: ["BEI_NICL", "PROD_FERTIG", "BESTAETIGT", "STORNIERT"],
   BEI_NICL: ["WERKSTATT", "PROD_FERTIG", "STORNIERT"],
   PROD_FERTIG: ["WERKSTATT", "ABGESCHLOSSEN", "STORNIERT"],
   SERVICE: ["ABGESCHLOSSEN", "ABGESCHL_OHNE_BEFUND", "STORNIERT"],
@@ -238,6 +241,7 @@ export async function changeAuftragStatus(id: string, ziel: AuftragStatus) {
   }
 
   await db.update(auftrag).set(patch).where(eq(auftrag.id, id));
+  await logAuftrag(id, "STATUS", { von, nach: ziel }, user.id);
 
   // In Werkstatt / Bei Nicl: alle Standard-Arbeitsschritte sicherstellen (idempotent) +
   // Compliance-Schritte (Cites/F&W/Ausfuhr) bedarfsgerecht ableiten.
@@ -303,12 +307,16 @@ export async function updateAuftragKopf(id: string, input: AuftragKopfInput) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
   const bauplanMonat = input.bauplandatum ? input.bauplandatum.slice(0, 7) : null;
+  const [alt] = await db.select({ bauplandatum: auftrag.bauplandatum }).from(auftrag).where(eq(auftrag.id, id));
   const res = await db
     .update(auftrag)
     .set({ ...input, bauplanMonat, updatedAt: new Date(), updatedBy: user.id })
     .where(eq(auftrag.id, id))
     .returning({ id: auftrag.id });
   if (res.length === 0) throw new DomainError("NOT_FOUND", "Auftrag nicht gefunden.");
+  if ((alt?.bauplandatum ?? null) !== (input.bauplandatum ?? null)) {
+    await logAuftrag(id, "BAUPLAN", { von: alt?.bauplandatum, nach: input.bauplandatum }, user.id);
+  }
   await refreshFortschritt(id);
   await recomputeSummen("auftrag", id);
 }

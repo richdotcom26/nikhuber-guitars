@@ -37,6 +37,7 @@ import {
 import { ArbeitsschrittePanel } from "../arbeitsschritte-panel";
 import { AnzahlungForm } from "../anzahlung-form";
 import { CreateRechnungButton } from "../create-rechnung-button";
+import { AuftragVerlauf } from "../auftrag-verlauf";
 import { KopfForm } from "../kopf-form";
 import { NksDokument } from "../nks-dokumente";
 import { SetKundeButton } from "../set-kunde-form";
@@ -178,6 +179,10 @@ export default async function AuftragDetailPage({
                   }}
                 />
               </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Zeitstempel &amp; Verlauf</CardTitle></CardHeader>
+              <CardContent><AuftragVerlauf id={id} /></CardContent>
             </Card>
           </div>
         </div>

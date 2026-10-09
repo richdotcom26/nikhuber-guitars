@@ -120,7 +120,18 @@ export const auftrag = pgTable("auftrag", {
   zertifikatAssetId: uuid("zertifikat_asset_id"),
   lieferscheinAssetId: uuid("lieferschein_asset_id"),
 
+  // Auftragsbestätigung mit elektronischer Unterschrift (Link /unterschrift/<token>)
+  abToken: text("ab_token").unique(),
+  abAngefordertAm: timestamp("ab_angefordert_am", { withTimezone: true }),
+  abUnterschriebenAm: timestamp("ab_unterschrieben_am", { withTimezone: true }),
+  abUnterschriebenName: text("ab_unterschrieben_name"),
+  abUnterschriftIp: text("ab_unterschrift_ip"),
+  abAnhangId: uuid("ab_anhang_id"),                       // zuletzt gesendete AB (PDF)
+  abUnterschriebenAnhangId: uuid("ab_unterschrieben_anhang_id"),
+
   // Zeitstempel:
+  erfasstAm: date("erfasst_am"),                 // ex Ninox „erfasst am"
+  erfasstVon: text("erfasst_von"),               // ex Ninox „erfasst von" (Name, Altbestand)
   werkstattbeginn: date("werkstattbeginn"),
   endmontagedatum: date("endmontagedatum"),
   versanddatum: date("versanddatum"),

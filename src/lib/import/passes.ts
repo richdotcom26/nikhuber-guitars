@@ -748,6 +748,9 @@ export async function importAuftraege(ctx: Ctx) {
         const dt = ninoxDateOnly(f(ctx, a, rec, "Bauplandatum"));
         return dt ? dt.slice(0, 7).replace("-", "/") : null;
       })(),
+      erfasstAm: ninoxDateOnly(f(ctx, a, rec, "erfasst am")),
+      erfasstVon: ninoxStr(f(ctx, a, rec, "erfasst von")),
+      createdAt: ninoxDate(rec._cd) ?? undefined,          // Ninox „Erstellt am" statt Importzeit
       werkstattbeginn: ninoxDateOnly(f(ctx, a, rec, "Werkstattbeginn")),
       endmontagedatum: ninoxDateOnly(f(ctx, a, rec, "Endmontagedatum")),
       versanddatum: ninoxDateOnly(f(ctx, a, rec, "Versanddatum")),

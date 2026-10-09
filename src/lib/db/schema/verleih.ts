@@ -37,3 +37,19 @@ export const verleih = pgTable("verleih", {
   auftragIdx: index("verleih_auftrag_idx").on(t.auftragId),
   kundeIdx: index("verleih_kunde_idx").on(t.kundeId),
 }));
+
+/**
+ * Auftrags-Verlauf (Protokoll): Statuswechsel, Bauplandatum, Auftragsbestätigung gesendet/unterschrieben …
+ * Nur anfügen, nie ändern. Abgeleitete Daten (Werkstattbeginn, Endmontage, Rechnung, Zahlung) kommen
+ * zusätzlich live aus den Belegen (lib/domain/auftrag-verlauf).
+ */
+export const auftragEreignis = pgTable("auftrag_ereignis", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  auftragId: uuid("auftrag_id").notNull().references(() => auftrag.id, { onDelete: "cascade" }),
+  art: text("art").notNull(),          // STATUS | BAUPLAN | AB_GESENDET | AB_UNTERSCHRIEBEN | …
+  von: text("von"),
+  nach: text("nach"),
+  text: text("text"),
+  zeit: timestamp("zeit", { withTimezone: true }).defaultNow().notNull(),
+  userId: uuid("user_id"),
+}, (t) => ({ auftragIdx: index("auftrag_ereignis_auftrag_idx").on(t.auftragId, t.zeit) }));
