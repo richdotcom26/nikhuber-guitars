@@ -35,8 +35,8 @@ export function ArtikelTable({
       cell: (r) => <Badge>{gruppeLabel(r.artikelgruppe)}</Badge>,
     },
     {
-      key: "name", header: "Name", sortable: true, hideable: false, className: "font-medium",
-      cell: (r) => <span className="hover:underline">{artikelName(r)}</span>,
+      key: "name", header: "Name", sortable: true, hideable: false,
+      cell: (r) => artikelName(r),
     },
     {
       key: "nr", header: "Nr", sortable: true, className: "font-mono text-[13px] text-muted",
