@@ -42,16 +42,16 @@ import { dezimal, heuteBerlin } from "@/lib/utils";
 /** Rechnungsbetrag brutto: gespeicherte Summe, sonst (Ninox-Altbestand) aus den Positionen + MwSt. */
 const POS_NETTO = sql`(select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant)`;
 const BETRAG = sql<string | null>`coalesce(${rechnung.summeBrutto}, round(${POS_NETTO} * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`;
-const LAUF_NR = sql<number | null>`nullif(regexp_replace(coalesce(${rechnung.nummer}, ), ^.*-, ), )::int`;
-const SPARTE = sql<string>`case when ${auftrag.auftragsart} = PRODUKTION then Guitar when ${auftrag.auftragsart} = SERVICE then Service else Non-Guitar end`;
+const LAUF_NR = sql<number | null>`nullif(regexp_replace(coalesce(${rechnung.nummer}, ''), '^.*-', ''), '')::int`;
+const SPARTE = sql<string>`case when ${auftrag.auftragsart} = 'PRODUKTION' then 'Guitar' when ${auftrag.auftragsart} = 'SERVICE' then 'Service' else 'Non-Guitar' end`;
 
 export const RECHNUNG_SORT: Record<string, unknown> = {
   lauf: LAUF_NR,
   modell: artikel.nameKurz,
   ser: seriennummer.anzeige,
-  eur: sql`case when ${rechnung.kdWaehrung} = USD then null else ${BETRAG} end`,
-  usd: sql`case when ${rechnung.kdWaehrung} = USD then ${BETRAG} end`,
-  erloes: sql`${BETRAG} * case when ${rechnung.kdWaehrung} = USD then 0.92 else 1 end`,
+  eur: sql`case when ${rechnung.kdWaehrung} = 'USD' then null else ${BETRAG} end`,
+  usd: sql`case when ${rechnung.kdWaehrung} = 'USD' then ${BETRAG} end`,
+  erloes: sql`${BETRAG} * case when ${rechnung.kdWaehrung} = 'USD' then 0.92 else 1 end`,
   waehrung: rechnung.kdWaehrung,
   differenz: sql`${rechnung.zahlbetrag} - coalesce(${rechnung.rechnungsbetrag}, ${BETRAG})`,
   sparte: SPARTE,
