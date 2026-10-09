@@ -25,16 +25,19 @@ import { mahnKonfig } from "@/lib/domain/mahnung";
 import { ZaehlerPanel } from "./zaehler-panel";
 import { ZahlungenPanel } from "./zahlungen-panel";
 
-const BASE_TABS: readonly TabItem[] = [
+/** Reiter-Reihenfolge; `admin` = nur für Admins sichtbar. */
+const ALLE_TABS: readonly (TabItem & { admin?: boolean })[] = [
   { key: "firma", label: "Firma" },
+  { key: "benutzer", label: "Benutzer", admin: true },
+  { key: "buchhaltung", label: "Buchhaltung" },
+  { key: "zaehler", label: "Belegnummern" },
   { key: "zahlungen", label: "Zahlungsbedingungen" },
   { key: "staaten", label: "Staaten" },
+  { key: "textbausteine", label: "Textbausteine" },
   { key: "modellgruppen", label: "Modellgruppen" },
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
-  { key: "zaehler", label: "Belegnummern" },
-  { key: "textbausteine", label: "Textbausteine" },
-  { key: "buchhaltung", label: "Buchhaltung" },
   { key: "themes", label: "Themes" },
+  { key: "arbeitszeit", label: "Arbeitszeit", admin: true },
   { key: "wiki", label: "Wiki" },
 ];
 
@@ -45,9 +48,7 @@ export default async function EinstellungenPage({
 }) {
   const { tab } = await searchParams;
   const user = await requireUser();
-  const TABS: readonly TabItem[] = user.rolle === "ADMIN"
-    ? [...BASE_TABS, { key: "benutzer", label: "Benutzer" }, { key: "arbeitszeit", label: "Arbeitszeit" }]
-    : BASE_TABS;
+  const TABS: readonly TabItem[] = ALLE_TABS.filter((t) => !t.admin || user.rolle === "ADMIN");
   const active = TABS.some((t) => t.key === tab) ? tab! : "firma";
 
   return (
