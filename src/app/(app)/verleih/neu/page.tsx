@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { kundenPickerListe } from "@/lib/domain/angebot";
 import { getKunde } from "@/lib/domain/adressen";
 import { verleihGitarren } from "@/lib/domain/verleih";
+import { ZUBEHOER_STANDARD } from "@/lib/verleih-shared";
 import { VerleihForm } from "../verleih-form";
 
 /** Neuer Verleih: 1. Kontakt suchen/wählen (muss in den Adressen angelegt sein), 2. Gitarre + Daten. */
@@ -51,7 +52,7 @@ export default async function NeuerVerleihPage({
               }))}
               values={{
                 auftragId: gitarre, kundeId: kunde, versendetAm: null, verfuegbarBis: null, zurueckAm: null,
-                zweck: null, zubehoer: "Koffer", wert: g?.umsatzerwartung ?? null, bemerkung: null,
+                zweck: null, zubehoer: ZUBEHOER_STANDARD, wert: g?.umsatzerwartung ?? null, bemerkung: null,
               }}
             />
           </CardContent>

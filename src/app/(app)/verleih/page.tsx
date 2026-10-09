@@ -46,6 +46,11 @@ export default async function VerleihPage({
                         <Link href={`/auftraege/${g.id}`} className="font-mono text-[13px] font-semibold text-blue-700 hover:underline">{g.nummer}</Link>
                       </div>
                     </div>
+                    {!g.seriennummer ? (
+                      <Link href={`/auftraege/${g.id}`} title="Ohne Seriennummer kann keine Übergabevereinbarung erzeugt werden.">
+                        <Badge tone="amber">Seriennummer fehlt</Badge>
+                      </Link>
+                    ) : null}
                     {g.offen ? (
                       <Badge tone={VERLEIH_STATUS_TON[g.offen.status]}>{VERLEIH_STATUS_LABEL[g.offen.status]}</Badge>
                     ) : <Badge tone="green">verfügbar</Badge>}

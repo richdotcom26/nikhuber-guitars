@@ -219,6 +219,10 @@ export async function erzeugeVereinbarung(id: string): Promise<string> {
   const user = await schreibRecht();
   const { data, v, dateiBasis } = await pdfDaten(id);
   if (!v.verfuegbarBis) throw new DomainError("VALIDATION", "Bitte zuerst „Zur Verfügung bis“ eintragen.");
+  if (!data.modell) throw new DomainError("STATE", "Für die Gitarre ist kein Modell hinterlegt – bitte im Auftrag (Details) die Modellvorlage setzen.");
+  if (!data.seriennummer) {
+    throw new DomainError("STATE", "Für die Gitarre ist keine Seriennummer vergeben – bitte im Auftrag unter „Seriennummer“ vergeben.");
+  }
   const pdf = await renderVerleihPdf(data);
   const anhangId = await speichereAnhang({
     traeger: "auftrag", traegerId: v.auftragId, dateiname: `${heuteBerlin()} ${dateiBasis}.pdf`,

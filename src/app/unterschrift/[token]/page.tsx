@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { unterschriftKontext } from "@/lib/domain/verleih";
 import { formatDateTime } from "@/lib/utils";
-import { VEREINBARUNG } from "@/lib/verleih-shared";
+import { VEREINBARUNG, zubehoerListe } from "@/lib/verleih-shared";
 import { UnterschriftForm } from "./unterschrift-form";
 
 export const metadata: Metadata = { title: "Nik Huber Guitars", robots: { index: false, follow: false } };
@@ -61,7 +61,12 @@ export default async function UnterschriftPage({ params }: { params: Promise<{ t
         <div className="mb-1 font-semibold text-ink">{t.gegenstand}</div>
         {zeile(t.modell, d.modell)}
         {zeile(t.seriennummer, d.seriennummer)}
-        {zeile(t.zubehoer, d.zubehoer)}
+        <div className="flex gap-3 py-0.5">
+          <span className="w-32 shrink-0 text-muted">{t.zubehoer}</span>
+          <ul className="font-semibold text-ink">
+            {zubehoerListe(d.zubehoer).map((z, i) => <li key={i}>• {z}</li>)}
+          </ul>
+        </div>
         {zeile(t.wert, d.wert)}
         {d.zweck ? zeile(t.zweck, d.zweck) : null}
         {zeile(t.zeitraum, `${t.vom} ${d.vom || "–"} ${t.bis} ${d.bis || "–"}`)}

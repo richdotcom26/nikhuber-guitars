@@ -26,6 +26,14 @@ export function verleihStatus(
   return "VERLIEHEN";
 }
 
+/** Standard-Zubehör einer Leihgitarre. */
+export const ZUBEHOER_STANDARD = "Koffer, Gurt";
+
+/** „Koffer, Gurt" / mehrzeilig → Liste. */
+export function zubehoerListe(s: string | null | undefined): string[] {
+  return (s ?? "").split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean);
+}
+
 /** Platzhalter für die Verleih-Textbausteine (Einstellungen → Textbausteine). */
 export const VERLEIH_PLATZHALTER = [
   { key: "briefanrede", label: "Briefanrede (z. B. „Hallo Rainer,“)" },

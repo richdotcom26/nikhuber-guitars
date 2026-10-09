@@ -2,7 +2,7 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
-import { VEREINBARUNG, type VerleihSprache } from "@/lib/verleih-shared";
+import { VEREINBARUNG, type VerleihSprache, zubehoerListe } from "@/lib/verleih-shared";
 
 /** Übergabevereinbarung (Leihgabe) einer Verleih-/Testgitarre — optional mit elektronischer Unterschrift. */
 export interface VerleihPdfData {
@@ -79,7 +79,14 @@ function VerleihPdf({ d }: { d: VerleihPdfData }) {
           <Text style={s.h}>{t.gegenstand}</Text>
           {zeile(t.modell, d.modell)}
           {zeile(t.seriennummer, d.seriennummer)}
-          {zeile(t.zubehoer, d.zubehoer)}
+          <View style={s.zeile}>
+            <Text style={s.k}>{t.zubehoer}</Text>
+            <View style={{ flex: 1 }}>
+              {zubehoerListe(d.zubehoer).length
+                ? zubehoerListe(d.zubehoer).map((z, i) => <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>• {z}</Text>)
+                : <Text style={s.v}>–</Text>}
+            </View>
+          </View>
           {zeile(t.wert, d.wert)}
           {d.zweck ? zeile(t.zweck, d.zweck) : null}
           {zeile(t.zeitraum, `${t.vom} ${d.vom || "–"}  ${t.bis} ${d.bis || "–"}`)}

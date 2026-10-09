@@ -6,6 +6,7 @@ import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
 import { formatBetrag } from "@/lib/utils";
+import { ZUBEHOER_STANDARD } from "@/lib/verleih-shared";
 import { createVerleihAction, updateVerleihAction } from "./actions";
 
 export interface GitarreOpt { id: string; label: string; wert: string | null }
@@ -63,7 +64,7 @@ export function VerleihForm({
           <Input id="zweck" name="zweck" defaultValue={values.zweck ?? ""} placeholder="z. B. Test, Messe, Endorsement" />
         </Field>
         <Field label="Zubehör" htmlFor="zubehoer" errors={err.zubehoer}>
-          <Input id="zubehoer" name="zubehoer" defaultValue={values.zubehoer ?? "Koffer"} />
+          <Input id="zubehoer" name="zubehoer" defaultValue={values.zubehoer ?? ZUBEHOER_STANDARD} placeholder="mit Komma trennen, z. B. Koffer, Gurt" />
         </Field>
         <Field label="Wert (EUR, für Haftung)" htmlFor="wert" errors={err.wert}>
           <Input id="wert" name="wert" inputMode="decimal" defaultValue={formatBetrag(values.wert)} />
