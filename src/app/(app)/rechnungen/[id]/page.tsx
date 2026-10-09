@@ -218,7 +218,7 @@ export default async function RechnungDetailPage({
           <div className="space-y-5">
             <Card>
               <CardHeader><CardTitle>Bezug</CardTitle></CardHeader>
-              <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+              <CardContent className="grid gap-4 text-sm md:grid-cols-[1fr_2fr]">
                <div className="space-y-1">
                 {data.auftragInfo ? (
                   <>
