@@ -109,7 +109,7 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
       <Page size="A4" style={s.page}>
         {/* Logo mittig oben (wie das alte Ninox-Formular) */}
         {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf-Image hat kein alt */}
-        <Image src={LOGO} style={{ width: 150, alignSelf: "center", marginBottom: 18 }} />
+        <Image src={LOGO} style={{ width: 136, alignSelf: "center", marginTop: 4, marginBottom: 20 }} />
 
         <View style={[s.rowBetween, { marginBottom: 20 }]}>
           <View style={{ width: "55%" }}>
