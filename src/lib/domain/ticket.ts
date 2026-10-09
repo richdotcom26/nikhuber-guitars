@@ -46,6 +46,8 @@ export interface TicketListRow {
 
 export async function listTickets(params: {
   q?: string; typ?: string; status?: string; mir?: boolean; page?: number;
+  /** Erledigte/abgelehnte Tickets mit anzeigen (sonst ausgeblendet, außer per Status-Filter gewählt). */
+  erledigte?: boolean;
 } = {}) {
   const user = await requireUser();
   const pageSize = 50;
@@ -59,6 +61,9 @@ export async function listTickets(params: {
     filters.push(eq(ticket.status, params.status as TicketStatus));
   }
   if (params.mir) filters.push(eq(ticket.zugewiesenAnId, user.id));
+  if (!params.erledigte && !params.status) {
+    filters.push(sql`${ticket.status} not in ('ERLEDIGT','ABGELEHNT')`);
+  }
   if (params.q?.trim()) {
     const like = `%${params.q.trim()}%`;
     filters.push(or(ilike(ticket.titel, like), ilike(ticket.beschreibung, like))!);
@@ -95,6 +100,7 @@ export async function listTickets(params: {
   return {
     rows: rows as TicketListRow[],
     total: agg.c,
+    alle: (await db.select({ c: sql<number>`count(*)::int` }).from(ticket))[0].c,
     offen: (await db
       .select({ c: sql<number>`count(*)::int` })
       .from(ticket)

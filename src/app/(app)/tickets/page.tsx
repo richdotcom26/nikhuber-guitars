@@ -14,20 +14,21 @@ import { formatDate } from "@/lib/utils";
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; typ?: string; status?: string; mir?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; typ?: string; status?: string; mir?: string; erledigte?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const typ = sp.typ ?? "";
   const status = sp.status ?? "";
   const mir = sp.mir === "1";
+  const erledigte = sp.erledigte === "1";
   const page = Number(sp.page) || 1;
 
-  const { rows, total, offen, pageCount } = await listTickets({ q, typ, status, mir, page });
+  const { rows, alle, offen, pageCount } = await listTickets({ q, typ, status, mir, erledigte, page });
 
   const linkWith = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    for (const [k, val] of Object.entries({ q, typ, status, mir: mir ? "1" : undefined, ...patch })) {
+    for (const [k, val] of Object.entries({ q, typ, status, mir: mir ? "1" : undefined, erledigte: erledigte ? "1" : undefined, ...patch })) {
       if (val) p.set(k, val);
     }
     const s = p.toString();
@@ -38,7 +39,7 @@ export default async function TicketsPage({
     <div>
       <PageHeader
         title="Tickets"
-        count={`${offen} offen · ${total} gesamt`}
+        count={`${offen} offen · ${alle} gesamt`}
         actions={<Link href="/tickets/neu" className={buttonClasses()}>Neues Ticket</Link>}
       />
 
@@ -56,8 +57,12 @@ export default async function TicketsPage({
           <input type="checkbox" name="mir" value="1" defaultChecked={mir} />
           mir zugewiesen
         </label>
+        <label className="flex items-center gap-1.5 text-xs text-muted" title="Auch erledigte und abgelehnte Tickets zeigen">
+          <input type="checkbox" name="erledigte" value="1" defaultChecked={erledigte} />
+          erledigte anzeigen
+        </label>
         <Button size="sm" variant="outline" type="submit">Filtern</Button>
-        {(q || typ || status || mir) ? (
+        {(q || typ || status || mir || erledigte) ? (
           <Link href="/tickets" className="text-xs text-neutral-500 hover:underline">zurücksetzen</Link>
         ) : null}
       </form>

@@ -494,7 +494,7 @@ export const WIKI: WikiArtikel[] = [
         "Der **Aufwand** (Umsetzungszeit in Minuten) wird beim Bearbeiten des Tickets eingetragen – beim Anlegen gibt es das Feld noch nicht.",
         "Wird ein Ticket auf **Erledigt** gesetzt, bekommt der Ersteller eine **E-Mail**.",
         "Ein Kommentar als **Rückfrage** setzt das Ticket auf „Rückfrage“ und schickt der jeweils anderen Seite eine E-Mail.",
-        "Offene Tickets stehen oben, erledigte/abgelehnte unten.",
+        "In der Liste sind **erledigte und abgelehnte Tickets ausgeblendet**. Mit dem Häkchen **„erledigte anzeigen“** (und „Filtern“) erscheinen sie wieder – unten, nach den offenen. Wer im Status-Filter „Erledigt“ oder „Abgelehnt“ wählt, sieht diese auch ohne Häkchen.",
       ] },
     ],
   },
