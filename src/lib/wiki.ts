@@ -162,6 +162,19 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "he-stichtag",
+    bereich: "Aufträge",
+    titel: "Stand HE (halbfertige Erzeugnisse) und Monatsstichtag",
+    bloecke: [
+      { p: "**Stand HE** eines Auftrags = Umsatzerwartung (EUR-normiert) × Work %. Die Summe über alle Gitarren **„In Werkstatt“** und **„Bei Nicl“** ist der Wert der halbfertigen Erzeugnisse." },
+      { ul: [
+        "Unter **Verwaltung → Report Monat** steht ganz unten die Karte **„Stand HE“** mit dem heutigen Wert und allen Monats-Stichtagen.",
+        "Am **letzten Tag jedes Monats** (abends) werden Work %, Umsatzerwartung und HE-Wert aller betroffenen Gitarren automatisch neu berechnet und **festgeschrieben** – je Gitarre und als Summe. „Details“ zeigt die einzelnen Gitarren des Stichtags.",
+        "Festgeschriebene Stichtage sind **unveränderbar** – die Datenbank verhindert jedes Ändern oder Löschen. Der erste Stichtag entsteht am Ende des laufenden Monats.",
+      ] },
+    ],
+  },
+  {
     id: "verleih",
     bereich: "Aufträge",
     titel: "Verleih-/Testgitarren: Übersicht, Vereinbarung, Unterschrift, Erinnerung",

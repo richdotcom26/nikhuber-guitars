@@ -31,7 +31,8 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth") || pathname.startsWith("/unterschrift/");
+  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth") || pathname.startsWith("/unterschrift/")
+    || pathname.startsWith("/api/cron/"); // Vercel-Cron, prüft CRON_SECRET selbst
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

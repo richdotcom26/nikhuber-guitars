@@ -159,6 +159,8 @@ export async function createAuftrag(art: Auftragsart, kundeId?: string | null): 
       status: START_STATUS[art],
       auftragsdatum: heuteBerlin(),
       ...snap,
+      erfasstAm: heuteBerlin(),
+      erfasstVon: user.name,
       createdBy: user.id,
       updatedBy: user.id,
     })

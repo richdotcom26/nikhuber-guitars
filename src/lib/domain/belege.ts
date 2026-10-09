@@ -704,6 +704,8 @@ export async function angebotToAuftrag(angebotId: string): Promise<string> {
         auftragsart: "PRODUKTION",
         status: "BACKORDER",
         auftragsdatum: heuteBerlin(),
+        erfasstAm: heuteBerlin(),
+        erfasstVon: user.name,
         kundeId: a.kundeId,
         kdFirma: a.kdFirma, kdVorname: a.kdVorname, kdNachname: a.kdNachname,
         kdStrasse: a.kdStrasse, kdPlz: a.kdPlz, kdOrt: a.kdOrt, kdStaatId: a.kdStaatId,

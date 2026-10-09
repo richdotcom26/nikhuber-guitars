@@ -7,11 +7,12 @@ import {
   monatsRechnungen, monatsUebersicht, reportJahre,
 } from "@/lib/domain/report";
 import { formatDate, formatMoney, jahrBerlin } from "@/lib/utils";
+import { HeStand } from "./he-stand";
 
 export default async function ReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ jahr?: string; monat?: string }>;
+  searchParams: Promise<{ jahr?: string; monat?: string; he?: string }>;
 }) {
   const sp = await searchParams;
   const jahre = await reportJahre();
@@ -116,6 +117,8 @@ export default async function ReportPage({
       </Card>
 
       {monat ? <MonatDetail jahr={jahr} monat={monat} /> : null}
+
+      <HeStand basis={`/report?jahr=${jahr}${monat ? `&monat=${monat}` : ""}`} detail={sp.he && /^\d{4}-\d{2}$/.test(sp.he) ? sp.he : null} />
     </div>
   );
 }

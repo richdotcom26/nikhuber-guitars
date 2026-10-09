@@ -91,3 +91,31 @@ export const reportMonat = pgTable("report_monat", {
   kostenzielMonatEur: numeric("kostenziel_monat_eur", { precision: 14, scale: 2 }),
   // … weitere KPIs (7z) — TODO
 });
+
+/**
+ * Stand HE (halbfertige Erzeugnisse) zum Monatsende — unveränderbar.
+ * Am letzten Tag jedes Monats (Vercel-Cron) werden alle Gitarren mit Status „In Werkstatt" / „Bei Nicl"
+ * mit Work % × Umsatzerwartung festgeschrieben. Ein DB-Trigger verbietet UPDATE/DELETE (Migration 0015).
+ */
+export const heStichtag = pgTable("he_stichtag", {
+  monat: text("monat").primaryKey(),                       // 'YYYY-MM'
+  stichtag: date("stichtag").notNull(),
+  anzahl: integer("anzahl").notNull(),
+  umsatzerwartungEur: numeric("umsatzerwartung_eur", { precision: 14, scale: 2 }).notNull(),
+  heWertEur: numeric("he_wert_eur", { precision: 14, scale: 2 }).notNull(),
+  erstelltAm: timestamp("erstellt_am", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const heStichtagPosition = pgTable("he_stichtag_position", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  monat: text("monat").notNull().references(() => heStichtag.monat),
+  auftragId: uuid("auftrag_id"),                           // bewusst ohne FK: Festschreibung bleibt auch ohne Auftrag
+  auftragNummer: text("auftrag_nummer").notNull(),
+  seriennummer: text("seriennummer"),
+  modell: text("modell"),
+  kunde: text("kunde"),
+  status: text("status").notNull(),
+  workProzent: integer("work_prozent"),
+  umsatzerwartungEur: numeric("umsatzerwartung_eur", { precision: 14, scale: 2 }),
+  heWertEur: numeric("he_wert_eur", { precision: 14, scale: 2 }),
+}, (t) => ({ monatIdx: index("he_stichtag_position_monat_idx").on(t.monat) }));
