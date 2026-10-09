@@ -119,7 +119,8 @@ export function belegZuZugferd(data: BelegRenderData) {
         },
         ...(data.auftragNummer ? { buyerOrderReference: { issuerAssignedID: data.auftragNummer } } : {}),
       },
-      tradeDelivery: {},
+      // BT-72 Liefer-/Leistungsdatum (in DE Pflichtangabe)
+      tradeDelivery: data.lieferdatum ? { information: { deliveryDate: new Date(`${data.lieferdatum}T00:00:00Z`) } } : {},
       tradeSettlement: {
         currencyCode: cur,
         ...(data.firma.iban

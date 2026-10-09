@@ -133,6 +133,7 @@ export const auftrag = pgTable("auftrag", {
   erfasstAm: date("erfasst_am"),                 // ex Ninox „erfasst am"
   erfasstVon: text("erfasst_von"),               // ex Ninox „erfasst von" (Name, Altbestand)
   werkstattbeginn: date("werkstattbeginn"),
+  lieferdatum: date("lieferdatum"),              // ex Ninox „Lieferdatum" → Lieferschein + Rechnung (§ 14 UStG)
   endmontagedatum: date("endmontagedatum"),
   versanddatum: date("versanddatum"),
   rechnungsdatum: date("rechnungsdatum"),

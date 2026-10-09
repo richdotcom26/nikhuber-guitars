@@ -1,0 +1,1 @@
+ALTER TABLE "auftrag" ADD COLUMN "lieferdatum" date;

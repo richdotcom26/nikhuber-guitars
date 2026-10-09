@@ -3,7 +3,7 @@ import { formatDate, formatMoney } from "@/lib/utils";
 
 const T = {
   DE: {
-    von: "Von", an: "An", datum: "Datum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
+    von: "Von", an: "An", datum: "Datum", lieferdatum: "Lieferdatum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
     pos: "Pos", bez: "Bezeichnung", menge: "Menge", einzel: "Einzelpreis", rabatt: "Rabatt", gesamt: "Gesamt",
     summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", abzug: "abzgl. Anzahlung", vom: "vom", nettoKurz: "netto", nochZuZahlen: "Noch zu zahlen", netto: "Summe netto", mwst: "MwSt",
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
@@ -11,7 +11,7 @@ const T = {
     seite: "Seite", erstellt: "Erstellt am",
   },
   EN: {
-    von: "From", an: "To", datum: "Date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
+    von: "From", an: "To", datum: "Date", lieferdatum: "Delivery date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
     pos: "Item", bez: "Description", menge: "Qty", einzel: "Unit price", rabatt: "Discount", gesamt: "Total",
     summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", abzug: "less down payment", vom: "of", nettoKurz: "net", nochZuZahlen: "Amount due", netto: "Net total", mwst: "VAT",
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
@@ -53,6 +53,9 @@ export function BelegDokument({ data }: { data: BelegRenderData }) {
             <h1>{data.titel}</h1>
             <div>{t.nr} {data.nummer}</div>
             <div className="muted">{t.datum}: {formatDate(data.datum)}</div>
+            {data.lieferdatum && (data.art === "rechnung" || data.ohnePreise) ? (
+              <div className="muted">{t.lieferdatum}: {formatDate(data.lieferdatum)}</div>
+            ) : null}
             {data.auftragNummer ? <div className="muted">{t.auftrag}: {data.auftragNummer}</div> : null}
             {data.referenzNummer ? <div className="muted">{t.bezug} {data.referenzNummer}</div> : null}
           </div>

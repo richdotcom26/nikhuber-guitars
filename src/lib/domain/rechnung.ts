@@ -228,6 +228,7 @@ export async function createEntwurfAusAuftrag(auftragId: string): Promise<string
         modellArtikelId: a.modellArtikelId,
         gesamtrabattProzent: a.gesamtrabattProzent,
         gesamtrabattAktiv: a.gesamtrabattAktiv,
+        lieferdatum: a.lieferdatum ?? a.versanddatum,
         ...versand,
         createdBy: user.id,
         updatedBy: user.id,
@@ -374,6 +375,10 @@ export async function buchen(id: string): Promise<{ nummer: string; anhangId: st
     .from(belegPosition)
     .where(and(eq(belegPosition.rechnungId, id), eq(belegPosition.reRelevant, true)));
   if (n === 0) throw new DomainError("STATE", "Der Entwurf hat keine Positionen.");
+  // § 14 UStG: Zeitpunkt der Lieferung/Leistung ist Pflichtangabe (Anzahlungsrechnung: Lieferung liegt noch nicht vor)
+  if (r0.belegart === "RECHNUNG" && !h0.lieferdatum) {
+    throw new DomainError("VALIDATION", "Lieferdatum fehlt — bitte im Entwurf eintragen (Pflichtangabe auf der Rechnung).");
+  }
 
   await snapshotVorBuchen(id, user.id);
 

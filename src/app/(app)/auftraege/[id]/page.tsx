@@ -195,6 +195,7 @@ export default async function AuftragDetailPage({
                     bauplandatum: a.bauplandatum,
                     umsatzerwartung: a.umsatzerwartung,
                     anzahlung: a.anzahlung,
+                    lieferdatum: a.lieferdatum,
                   }}
                 />
               </CardContent>

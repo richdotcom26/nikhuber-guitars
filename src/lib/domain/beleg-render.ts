@@ -39,6 +39,8 @@ export interface BelegRenderData {
   belegart: string | null;   // rechnung: RECHNUNG | STORNORECHNUNG | RECHNUNGSKORREKTUR
   nummer: string;
   datum: string | null;
+  /** Liefer-/Leistungsdatum (Rechnung, Lieferschein, AB). */
+  lieferdatum: string | null;
   referenzNummer: string | null;
   auftragNummer: string | null;
   kopftext: string | null;
@@ -232,6 +234,7 @@ export async function ladeBelegData(
     art,
     sprache,
     waehrung,
+    lieferdatum: "lieferdatum" in h ? (h.lieferdatum as string | null) : null,
     firma: {
       firma: fs.firma,
       strasse: fs.strasse,

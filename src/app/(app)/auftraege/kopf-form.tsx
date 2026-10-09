@@ -30,6 +30,7 @@ export interface KopfValues {
   bauplandatum: string | null;
   umsatzerwartung: string | null;
   anzahlung: string | null;
+  lieferdatum: string | null;
 }
 
 export function KopfForm({ v }: { v: KopfValues }) {
@@ -99,6 +100,9 @@ export function KopfForm({ v }: { v: KopfValues }) {
             className="cursor-default bg-page text-muted"
             title="Wird berechnet: Summe netto der Positionen, sonst Grundpreis (netto) des Modells; USD in EUR umgerechnet."
           />
+        </Field>
+        <Field label="Lieferdatum" htmlFor="lieferdatum" hint="Erscheint auf Lieferschein und Rechnung.">
+          <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={v.lieferdatum ?? ""} />
         </Field>
         <Field label="Anzahlung" htmlFor="anzahlung">
           <Input id="anzahlung" name="anzahlung" inputMode="decimal" defaultValue={formatBetrag(v.anzahlung)} />

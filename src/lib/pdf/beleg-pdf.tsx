@@ -12,7 +12,7 @@ import { formatDate, formatMoney } from "@/lib/utils";
 
 const T = {
   DE: {
-    datum: "Datum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
+    datum: "Datum", lieferdatum: "Lieferdatum", nr: "Nr.", auftrag: "Auftrag", bezug: "Bezug: Rechnung",
     pos: "Pos", bez: "Bezeichnung", menge: "Menge", einzel: "Einzelpreis", rabatt: "Rabatt", gesamt: "Gesamt",
     summePos: "Summe Positionen", gesamtrabatt: "Gesamtrabatt", versand: "Versandkosten", abzug: "abzgl. Anzahlung", vom: "vom", nettoKurz: "netto", nochZuZahlen: "Noch zu zahlen", netto: "Summe netto", mwst: "MwSt",
     brutto: "Summe brutto", anzahlung: "Anzahlung", rechnungsbetrag: "Rechnungsbetrag",
@@ -25,7 +25,7 @@ const T = {
     am: "am",
   },
   EN: {
-    datum: "Date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
+    datum: "Date", lieferdatum: "Delivery date", nr: "No.", auftrag: "Order", bezug: "Ref.: Invoice",
     pos: "Item", bez: "Description", menge: "Qty", einzel: "Unit price", rabatt: "Discount", gesamt: "Total",
     summePos: "Subtotal", gesamtrabatt: "Overall discount", versand: "Shipping", abzug: "less down payment", vom: "of", nettoKurz: "net", nochZuZahlen: "Amount due", netto: "Net total", mwst: "VAT",
     brutto: "Gross total", anzahlung: "Down payment", rechnungsbetrag: "Amount due",
@@ -96,6 +96,9 @@ export function BelegPdf({ data }: { data: BelegRenderData }) {
             <Text style={s.titel}>{data.titel}</Text>
             <Text>{t.nr} {data.nummer}</Text>
             <Text style={s.muted}>{t.datum}: {formatDate(data.datum)}</Text>
+            {data.lieferdatum && (data.art === "rechnung" || data.ohnePreise) ? (
+              <Text style={s.muted}>{t.lieferdatum}: {formatDate(data.lieferdatum)}</Text>
+            ) : null}
             {data.auftragNummer ? <Text style={s.muted}>{t.auftrag}: {data.auftragNummer}</Text> : null}
             {data.referenzNummer ? <Text style={s.muted}>{t.bezug} {data.referenzNummer}</Text> : null}
           </View>

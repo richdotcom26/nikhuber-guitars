@@ -131,6 +131,19 @@ export const WIKI: WikiArtikel[] = [
   },
 
   {
+    id: "lieferdatum",
+    bereich: "Aufträge",
+    titel: "Lieferdatum (Pflichtangabe auf der Rechnung)",
+    bloecke: [
+      { p: "Im Kopf des Auftrags gibt es das Feld **Lieferdatum**. Es erscheint auf dem **Lieferschein** und auf der **Rechnung** (§ 14 UStG: Zeitpunkt der Lieferung ist Pflichtangabe; in der E-Rechnung als Lieferdatum BT‑72)." },
+      { ul: [
+        "Beim Erstellen eines Rechnungsentwurfs wird das Lieferdatum aus dem Auftrag übernommen (fehlt es, das Versanddatum). Im Entwurf lässt es sich noch ändern.",
+        "Eine **Rechnung lässt sich ohne Lieferdatum nicht buchen** – das Programm meldet dann „Lieferdatum fehlt“. Anzahlungsrechnungen sind ausgenommen (die Lieferung liegt noch nicht vor).",
+        "Aus Ninox übernommen: das Feld „Lieferdatum“ der Aufträge.",
+      ] },
+    ],
+  },
+  {
     id: "lieferschein",
     bereich: "Aufträge",
     titel: "Lieferschein drucken",
@@ -138,7 +151,7 @@ export const WIKI: WikiArtikel[] = [
       { p: "Oben rechts im Auftrag öffnet **„Lieferschein“** den Lieferschein in einem neuen Tab – zum Drucken oder als PDF herunterladen." },
       { ul: [
         "Inhalt wie die Auftragsbestätigung (Kunde, Auftragsnummer, alle Positionen mit Menge und Beschreibung), aber **ohne Preise, Rabatte und Summen** und ohne Zahlungsbedingung.",
-        "Überschrift **„Lieferschein“** (bei englischsprachigen Kunden „Delivery Note“), Datum = heute.",
+        "Überschrift **„Lieferschein“** (bei englischsprachigen Kunden „Delivery Note“), Datum = heute, darunter das **Lieferdatum** des Auftrags.",
       ] },
     ],
   },

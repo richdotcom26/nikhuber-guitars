@@ -301,6 +301,7 @@ export const auftragKopfSchema = z.object({
   besonderes: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(BESONDERES_VALUES).nullable()),
   spezialauftrag: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(SPEZIALAUFTRAG_VALUES).nullable()),
   bauplandatum: dateOrNull,
+  lieferdatum: dateOrNull,
   anzahlung: decimalOrNull,
 });
 export type AuftragKopfInput = z.infer<typeof auftragKopfSchema>;

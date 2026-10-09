@@ -752,6 +752,7 @@ export async function importAuftraege(ctx: Ctx) {
       erfasstVon: ninoxStr(f(ctx, a, rec, "erfasst von")),
       createdAt: ninoxDate(rec._cd) ?? undefined,          // Ninox „Erstellt am" statt Importzeit
       werkstattbeginn: ninoxDateOnly(f(ctx, a, rec, "Werkstattbeginn")),
+      lieferdatum: ninoxDateOnly(f(ctx, a, rec, "Lieferdatum")),
       endmontagedatum: ninoxDateOnly(f(ctx, a, rec, "Endmontagedatum")),
       versanddatum: ninoxDateOnly(f(ctx, a, rec, "Versanddatum")),
       rechnungsdatum: ninoxDateOnly(f(ctx, a, rec, "Rechnungsdatum")),
