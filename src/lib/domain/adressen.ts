@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { ansprechpartner, kunde, lieferadresse, rechnung, staat } from "@/lib/db/schema";
 import { taxDefault } from "@/lib/pricing";
 import {
-  KONTAKTART_VALUES, type KontaktartValue, REGION_VALUES, VERTRIEBSWEG_VALUES,
+  KONTAKTART_VALUES, type KontaktartValue, REGION_VALUES, spracheFuerStaat, VERTRIEBSWEG_VALUES, waehrungFuerStaat,
 } from "@/lib/adressen-shared";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
@@ -202,8 +202,8 @@ export async function staatDefaults(staatId: string, kontaktart: string): Promis
   const tax = taxDefault(kontaktart as never, s.region);
   return {
     region: s.region,
-    sprache: s.defaultSprache,
-    waehrung: s.defaultWaehrung,
+    sprache: spracheFuerStaat(s.kuerzel),
+    waehrung: waehrungFuerStaat(s.kuerzel),
     zahlungsbedingungId: s.defaultZahlungsbedingungId,
     vertriebsweg: tax?.vertriebsweg ?? null,
     steuerpflichtig: tax?.steuerpflichtig ?? null,

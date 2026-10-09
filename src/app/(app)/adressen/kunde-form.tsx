@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select, Textarea } from "@/components/ui/input";
-import { KONTAKTARTEN } from "@/lib/adressen-shared";
+import { KONTAKTARTEN, spracheFuerStaat, waehrungFuerStaat } from "@/lib/adressen-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import { istVerkaufsrelevant, type Region, taxDefault } from "@/lib/pricing";
 import { createKundeAction, updateKundeAction } from "./actions";
 
-interface StaatOpt { id: string; name: string; region: Region }
+interface StaatOpt { id: string; name: string; region: Region; kuerzel: string | null }
 interface ZbOpt { id: string; bezeichnung: string }
 
 // Nur die im Formular editierbaren Felder (Rest kommt aus dem Datensatz/Defaults).
@@ -99,6 +99,8 @@ export function KundeForm({
     const s = staatId ? staatById.get(staatId) : undefined;
     if (s) {
       setRegion(s.region);
+      setWaehrung(waehrungFuerStaat(s.kuerzel));
+      setSprache(spracheFuerStaat(s.kuerzel));
     }
     const t = vorschau.t;
     if (t) {
@@ -185,6 +187,10 @@ export function KundeForm({
                     {vorschau.t ? (
                       <> → Vertriebsweg <b>{vorschau.t.vertriebsweg}</b>,{" "}
                         <b>{vorschau.t.steuerpflichtig ? "steuerpflichtig" : "steuerfrei"}</b></>
+                    ) : null}
+                    {staatId && staatById.get(staatId) ? (
+                      <>, Währung <b>{waehrungFuerStaat(staatById.get(staatId)!.kuerzel)}</b>,
+                        Sprache <b>{spracheFuerStaat(staatById.get(staatId)!.kuerzel)}</b></>
                     ) : null}
                   </>
                 ) : <i>kein Staat gewählt</i>}

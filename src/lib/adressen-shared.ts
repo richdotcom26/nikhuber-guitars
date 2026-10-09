@@ -44,6 +44,16 @@ export function anzeigename(k: {
  *   [Staat — nur wenn nicht Inland]
  * `briefkopfManuell` überschreibt alles. Leere Zeilen werden ausgelassen.
  */
+/** Währung aus dem Staat: USD für USA und Kanada, sonst EUR. */
+export function waehrungFuerStaat(kuerzel: string | null | undefined): "EUR" | "USD" {
+  return kuerzel === "US" || kuerzel === "CA" ? "USD" : "EUR";
+}
+
+/** Sprache aus dem Staat: Deutsch für Deutschland und Österreich, sonst Englisch. */
+export function spracheFuerStaat(kuerzel: string | null | undefined): "DE" | "EN" {
+  return kuerzel === "DE" || kuerzel === "AT" ? "DE" : "EN";
+}
+
 export function berechneBriefkopf(k: {
   firma?: string | null;
   vorname?: string | null;

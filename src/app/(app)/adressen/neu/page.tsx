@@ -16,7 +16,7 @@ export default async function NeuerKontaktPage() {
       <KundeForm
         mode="neu"
         values={{ kontaktart: "KUNDE" }}
-        staaten={staaten.map((s) => ({ id: s.id, name: s.name, region: s.region }))}
+        staaten={staaten.map((s) => ({ id: s.id, name: s.name, region: s.region, kuerzel: s.kuerzel }))}
         zahlungsbedingungen={zbs.map((z) => ({ id: z.id, bezeichnung: z.bezeichnung }))}
       />
     </div>

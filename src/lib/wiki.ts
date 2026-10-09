@@ -659,6 +659,20 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "adresse-ableitung",
+    bereich: "Einstellungen",
+    titel: "Adresse: Werte aus dem Staat übernehmen",
+    bloecke: [
+      { p: "Im Kontakt unter **Preise / Steuer / Zahlung** zeigt die graue Zeile, was sich aus dem gewählten **Staat** ergibt. Ein Klick auf **„Übernehmen“** setzt:" },
+      { ul: [
+        "**Region** (aus dem Staat), **Vertriebsweg** und **Steuerpflichtig** (aus Kontaktart × Region),",
+        "**Währung**: USD bei USA und Kanada, sonst EUR,",
+        "**Sprache**: Deutsch bei Deutschland und Österreich, sonst Englisch.",
+        "Beim Neuanlegen werden leere Felder automatisch so vorbelegt. Danach mit „Speichern“ übernehmen.",
+      ] },
+    ],
+  },
+  {
     id: "staaten",
     bereich: "Einstellungen",
     titel: "Staaten und Porto-Zuordnung",
