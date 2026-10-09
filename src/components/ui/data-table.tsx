@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { SortSpec } from "@/lib/table-sort";
@@ -54,6 +55,7 @@ export function DataTable<T>({
   rowHref?: (row: T) => string;
   rowClassName?: (row: T) => string;
 }) {
+  const router = useRouter();
   const lsKey = `dt:${storageKey}`;
   const [hidden, setHidden] = useState<Set<string>>(() => {
     const init = new Set(columns.filter((c) => c.defaultHidden).map((c) => c.key));
@@ -161,8 +163,17 @@ export function DataTable<T>({
                   key={rowKey(row)}
                   className={cn(
                     "border-b border-line last:border-0 transition-colors hover:bg-brand-soft/50",
+                    href && "cursor-pointer",
                     rowClassName?.(row),
                   )}
+                  // Ganze Zeile öffnet den Datensatz — außer bei Klicks auf Bedienelemente/Links in der Zeile.
+                  onClick={href ? (e) => {
+                    const t = e.target as HTMLElement;
+                    if (t.closest("a, button, input, select, textarea, label, form")) return;
+                    if (window.getSelection()?.toString()) return; // Text markieren statt öffnen
+                    if (e.ctrlKey || e.metaKey) window.open(href, "_blank");
+                    else router.push(href);
+                  } : undefined}
                 >
                   {visible.map((c) => (
                     <td
