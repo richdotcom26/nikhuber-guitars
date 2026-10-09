@@ -162,6 +162,7 @@ function SlotLine({
           </option>
         ))}
       </Select>
+      <ArtikelLink artikelId={gewaehlt} />
       {slot.aufpreis ? (
         <label className="flex items-center gap-1 text-xs text-neutral-500">
           <input
@@ -176,6 +177,27 @@ function SlotLine({
       ) : null}
       {state && !state.ok ? <span className="text-xs text-red-600">{state.message}</span> : null}
     </form>
+  );
+}
+
+/** Kleiner Link neben der Auswahl: öffnet den gewählten Artikel zum Bearbeiten (neuer Tab). */
+function ArtikelLink({ artikelId }: { artikelId: string }) {
+  if (!artikelId) return <span className="w-6 shrink-0" />;
+  return (
+    <a
+      href={`/artikel/${artikelId}`}
+      target="_blank"
+      rel="noreferrer"
+      title="Artikel öffnen (neuer Tab)"
+      aria-label="Artikel öffnen"
+      className="grid h-6 w-6 shrink-0 place-items-center rounded text-muted transition-colors hover:bg-brand-soft hover:text-brand"
+    >
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+        <path d="M11 3h6v6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M17 3l-8 8" strokeLinecap="round" />
+        <path d="M15 12v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </a>
   );
 }
 

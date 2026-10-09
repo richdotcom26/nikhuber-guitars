@@ -183,6 +183,7 @@ export const WIKI: WikiArtikel[] = [
         "Das Symbol wechselt sofort beim Auswählen; mit der Maus darüber erscheint eine Erklärung.",
         "Artikeltyp und CITES-Kennzeichen werden im **Artikel** gepflegt.",
       ] },
+      { p: "**Artikel direkt öffnen:** Rechts neben jeder Auswahl steht ein kleines Pfeil-Symbol. Ein Klick öffnet den gewählten Artikel in einem **neuen Tab** – dort kann man ihn bearbeiten (z. B. Holzart, Volumen, CITES), ohne den Beleg zu verlassen. Danach den Beleg-Tab neu laden, um Änderungen zu sehen." },
     ],
   },
   {
