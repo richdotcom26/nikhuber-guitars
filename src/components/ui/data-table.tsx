@@ -122,7 +122,7 @@ export function DataTable<T>({
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-surface shadow-sm">
         <table className="w-full border-collapse text-sm">
-          <thead className="border-b border-line bg-page/70 text-left text-[11px] font-medium uppercase tracking-wide text-muted">
+          <thead className="border-b border-line bg-card-head text-left text-[11px] font-semibold uppercase tracking-wide text-navy">
             <tr>
               {visible.map((c) => {
                 const active = sort.key === c.key;

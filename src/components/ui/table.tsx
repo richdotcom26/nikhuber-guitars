@@ -13,7 +13,7 @@ export function THead({ className, ...props }: React.HTMLAttributes<HTMLTableSec
   return (
     <thead
       className={cn(
-        "border-b border-line bg-page/70 text-left text-[11px] font-medium uppercase tracking-wide text-muted",
+        "border-b border-line bg-card-head text-left text-[11px] font-semibold uppercase tracking-wide text-navy",
         className,
       )}
       {...props}

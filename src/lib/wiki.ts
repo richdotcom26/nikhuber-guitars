@@ -691,7 +691,7 @@ export const WIKI: WikiArtikel[] = [
       { ul: [
         "**Schrift dunkel** = Überschriften · **Schrift mittel** = Fließtext · **Schrift gedämpft** = Nebentexte.",
         "**Seitenhintergrund**, **Kartenfläche**, **Linien & Rahmen** = Flächen und Trennlinien.",
-        "**Kartenkopf (Überschrift)** = Hintergrund des Kopfbereichs eines Blocks, in dem die Überschrift steht (z. B. ein helles Grün) – unabhängig von der Kartenfläche. Gleiche Farbe wie die Kartenfläche = kein sichtbarer Kopf.",
+        "**Kartenkopf (Überschrift)** = Hintergrund des Kopfbereichs eines Blocks, in dem die Überschrift steht (z. B. ein helles Grün) – unabhängig von der Kartenfläche. Gilt ebenso für die **Kopfzeilen aller Tabellen** (Spaltenüberschriften). Gleiche Farbe wie die Kartenfläche = kein sichtbarer Kopf.",
         "**Akzent** = Links, Fokus-Rahmen, aktive Tabs · **Akzent hell** = Hover-Flächen und Badges · **Schein** = Leuchten um fokussierte Eingabefelder.",
         "**Schaltfläche** = aktiver Menüpunkt, aktive Filter, Logo · **Hauptschaltfläche** = Speichern-/Haupt-Buttons (mit eigener Schriftfarbe).",
         "**Eingabefeld** / **Eingabefeld-Rahmen** = Grund und Rand von Eingabefeldern.",
