@@ -12,7 +12,6 @@ import {
 } from "@/lib/auftrag-shared";
 import { listArtikel } from "@/lib/domain/artikel";
 import { getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
-import { getKunde } from "@/lib/domain/adressen";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
 import { listPositionen } from "@/lib/domain/belege";
 import { isDomainError } from "@/lib/domain/errors";
@@ -28,6 +27,7 @@ import {
 } from "@/lib/rechnung-shared";
 import { SeriennummerPanel } from "../seriennummer-panel";
 import { AnhangCard } from "../../_components/anhang-card";
+import { KundeBlock } from "../../_components/kunde-block";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import { SpecsEditor } from "../../specs-editor";
 import { VorlagePicker } from "../../_components/vorlage-picker";
@@ -120,16 +120,7 @@ export default async function AuftragDetailPage({
               <CardHeader><CardTitle>Kunde</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {kdName ? (
-                  <KundeBlock
-                    auftragId={id}
-                    kundeId={a.kundeId}
-                    briefkopf={a.kdBriefkopf || [kdName, a.kdStrasse, [a.kdPlz, a.kdOrt].filter(Boolean).join(" ")].filter(Boolean).join("\n")}
-                    firma={a.kdFirma}
-                    kennzeichen={{
-                      region: a.kdRegion, waehrung: a.kdWaehrung, vertriebsweg: a.kdVertriebsweg,
-                      sprache: a.kdSprache, steuerpflichtig: a.kdSteuerpflichtig,
-                    }}
-                  />
+                  <KundeBlock beleg={a} mailHref={`/auftraege/${id}/mail`} />
                 ) : (
                   <p className="text-sm text-neutral-400">Kein Kunde gewählt.</p>
                 )}
@@ -580,53 +571,3 @@ async function NksTab({ id }: { id: string }) {
   );
 }
 
-/** Kundenblock: links vollständiger Briefkopf (Firma fett), rechts Kontakt (Tel/E-Mail + Mail-Funktion) und Kennzeichen. */
-async function KundeBlock({
-  auftragId, kundeId, briefkopf, firma, kennzeichen,
-}: {
-  auftragId: string;
-  kundeId: string | null;
-  briefkopf: string;
-  firma: string | null;
-  kennzeichen: { region: string | null; waehrung: string | null; vertriebsweg: string | null; sprache: string | null; steuerpflichtig: boolean | null };
-}) {
-  const k = kundeId ? (await getKunde(kundeId).catch(() => null))?.kunde ?? null : null;
-  const zeilen = briefkopf.split("\n").map((z) => z.trim()).filter(Boolean);
-  const fettErste = !!firma?.trim() && zeilen[0] === firma.trim();
-  return (
-    <div className="grid gap-4 text-sm sm:grid-cols-2">
-      <div>
-        {zeilen.map((z, i) => (
-          <div key={i} className={i === 0 && fettErste ? "font-semibold text-ink" : "text-ink"}>{z}</div>
-        ))}
-        {kundeId ? (
-          <Link href={`/adressen/${kundeId}`} className="mt-2 inline-block text-sm font-semibold text-blue-700 hover:underline">
-            → Kundendatensatz
-          </Link>
-        ) : null}
-      </div>
-      <div className="space-y-2">
-        <div className="space-y-0.5">
-          {k?.telefon ? <div><span className="text-muted">Tel.</span> <a href={`tel:${k.telefon}`} className="text-ink hover:underline">{k.telefon}</a></div> : null}
-          {k?.mobil ? <div><span className="text-muted">Mobil</span> <a href={`tel:${k.mobil}`} className="text-ink hover:underline">{k.mobil}</a></div> : null}
-          {k?.email ? (
-            <div className="truncate"><span className="text-muted">E-Mail</span> <span className="text-ink">{k.email}</span></div>
-          ) : <div className="text-xs text-muted">keine E-Mail hinterlegt</div>}
-          {kundeId ? (
-            <Link href={`/auftraege/${auftragId}/mail`} className={buttonClasses("outline", "sm") + " mt-1"}>
-              ✉ E-Mail schreiben …
-            </Link>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-1 text-xs">
-          {kennzeichen.region ? <Badge>{kennzeichen.region}</Badge> : null}
-          {kennzeichen.waehrung ? <Badge>{kennzeichen.waehrung}</Badge> : null}
-          {kennzeichen.vertriebsweg ? <Badge>{kennzeichen.vertriebsweg}</Badge> : null}
-          {kennzeichen.sprache ? <Badge>{kennzeichen.sprache}</Badge> : null}
-          {kennzeichen.steuerpflichtig === true ? <Badge tone="amber">steuerpflichtig</Badge> : null}
-          {kennzeichen.steuerpflichtig === false ? <Badge tone="green">steuerfrei</Badge> : null}
-        </div>
-      </div>
-    </div>
-  );
-}

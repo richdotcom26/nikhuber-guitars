@@ -160,11 +160,11 @@ export const WIKI: WikiArtikel[] = [
   {
     id: "auftrag-kunde",
     bereich: "Aufträge",
-    titel: "Kundenblock und E-Mail an den Kunden",
+    titel: "Kundenblock und E-Mail an den Kunden (Angebot und Auftrag)",
     bloecke: [
-      { p: "Im Reiter **Auftrag** zeigt die Karte **Kunde** links den vollständigen Briefkopf (wie auf den Belegen, die Firma fett) und rechts Telefon, Mobil, E-Mail sowie die Kennzeichen (Region, Währung, Vertriebsweg, Sprache, steuerpflichtig/-frei)." },
+      { p: "Im Reiter **Angebot** bzw. **Auftrag** zeigt die Karte **Kunde** links den vollständigen Briefkopf (wie auf den Belegen, die Firma fett) und rechts Telefon, Mobil, E-Mail sowie die Kennzeichen (Region, Währung, Vertriebsweg, Sprache, steuerpflichtig/-frei)." },
       { ul: [
-        "**„✉ E-Mail schreiben …“** öffnet ein Mail-Fenster wie bei der Rechnung: Empfänger aus dem Kunden, Textbaustein wählen (Einstellungen → Textbausteine, Belegart „Auftrag (allgemeine Mail)“, DE/EN), Text anpassen, optional Dateien des Auftrags anhängen.",
+        "**„✉ E-Mail schreiben …“** öffnet ein Mail-Fenster wie bei der Rechnung: Empfänger aus dem Kunden, Textbaustein wählen (Einstellungen → Textbausteine, Belegart „Angebot“ bzw. „Auftrag (allgemeine Mail)“, DE/EN), Text anpassen, optional Dateien des Belegs anhängen.",
         "Die Mail wird im **Mailversand** beim Kunden protokolliert.",
       ] },
     ],

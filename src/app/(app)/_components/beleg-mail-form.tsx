@@ -8,29 +8,13 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { formatBytes } from "@/lib/anhang-shared";
 import { IDLE } from "@/lib/domain/action-state";
 import { fuelleVorlage, type MailPlatzhalterWerte } from "@/lib/mail-vorlage-shared";
-import { sendeAuftragMailAction } from "../../actions";
+import type { BelegMailKontext } from "@/lib/domain/beleg-mail";
+import { sendeBelegMailAction } from "./beleg-mail-actions";
 
-interface Vorlage {
-  id: string;
-  sprache: string;
-  name: string | null;
-  istStandard: boolean;
-  betreff: string | null;
-  text: string | null;
-}
-
-export interface AuftragMailKontext {
-  auftrag: { id: string; nummer: string };
-  sprache: "DE" | "EN";
-  an: string;
-  werte: MailPlatzhalterWerte;
-  vorlagen: Vorlage[];
-  dateien: { id: string; dateiname: string | null; groesse: number | null; mime: string | null }[];
-}
-
-/** Allgemeine Mail an den Kunden eines Auftrags: Textbaustein wählen, Text anpassen, Anhänge optional. */
-export function AuftragMailForm({ ctx }: { ctx: AuftragMailKontext }) {
-  const [state, action] = useActionState(sendeAuftragMailAction, IDLE);
+/** Allgemeine Mail an den Kunden eines Angebots/Auftrags: Textbaustein wählen, Text anpassen, Anhänge optional. */
+export function BelegMailForm({ ctx }: { ctx: BelegMailKontext }) {
+  const [state, action] = useActionState(sendeBelegMailAction, IDLE);
+  const werte = ctx.werte as MailPlatzhalterWerte;
   const start = useMemo(
     () => ctx.vorlagen.find((v) => v.istStandard && v.sprache === ctx.sprache)
       ?? ctx.vorlagen.find((v) => v.sprache === ctx.sprache)
@@ -39,16 +23,16 @@ export function AuftragMailForm({ ctx }: { ctx: AuftragMailKontext }) {
     [ctx],
   );
   const [vorlageId, setVorlageId] = useState(start?.id ?? "");
-  const [betreff, setBetreff] = useState(fuelleVorlage(start?.betreff, ctx.werte));
-  const [text, setText] = useState(fuelleVorlage(start?.text, ctx.werte));
+  const [betreff, setBetreff] = useState(fuelleVorlage(start?.betreff, werte));
+  const [text, setText] = useState(fuelleVorlage(start?.text, werte));
   const [auswahl, setAuswahl] = useState<Set<string>>(() => new Set());
 
   function vorlageWaehlen(id: string) {
     setVorlageId(id);
     const v = ctx.vorlagen.find((x) => x.id === id);
     if (!v) return;
-    setBetreff(fuelleVorlage(v.betreff, ctx.werte));
-    setText(fuelleVorlage(v.text, ctx.werte));
+    setBetreff(fuelleVorlage(v.betreff, werte));
+    setText(fuelleVorlage(v.text, werte));
   }
   const toggle = (id: string) => setAuswahl((s) => {
     const n = new Set(s);
@@ -59,7 +43,8 @@ export function AuftragMailForm({ ctx }: { ctx: AuftragMailKontext }) {
 
   return (
     <form action={action} className="grid gap-5 lg:grid-cols-[1fr_22rem]">
-      <input type="hidden" name="id" value={ctx.auftrag.id} />
+      <input type="hidden" name="art" value={ctx.art} />
+      <input type="hidden" name="id" value={ctx.beleg.id} />
       {[...auswahl].map((id) => <input key={id} type="hidden" name="anhangId" value={id} />)}
 
       <Card>
@@ -72,7 +57,7 @@ export function AuftragMailForm({ ctx }: { ctx: AuftragMailKontext }) {
           <Field label="CC" htmlFor="cc">
             <Input id="cc" name="cc" defaultValue="" />
           </Field>
-          <Field label="Textbaustein" htmlFor="vorlage" hint="Pflege unter Einstellungen → Textbausteine (Belegart „Auftrag“).">
+          <Field label="Textbaustein" htmlFor="vorlage" hint={`Pflege unter Einstellungen → Textbausteine (Belegart „${ctx.art === "angebot" ? "Angebot" : "Auftrag (allgemeine Mail)"}“).`}>
             <Select id="vorlage" value={vorlageId} onChange={(e) => vorlageWaehlen(e.target.value)}>
               {ctx.vorlagen.length === 0 ? <option value="">– keine Textbausteine angelegt –</option> : null}
               {ctx.vorlagen.map((v) => (
@@ -98,7 +83,7 @@ export function AuftragMailForm({ ctx }: { ctx: AuftragMailKontext }) {
       <Card>
         <CardHeader><CardTitle>Anhänge (optional)</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
-          {ctx.dateien.length === 0 ? <p className="text-xs text-muted">Keine Dateien am Auftrag.</p> : null}
+          {ctx.dateien.length === 0 ? <p className="text-xs text-muted">Keine Dateien am Beleg.</p> : null}
           {ctx.dateien.map((d) => (
             <label key={d.id} className="flex cursor-pointer items-center gap-2">
               <input type="checkbox" checked={auswahl.has(d.id)} onChange={() => toggle(d.id)} />

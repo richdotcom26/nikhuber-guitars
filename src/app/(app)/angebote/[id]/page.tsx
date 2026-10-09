@@ -26,6 +26,7 @@ import { SetKundeButton } from "../set-kunde-form";
 import { ToAuftragButton } from "../to-auftrag-button";
 import { VorlagePicker } from "../../_components/vorlage-picker";
 import { SpecsEditor } from "../../specs-editor";
+import { KundeBlock } from "../../_components/kunde-block";
 
 const TABS: readonly TabItem[] = [
   { key: "angebot", label: "Angebot" },
@@ -85,23 +86,7 @@ export default async function AngebotDetailPage({
             <CardHeader><CardTitle>Kunde</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {kdName ? (
-                <div className="text-sm">
-                  <div className="font-medium">{kdName}</div>
-                  <div className="text-neutral-500">{a.kdStrasse}</div>
-                  <div className="text-neutral-500">{[a.kdPlz, a.kdOrt].filter(Boolean).join(" ")}</div>
-                  <div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-500">
-                    {a.kdRegion ? <Badge>{a.kdRegion}</Badge> : null}
-                    {a.kdWaehrung ? <Badge>{a.kdWaehrung}</Badge> : null}
-                    {a.kdVertriebsweg ? <Badge>{a.kdVertriebsweg}</Badge> : null}
-                    {a.kdSteuerpflichtig === true ? <Badge tone="amber">steuerpflichtig</Badge> : null}
-                    {a.kdSteuerpflichtig === false ? <Badge tone="green">steuerfrei</Badge> : null}
-                  </div>
-                  {a.kundeId ? (
-                    <Link href={`/adressen/${a.kundeId}`} className="mt-1 inline-block text-blue-700 hover:underline font-semibold text-sm">
-                      → Kundendatensatz
-                    </Link>
-                  ) : null}
-                </div>
+                <KundeBlock beleg={a} mailHref={`/angebote/${id}/mail`} />
               ) : (
                 <p className="text-sm text-neutral-400">Kein Kunde gewählt.</p>
               )}
