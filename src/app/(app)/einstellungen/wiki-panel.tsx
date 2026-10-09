@@ -67,10 +67,10 @@ export function WikiPanel() {
           placeholder="Im Wiki suchen …"
           className="h-9"
         />
-        <nav className="space-y-3 text-sm">
+        <nav className="space-y-6 text-sm">
           {bereiche.map(([bereich, artikel]) => (
             <div key={bereich}>
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">{bereich}</div>
+              <div className="mb-1.5 text-base font-bold text-brand">{bereich}</div>
               <ul className="space-y-0.5">
                 {artikel.map((a) => (
                   <li key={a.id}>
@@ -85,13 +85,13 @@ export function WikiPanel() {
         </nav>
       </aside>
 
-      <div className="space-y-6">
+      <div className="space-y-10">
         {bereiche.length === 0 ? (
           <p className="text-sm text-muted">Nichts gefunden für „{q}“.</p>
         ) : null}
         {bereiche.map(([bereich, artikel]) => (
           <section key={bereich} className="space-y-3">
-            <h2 className="text-lg font-semibold text-ink">{bereich}</h2>
+            <h2 className="text-xl font-bold text-brand">{bereich}</h2>
             {artikel.map((a) => (
               <Card key={a.id} id={`wiki-${a.id}`} className="scroll-mt-4">
                 <CardContent className="space-y-3 pt-5 text-sm leading-relaxed text-neutral-700">
