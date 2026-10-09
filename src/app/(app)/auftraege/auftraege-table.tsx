@@ -42,11 +42,20 @@ export function AuftraegeTable({
 }) {
   const columns: Column<AuftragRow>[] = [
     {
-      key: "nummer", header: "Nr", sortable: true, hideable: false, className: "font-mono text-[13px]",
-      cell: (r) => <span className="font-semibold hover:underline">{r.nummer}</span>,
+      key: "nummer", header: "Nr", sortable: true, hideable: false, className: "whitespace-nowrap font-mono text-[13px]",
+      cell: (r) => (
+        <div>
+          <span className="font-semibold hover:underline">{r.nummer}</span>
+          {/* Prio-Sterne unter der Nummer (spart eine Spalte) */}
+          {r.prio ? (
+            <div className="font-sans text-xs leading-none tracking-tight text-amber-600" title={`Priorität ${r.prio}`}>{prioSterne(r.prio)}</div>
+          ) : null}
+        </div>
+      ),
     },
     {
-      key: "prio", header: "Prio", sortable: true, firstDir: "desc", align: "center", className: "w-14",
+      // eigene Spalte nur noch zum Sortieren (standardmäßig ausgeblendet)
+      key: "prio", header: "Prio", sortable: true, firstDir: "desc", align: "center", className: "w-14", defaultHidden: true,
       cell: (r) => (r.prio ? (
         <span className="tracking-tight text-amber-600" title={`Priorität ${r.prio}`}>{prioSterne(r.prio)}</span>
       ) : <span className="text-neutral-300">–</span>),
@@ -118,7 +127,7 @@ export function AuftraegeTable({
       sort={sort}
       basePath="/auftraege"
       query={query}
-      storageKey="auftraege"
+      storageKey="auftraege-v2"
       empty="Keine Aufträge."
       rowHref={(r) => `/auftraege/${r.id}`}
       rowClassName={(r) => prioRowClass(r.prio)}

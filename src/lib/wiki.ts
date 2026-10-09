@@ -102,7 +102,7 @@ export const WIKI: WikiArtikel[] = [
     bloecke: [
       { p: "Im Auftrag unter **Kopf → Priorität** gibt es die Stufen – (keine), ★, ★★ und ★★★." },
       { ul: [
-        "In der Auftragsliste zeigt die Spalte **Prio** die Sterne; sie ist sortierbar (höchste zuerst).",
+        "In der Auftragsliste stehen die Sterne **unter der Auftragsnummer**. Zum Sortieren nach Priorität lässt sich die Spalte **Prio** über „Spalten“ einblenden (höchste zuerst).",
         "Zeilen mit Priorität werden **gelb hinterlegt**: ★ hellgelb, ★★ mittel, ★★★ kräftig gelb.",
       ] },
     ],
