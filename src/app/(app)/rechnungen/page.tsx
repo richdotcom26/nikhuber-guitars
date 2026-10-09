@@ -10,6 +10,9 @@ import { RechnungenTable } from "./rechnungen-table";
 import { RechnungSummen } from "./summen";
 import { AutoSelect } from "./auto-select";
 import { heuteBerlin } from "@/lib/utils";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { FilterMerken } from "./filter-merken";
 
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 
@@ -19,10 +22,15 @@ export default async function RechnungenPage({
   searchParams: Promise<{ q?: string; status?: string; belegart?: string; jahr?: string; monat?: string; page?: string; sort?: string; dir?: string; summen?: string }>;
 }) {
   const sp = await searchParams;
+  // Ohne Parameter: zuletzt benutzte Filter wiederherstellen (Cookie). Erst „Filter zurücksetzen“ (?reset=1) holt die Vorgabe.
+  if (Object.keys(sp).length === 0) {
+    const gemerkt = (await cookies()).get("rg-filter")?.value;
+    if (gemerkt) redirect(`/rechnungen?${decodeURIComponent(gemerkt)}`);
+  }
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
   const belegart = sp.belegart ?? "";
-  // Vorgabe ohne Parameter: Vormonat (im Januar: Dezember des Vorjahres). „alle“ = kein Filter.
+  // Vorgabe (Schutz für schnelles Laden, wenn nichts gemerkt ist): Vormonat (im Januar: Dezember des Vorjahres). „alle“ = kein Filter.
   const [hj, hm] = heuteBerlin().split("-").map(Number);
   const vorJahr = hm === 1 ? hj - 1 : hj;
   const vorMonat = hm === 1 ? 12 : hm - 1;
@@ -76,6 +84,7 @@ export default async function RechnungenPage({
             {MONATE.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
           </AutoSelect>
           <Button size="sm" variant="outline" type="submit">Suchen</Button>
+          <Link prefetch={false} href="/rechnungen?reset=1" className="text-xs text-muted hover:text-brand hover:underline">Filter zurücksetzen</Link>
         </form>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {summen ? (
@@ -92,6 +101,7 @@ export default async function RechnungenPage({
         </div>
       </div>
 
+      <FilterMerken query={new URLSearchParams(Object.entries(query).filter(([, v]) => v) as [string, string][]).toString()} />
       <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 
       {pageCount > 1 ? (
