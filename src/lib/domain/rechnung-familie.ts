@@ -1,9 +1,9 @@
 import "server-only";
-import { inArray, or } from "drizzle-orm";
+import { inArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rechnung, rechnungAnzahlung } from "@/lib/db/schema";
 import { RG_BELEGART_LABEL, RG_STATUS_LABEL, type RgBelegart, type RgStatus } from "@/lib/rechnung-shared";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatMoney } from "@/lib/utils";
 
 export interface FamilienGlied {
   id: string;
@@ -22,7 +22,7 @@ export async function rechnungsFamilien(ids: string[]): Promise<Map<string, Fami
   const ergebnis = new Map<string, FamilienGlied[]>();
   if (ids.length === 0) return ergebnis;
 
-  type R = { id: string; nummer: string | null; belegart: string; status: string; rechnungsdatum: string | null; auftragId: string | null; referenzRechnungId: string | null };
+  type R = { id: string; nummer: string | null; belegart: string; status: string; rechnungsdatum: string | null; auftragId: string | null; referenzRechnungId: string | null; betrag: string | null; waehrung: string | null };
   const belege = new Map<string, R>();
   const kanten: [string, string][] = [];
   let offen = new Set(ids);
@@ -36,6 +36,9 @@ export async function rechnungsFamilien(ids: string[]): Promise<Map<string, Fami
     const rows = await db.select({
       id: rechnung.id, nummer: rechnung.nummer, belegart: rechnung.belegart, status: rechnung.status,
       rechnungsdatum: rechnung.rechnungsdatum, auftragId: rechnung.auftragId, referenzRechnungId: rechnung.referenzRechnungId,
+      waehrung: rechnung.kdWaehrung,
+      // Brutto; Ninox-Altbestand ohne Summe: aus den Positionen
+      betrag: sql<string | null>`coalesce(${rechnung.summeBrutto}, round((select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant) * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`,
     }).from(rechnung).where(or(...conds));
     const az = await db.select({ a: rechnungAnzahlung.rechnungId, b: rechnungAnzahlung.anzahlungRechnungId })
       .from(rechnungAnzahlung)
@@ -82,6 +85,7 @@ export async function rechnungsFamilien(ids: string[]): Promise<Map<string, Fami
         b.nummer ?? "Entwurf",
         RG_BELEGART_LABEL[b.belegart as RgBelegart] ?? b.belegart,
         b.rechnungsdatum ? formatDate(b.rechnungsdatum) : null,
+        b.betrag != null ? formatMoney(b.betrag, b.waehrung === "USD" ? "USD" : "EUR") : null,
         RG_STATUS_LABEL[b.status as RgStatus] ?? b.status,
       ].filter(Boolean).join(" · "),
     });
