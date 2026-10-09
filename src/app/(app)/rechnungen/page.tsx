@@ -47,13 +47,22 @@ export default async function RechnungenPage({
         )}
       />
 
-      <form method="get" className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <form method="get" className="flex items-center gap-2">
         {status ? <input type="hidden" name="status" value={status} /> : null}
         {belegart ? <input type="hidden" name="belegart" value={belegart} /> : null}
         {jahr ? <input type="hidden" name="jahr" value={jahr} /> : null}
         <Input name="q" defaultValue={q} placeholder="Suche Nr / Kunde" className="h-8 w-64" />
         <Button size="sm" variant="outline" type="submit">Suchen</Button>
-      </form>
+        </form>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {summen ? (
+            <RechnungSummen summen={summen} kurs={kurs} />
+          ) : (
+            <Link prefetch={false} href={chip({ summen: "1" })} className={buttonClasses("outline", "sm")}>Summen berechnen</Link>
+          )}
+        </div>
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-1.5">
         <ChipLink href={chip({ status: undefined })} active={!status}>Alle</ChipLink>
@@ -68,14 +77,6 @@ export default async function RechnungenPage({
           <ChipLink key={j} href={chip({ jahr: String(j), page: undefined })} active={jahr === String(j)}>{j}</ChipLink>
         ))}
       </div>
-
-      {summen ? (
-        <RechnungSummen summen={summen} kurs={kurs} />
-      ) : (
-        <div className="mb-4">
-          <Link prefetch={false} href={chip({ summen: "1" })} className={buttonClasses("outline", "sm")}>Summen berechnen</Link>
-        </div>
-      )}
 
       <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 
