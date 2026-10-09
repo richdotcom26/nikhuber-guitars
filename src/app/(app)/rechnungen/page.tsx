@@ -88,7 +88,7 @@ export default async function RechnungenPage({
 
 function ChipLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
-    <Link
+    <Link prefetch={false}
       href={href}
       className={
         "rounded-full border px-2.5 py-1 text-xs transition-colors " +

@@ -143,7 +143,7 @@ export function DataTable<T>({
                     className={cn("px-2.5 py-2.5 font-medium", c.align && alignCls[c.align], c.className)}
                   >
                     {c.sortable ? (
-                      <Link
+                      <Link prefetch={false}
                         href={buildHref(basePath, query, { sort: c.key, dir: nextDir, page: undefined })}
                         className="hover:text-navy"
                       >
@@ -181,7 +181,7 @@ export function DataTable<T>({
                       className={cn("px-2.5 py-2 align-middle", c.align && alignCls[c.align], c.className)}
                     >
                       {href && c === visible[0] ? (
-                        <Link href={href} className="block">{c.cell(row)}</Link>
+                        <Link prefetch={false} href={href} className="block">{c.cell(row)}</Link>
                       ) : c.cell(row)}
                     </td>
                   ))}

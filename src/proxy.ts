@@ -28,7 +28,10 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // getClaims prüft das JWT lokal (asymmetrische Keys) statt bei jeder Anfrage den Auth-Server zu fragen —
+  // viele parallele Anfragen (Prefetch) führten sonst zu Rate-Limits/Session-Verlust.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
   const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth") || pathname.startsWith("/unterschrift/")
