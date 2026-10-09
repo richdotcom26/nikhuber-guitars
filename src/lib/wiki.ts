@@ -150,8 +150,8 @@ export const WIKI: WikiArtikel[] = [
     bloecke: [
       { p: "Im Tab **Details (Specs)** steht links neben jeder Auswahl ein Symbol, wenn der gewählte Artikel Holz ist:" },
       { ul: [
-        "**Brauner Holzstamm** – Artikeltyp **„Holz / Fertigung“**.",
-        "**Rotes Warndreieck + roter Holzstamm** – zusätzlich **geschütztes Holz (CITES)**. Hier sind Herkunfts- bzw. Ausfuhrdokumente zu beachten.",
+        "**Braune Holzscheibe** (Stammquerschnitt mit Jahresringen) – Artikeltyp **„Holz / Fertigung“**.",
+        "**Rote Holzscheibe** – zusätzlich **geschütztes Holz (CITES)**. Hier sind Herkunfts- bzw. Ausfuhrdokumente zu beachten.",
         "Das Symbol wechselt sofort beim Auswählen; mit der Maus darüber erscheint eine Erklärung.",
         "Artikeltyp und CITES-Kennzeichen werden im **Artikel** gepflegt.",
       ] },
