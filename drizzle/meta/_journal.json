@@ -120,6 +120,13 @@
       "when": 1791551017911,
       "tag": "0016_auftrag_lieferdatum",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791552572311,
+      "tag": "0017_docart_auftrag",
+      "breakpoints": true
     }
   ]
 }

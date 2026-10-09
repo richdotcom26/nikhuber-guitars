@@ -121,7 +121,7 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Aufträge",
     titel: "Arbeitsschritte: erledigt von wem, Warten auf …",
     bloecke: [
-      { p: "Die Arbeitsschritte stehen im Auftrag auf zwei Reitern: **Arbeitsschritte** = Werkstatt-Schritte, **Arbeitsschritte Office** = Büro-/Compliance-Schritte (z. B. Setup/Zertifikat, Rechnung, Ausfuhrantrag, Fotos, Verpackt, Versendet)." },
+      { p: "Die Arbeitsschritte stehen im Auftrag auf zwei Reitern: **Arbeitsschritte** = Werkstatt-Schritte, **Arbeitsschritte Office** = Büro-/Compliance-Schritte (z. B. Setup/Zertifikat, Rechnung, Ausfuhrantrag, Fotos, Verpackt, Versendet). Erledigte Schritte sind ausgeblendet; das Häkchen **„erledigte einblenden“** zeigt sie wieder." },
       { p: "Jeder Arbeitsschritt hat einen Status: offen, erledigt, „Warten auf …“ oder „Kiste vollständig“." },
       { ul: [
         "Bei **erledigt** und **Kiste vollständig** wird automatisch gespeichert, **wer** den Schritt erledigt hat und **wann** (Datum + Uhrzeit).",
@@ -141,6 +141,18 @@ export const WIKI: WikiArtikel[] = [
         "Enthalten u. a.: Verkäufer mit Anschrift und USt-IdNr./Steuernummer, Käufer, Lieferanschrift, **Lieferdatum**, Positionen, Gesamtrabatt, Versand, Steueraufschlüsselung (inkl. steuerfrei EU/Ausfuhr), Zahlungsbedingung, IBAN, abgezogene Anzahlungen.",
         "Geprüft mit dem offiziellen ZUGFeRD-Validator (Mustang/veraPDF): XML nach EN 16931 und PDF/A-3 gültig – für Inland mit MwSt, EU steuerfrei, Ausfuhr und Rechnungen mit abgezogener Anzahlung.",
         "**Voraussetzung:** Unter Einstellungen → Firma müssen Straße, PLZ, Ort und Steuernummer oder USt-IdNr. eingetragen sein – sonst lässt sich nicht buchen. IBAN/BIC sollten ebenfalls gepflegt sein.",
+      ] },
+    ],
+  },
+  {
+    id: "auftrag-kunde",
+    bereich: "Aufträge",
+    titel: "Kundenblock und E-Mail an den Kunden",
+    bloecke: [
+      { p: "Im Reiter **Auftrag** zeigt die Karte **Kunde** links den vollständigen Briefkopf (wie auf den Belegen, die Firma fett) und rechts Telefon, Mobil, E-Mail sowie die Kennzeichen (Region, Währung, Vertriebsweg, Sprache, steuerpflichtig/-frei)." },
+      { ul: [
+        "**„✉ E-Mail schreiben …“** öffnet ein Mail-Fenster wie bei der Rechnung: Empfänger aus dem Kunden, Textbaustein wählen (Einstellungen → Textbausteine, Belegart „Auftrag (allgemeine Mail)“, DE/EN), Text anpassen, optional Dateien des Auftrags anhängen.",
+        "Die Mail wird im **Mailversand** beim Kunden protokolliert.",
       ] },
     ],
   },

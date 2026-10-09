@@ -28,6 +28,7 @@ import { dezimal } from "@/lib/utils";
 import { createAnzahlungsrechnung } from "@/lib/domain/anzahlung";
 import { erzeugeCitesDokument, erzeugeLaceyDokument } from "@/lib/domain/nks";
 import { abMailSchema, abMailVorschlag, sendeAbZurUnterschrift } from "@/lib/domain/auftrag-ab";
+import { auftragMailSchema, sendeAuftragMail } from "@/lib/domain/auftrag-mail";
 
 function rev(id: string) {
   revalidatePath(`/auftraege/${id}`);
@@ -352,4 +353,28 @@ export async function sendeAbAction(_p: ActionState, fd: FormData): Promise<Acti
     rev(input.id);
     return res.ok ? ok(res.message) : fail(res.message);
   });
+}
+
+/* ---- Allgemeine Mail an den Kunden ---- */
+
+export async function sendeAuftragMailAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let zurueck: string | null = null;
+  const res = await runAction(async () => {
+    const input = auftragMailSchema.parse({
+      id: fd.get("id"),
+      an: fd.get("an") ?? "",
+      cc: fd.get("cc") ?? "",
+      betreff: fd.get("betreff") ?? "",
+      text: fd.get("text") ?? "",
+      anhangIds: fd.getAll("anhangId").map(String),
+    });
+    const r = await sendeAuftragMail(input);
+    rev(input.id);
+    revalidatePath("/mailversand");
+    if (!r.ok) return fail(r.message);
+    zurueck = `/auftraege/${input.id}`;
+    return ok(r.message);
+  });
+  if (zurueck) redirect(zurueck);
+  return res;
 }

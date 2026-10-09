@@ -27,6 +27,7 @@ const BELEGARTEN = [
   { value: "RECHNUNG", label: "Rechnung" },
   { value: "ANGEBOT", label: "Angebot" },
   { value: "AUFTRAGSBESTAETIGUNG", label: "Auftragsbestätigung" },
+  { value: "AUFTRAG", label: "Auftrag (allgemeine Mail)" },
   { value: "VERLEIH_VEREINBARUNG", label: "Verleih: Vereinbarung / Unterschrift" },
   { value: "VERLEIH_ERINNERUNG", label: "Verleih: Rückgabe-Erinnerung" },
 ];

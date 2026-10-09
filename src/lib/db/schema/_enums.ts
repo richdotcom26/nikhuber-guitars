@@ -89,7 +89,7 @@ export const vorratGruppeEnum = pgEnum("vorrat_gruppe", [
 // --- Dokumente / Mail -------------------------------------------------------
 export const docArtEnum = pgEnum("doc_art", [
   "ANGEBOT", "AUFTRAGSBESTAETIGUNG", "RECHNUNG", "LIEFERSCHEIN",
-  "ZERTIFIKAT", "CITES", "LACEY", "VERLEIH_VEREINBARUNG", "VERLEIH_ERINNERUNG",
+  "ZERTIFIKAT", "CITES", "LACEY", "VERLEIH_VEREINBARUNG", "VERLEIH_ERINNERUNG", "AUFTRAG",
 ]);
 export const mailArtEnum = pgEnum("mail_art", [
   "ANGEBOT", "AUFTRAGSBESTAETIGUNG", "RECHNUNG", "GUTSCHRIFT", "SONSTIGES",

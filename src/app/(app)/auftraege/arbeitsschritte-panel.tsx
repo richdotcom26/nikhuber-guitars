@@ -2,7 +2,6 @@
 
 import { useActionState, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/form";
 import { Input, Select } from "@/components/ui/input";
@@ -47,50 +46,28 @@ export function ArbeitsschrittePanel({
   /** Welche Schritte: Werkstatt (Reiter „Arbeitsschritte") oder Office/Compliance (Reiter „Arbeitsschritte Office"). */
   bereich?: "WERKSTATT" | "OFFICE";
 }) {
-  const [zeigeAlle, setZeigeAlle] = useState(false);
+  const [erledigteZeigen, setErledigteZeigen] = useState(false);
 
-  const werkstatt = rows.filter((r) => r.typ === "WERKSTATT");
-  const office = rows.filter((r) => r.typ !== "WERKSTATT");
-
-  // Führender Erledigt-Block: bis zur ersten noch nicht erledigten Nummer (ohne „Kiste packen").
-  // Nur diese erledigten Schritte werden ausgeblendet; später Erledigtes bleibt sichtbar.
-  const grenze = Math.min(
-    ...werkstatt
-      .filter((r) => r.status !== "ERLEDIGT" && r.reihenfolge !== KISTE_PACKEN_ORDER)
-      .map((r) => r.reihenfolge),
-    Number.POSITIVE_INFINITY,
-  );
-  const istVersteckt = (r: SchrittRow) => r.status === "ERLEDIGT" && r.reihenfolge < grenze;
-  const versteckt = werkstatt.filter(istVersteckt);
-  const werkstattSichtbar = zeigeAlle ? werkstatt : werkstatt.filter((r) => !istVersteckt(r));
-
-  if (bereich === "OFFICE") {
-    return <Section title="Office / Compliance" auftragId={auftragId} rows={office} gesamt={office.length} />;
-  }
+  const istErledigt = (r: SchrittRow) => r.status === "ERLEDIGT" || r.status === "KISTE_VOLLSTAENDIG";
+  const liste = bereich === "OFFICE"
+    ? rows.filter((r) => r.typ !== "WERKSTATT")
+    : rows.filter((r) => r.typ === "WERKSTATT");
+  const erledigt = liste.filter(istErledigt).length;
+  const sichtbar = erledigteZeigen ? liste : liste.filter((r) => !istErledigt(r));
 
   return (
-    <div className="space-y-5">
-      <Section
-        title="Werkstatt"
-        auftragId={auftragId}
-        rows={werkstattSichtbar}
-        gesamt={werkstatt.length}
-        toolbar={
-          versteckt.length > 0 ? (
-            <div className="flex items-center gap-2 text-xs text-muted">
-              <span>
-                {zeigeAlle
-                  ? `${versteckt.length} erledigte Schritte werden angezeigt`
-                  : `${versteckt.length} erledigte Schritte ausgeblendet`}
-              </span>
-              <Button size="sm" variant="ghost" onClick={() => setZeigeAlle((v) => !v)}>
-                {zeigeAlle ? "ausgeblendete wieder verstecken" : "alle anzeigen"}
-              </Button>
-            </div>
-          ) : null
-        }
-      />
-    </div>
+    <Section
+      title={bereich === "OFFICE" ? "Office / Compliance" : "Werkstatt"}
+      auftragId={auftragId}
+      rows={sichtbar}
+      gesamt={liste.length}
+      toolbar={
+        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+          <input type="checkbox" checked={erledigteZeigen} onChange={(e) => setErledigteZeigen(e.target.checked)} />
+          erledigte einblenden{erledigt ? ` (${erledigt})` : ""}
+        </label>
+      }
+    />
   );
 }
 
