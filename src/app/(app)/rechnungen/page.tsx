@@ -5,22 +5,28 @@ import { Input } from "@/components/ui/input";
 import { RG_STATUS } from "@/lib/rechnung-shared";
 import { listRechnungen, RECHNUNG_SORT } from "@/lib/domain/rechnung";
 import { parseSort } from "@/lib/table-sort";
+import { reportJahre } from "@/lib/domain/report";
 import { RechnungenTable } from "./rechnungen-table";
+import { RechnungSummen } from "./summen";
 
 export default async function RechnungenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; belegart?: string; page?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; belegart?: string; jahr?: string; page?: string; sort?: string; dir?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
   const belegart = sp.belegart ?? "";
+  const jahr = /^\d{4}$/.test(sp.jahr ?? "") ? sp.jahr! : "";
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(RECHNUNG_SORT), { key: "datum", dir: "desc" });
-  const { rows, faktor, total, pageCount } = await listRechnungen({ q, status, belegart, page, sort });
+  const [{ rows, faktor, kurs, summen, total, pageCount }, jahre] = await Promise.all([
+    listRechnungen({ q, status, belegart, jahr: jahr ? Number(jahr) : undefined, page, sort }),
+    reportJahre(),
+  ]);
 
-  const query = { q, status, belegart, sort: sort.key, dir: sort.dir };
+  const query = { q, status, belegart, jahr, sort: sort.key, dir: sort.dir };
   const chip = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries({ ...query, ...patch })) if (v) p.set(k, v);
@@ -39,6 +45,7 @@ export default async function RechnungenPage({
       <form method="get" className="mb-3 flex items-center gap-2">
         {status ? <input type="hidden" name="status" value={status} /> : null}
         {belegart ? <input type="hidden" name="belegart" value={belegart} /> : null}
+        {jahr ? <input type="hidden" name="jahr" value={jahr} /> : null}
         <Input name="q" defaultValue={q} placeholder="Suche Nr / Kunde" className="h-8 w-64" />
         <Button size="sm" variant="outline" type="submit">Suchen</Button>
       </form>
@@ -49,6 +56,15 @@ export default async function RechnungenPage({
           <ChipLink key={s.value} href={chip({ status: s.value })} active={status === s.value}>{s.label}</ChipLink>
         ))}
       </div>
+
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        <ChipLink href={chip({ jahr: undefined, page: undefined })} active={!jahr}>Alle Jahre</ChipLink>
+        {jahre.map((j) => (
+          <ChipLink key={j} href={chip({ jahr: String(j), page: undefined })} active={jahr === String(j)}>{j}</ChipLink>
+        ))}
+      </div>
+
+      <RechnungSummen summen={summen} kurs={kurs} />
 
       <RechnungenTable rows={rows} sort={sort} query={query} faktor={faktor} />
 

@@ -133,13 +133,14 @@ export const WIKI: WikiArtikel[] = [
   {
     id: "rechnung-liste",
     bereich: "Rechnungen",
-    titel: "Rechnungsliste: Spalten",
+    titel: "Rechnungsliste: Summen, Jahresfilter, Spalten",
     bloecke: [
-      { p: "Die Rechnungsliste zeigt wie in Ninox: **RG-Dat, RG-Nr, RG-Count** (laufende Nummer), Kunde, Status, **Zahlungsdatum, Artikelname kurz** (Modell), **Ser#**, Betrag in **EUR** bzw. **USD**, **Erlös in EUR** (USD × USD→EUR-Faktor aus Einstellungen → Firma), **Währung**, **Differenz Zahlung** (gezahlt − zu zahlen; rot = zu wenig, grün = zu viel), **Umsatzsparte** (Guitar / Non-Guitar / Service, aus der Auftragsart) und **Produktionsort**." },
+      { p: "Über der Liste stehen drei Summen (**netto**): Rechnungen in **EUR**, Rechnungen in **USD** und **Gesamt in EUR** – dabei wird USD mit dem **aktuellen Referenzkurs der Europäischen Zentralbank** umgerechnet (Kurs und Datum stehen unter der Summe; fällt der Abruf aus, gilt der Faktor aus Einstellungen → Firma)." },
       { ul: [
-        "Über die **Spaltenauswahl** der Tabelle lassen sich Spalten ein- und ausblenden (die Auswahl wird im Browser gemerkt). „Art“ (Rechnung/Storno/…) ist standardmäßig ausgeblendet.",
-        "Alle Spalten sind per Klick auf die Überschrift sortierbar.",
-        "Beträge: gebuchter Rechnungsbetrag brutto; bei Altrechnungen aus Ninox (ohne gespeicherte Summe) aus den Positionen + MwSt berechnet.",
+        "Die Summen beziehen sich auf die aktuelle Auswahl (Jahr, Status, Suche) und zählen nur **gebuchte** Belege. **Anzahlungsrechnungen** zählen nicht mit – ihr Betrag steckt bereits in der Endrechnung. Stornorechnungen werden abgezogen.",
+        "**Jahresfilter** (Alle Jahre, 2026, 2025 …) über die Knöpfe oberhalb der Summen.",
+        "Spalten: RG-Dat, RG-Nr, RG-Count, Kunde, **Art / Status** (untereinander), Artikelname kurz, Ser#, **Netto** (in Rechnungswährung), **Erlös EUR (netto)**, Währung, Umsatzsparte, Produktionsort. **Zahlungsdatum** und **Differenz Zahlung** sind standardmäßig ausgeblendet und lassen sich über „Spalten“ einblenden.",
+        "Beträge bei Altrechnungen aus Ninox (ohne gespeicherte Summe) werden aus den Positionen berechnet.",
       ] },
     ],
   },

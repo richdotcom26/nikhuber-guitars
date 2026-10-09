@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, isNotNull, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { renderBelegPdf } from "@/lib/pdf/render";
 import { embedZugferd } from "@/lib/pdf/zugferd";
@@ -19,6 +19,7 @@ import { renderBelegData } from "./beleg-render";
 import { allocateNummer, kdSnapshot, recomputeSummen, renumberPositionen } from "./belege";
 import { assertRolle, requireUser } from "./context";
 import { DomainError } from "./errors";
+import { usdEurKurs } from "./kurs";
 import { getFirmaSetting } from "./stammdaten";
 import { orderByFor } from "./_sort";
 
@@ -42,6 +43,8 @@ import { dezimal, heuteBerlin } from "@/lib/utils";
 /** Rechnungsbetrag brutto: gespeicherte Summe, sonst (Ninox-Altbestand) aus den Positionen + MwSt. */
 const POS_NETTO = sql`(select sum(p.gesamtpreis) from beleg_position p where p.rechnung_id = ${rechnung.id} and p.re_relevant)`;
 const BETRAG = sql<string | null>`coalesce(${rechnung.summeBrutto}, round(${POS_NETTO} * case when ${rechnung.kdSteuerpflichtig} then 1 + coalesce(${rechnung.mwstSatz}, 19) / 100 else 1 end, 2))`;
+/** Rechnungsbetrag netto: gespeicherte Summe, sonst (Ninox-Altbestand) Summe der Positionen. */
+const NETTO = sql<string | null>`coalesce(${rechnung.summeNetto}, round(${POS_NETTO}, 2))`;
 const LAUF_NR = sql<number | null>`nullif(regexp_replace(coalesce(${rechnung.nummer}, ''), '^.*-', ''), '')::int`;
 const SPARTE = sql<string>`case when ${auftrag.auftragsart} = 'PRODUKTION' then 'Guitar' when ${auftrag.auftragsart} = 'SERVICE' then 'Service' else 'Non-Guitar' end`;
 
@@ -49,9 +52,8 @@ export const RECHNUNG_SORT: Record<string, unknown> = {
   lauf: LAUF_NR,
   modell: artikel.nameKurz,
   ser: seriennummer.anzeige,
-  eur: sql`case when ${rechnung.kdWaehrung} = 'USD' then null else ${BETRAG} end`,
-  usd: sql`case when ${rechnung.kdWaehrung} = 'USD' then ${BETRAG} end`,
-  erloes: sql`${BETRAG} * case when ${rechnung.kdWaehrung} = 'USD' then 0.92 else 1 end`,
+  netto: NETTO,
+  erloes: sql`${NETTO} * case when ${rechnung.kdWaehrung} = 'USD' then 0.92 else 1 end`,
   waehrung: rechnung.kdWaehrung,
   differenz: sql`${rechnung.zahlbetrag} - coalesce(${rechnung.rechnungsbetrag}, ${BETRAG})`,
   sparte: SPARTE,
@@ -66,7 +68,7 @@ export const RECHNUNG_SORT: Record<string, unknown> = {
 };
 
 export async function listRechnungen(
-  params: { q?: string; status?: string; belegart?: string; page?: number; sort?: SortSpec } = {},
+  params: { q?: string; status?: string; belegart?: string; jahr?: number; page?: number; sort?: SortSpec } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
@@ -81,6 +83,7 @@ export async function listRechnungen(
     const like = `%${params.q.trim()}%`;
     filters.push(or(ilike(rechnung.nummer, like), ilike(rechnung.kdFirma, like), ilike(rechnung.kdNachname, like))!);
   }
+  if (params.jahr) filters.push(sql`extract(year from ${rechnung.rechnungsdatum}) = ${params.jahr}`);
   const where = filters.length ? and(...filters) : undefined;
 
   const rows = await db
@@ -103,6 +106,7 @@ export async function listRechnungen(
       modellKurz: sql<string | null>`coalesce(${artikel.nameKurz}, ${artikel.nameLang})`,
       serNr: seriennummer.anzeige,
       betrag: BETRAG,
+      netto: NETTO,
       zahlbetrag: rechnung.zahlbetrag,
       zahlbar: sql<string | null>`coalesce(${rechnung.rechnungsbetrag}, ${BETRAG})`,
       sparte: SPARTE,
@@ -119,8 +123,26 @@ export async function listRechnungen(
     .offset((page - 1) * pageSize);
 
   const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(rechnung).where(where);
-  const faktor = Number((await getFirmaSetting()).usdEurFaktor) || 0.92;
-  return { rows, faktor, total: count, page, pageCount: Math.max(Math.ceil(count / pageSize), 1) };
+  // Summen (netto) über alle gebuchten Belege der aktuellen Auswahl — ohne Entwürfe und ohne
+  // Anzahlungsrechnungen (deren Betrag steckt bereits in der Endrechnung; sonst doppelt gezählt).
+  const summenFilter = and(where, isNotNull(rechnung.nummer), ne(rechnung.belegart, "ANZAHLUNGSRECHNUNG"));
+  const summen = await db
+    .select({ waehrung: rechnung.kdWaehrung, netto: sql<string>`coalesce(sum(${NETTO}), 0)` })
+    .from(rechnung)
+    .where(summenFilter)
+    .groupBy(rechnung.kdWaehrung);
+  const kurs = await usdEurKurs();
+  const eur = summen.filter((s) => s.waehrung !== "USD").reduce((a, s) => a + Number(s.netto), 0);
+  const usd = summen.filter((s) => s.waehrung === "USD").reduce((a, s) => a + Number(s.netto), 0);
+  return {
+    rows,
+    faktor: kurs.faktor,
+    kurs,
+    summen: { eur, usd, gesamtEur: eur + usd * kurs.faktor },
+    total: count,
+    page,
+    pageCount: Math.max(Math.ceil(count / pageSize), 1),
+  };
 }
 
 /* --------------------------------------------------------------------- detail */
