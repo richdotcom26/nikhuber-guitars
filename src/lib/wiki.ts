@@ -124,7 +124,7 @@ export const WIKI: WikiArtikel[] = [
     bereich: "Aufträge",
     titel: "Arbeitsschritte: erledigt von wem, Warten auf …",
     bloecke: [
-      { p: "Die Arbeitsschritte stehen im Auftrag auf zwei Reitern: **Arbeitsschritte** = Werkstatt-Schritte, **Arbeitsschritte Office** = Büro-/Compliance-Schritte (z. B. Setup/Zertifikat, Rechnung, Ausfuhrantrag, Fotos, Verpackt, Versendet). Erledigte Schritte sind ausgeblendet; das Häkchen **„erledigte einblenden“** zeigt sie wieder." },
+      { p: "Die Arbeitsschritte stehen im Auftrag auf zwei Reitern: **Arbeitsschritte** = Werkstatt-Schritte, **Arbeitsschritte Office** = Büro-/Compliance-Schritte (z. B. Setup/Zertifikat, Rechnung, Ausfuhrantrag, Fotos, Verpackt, Versendet). Bei der **Werkstatt** sind erledigte Schritte ausgeblendet (Häkchen **„erledigte einblenden“** zeigt sie wieder); bei **Office** bleiben alle Schritte immer sichtbar." },
       { p: "Jeder Arbeitsschritt hat einen Status: offen, erledigt, „Warten auf …“ oder „Kiste vollständig“." },
       { ul: [
         "Bei **erledigt** und **Kiste vollständig** wird automatisch gespeichert, **wer** den Schritt erledigt hat und **wann** (Datum + Uhrzeit).",

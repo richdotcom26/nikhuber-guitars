@@ -53,7 +53,8 @@ export function ArbeitsschrittePanel({
     ? rows.filter((r) => r.typ !== "WERKSTATT")
     : rows.filter((r) => r.typ === "WERKSTATT");
   const erledigt = liste.filter(istErledigt).length;
-  const sichtbar = erledigteZeigen ? liste : liste.filter((r) => !istErledigt(r));
+  // Office: erledigte bleiben immer sichtbar (Überblick über die Compliance-Schritte)
+  const sichtbar = bereich === "OFFICE" || erledigteZeigen ? liste : liste.filter((r) => !istErledigt(r));
 
   return (
     <Section
@@ -61,12 +62,12 @@ export function ArbeitsschrittePanel({
       auftragId={auftragId}
       rows={sichtbar}
       gesamt={liste.length}
-      toolbar={
+      toolbar={bereich === "OFFICE" ? undefined : (
         <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
           <input type="checkbox" checked={erledigteZeigen} onChange={(e) => setErledigteZeigen(e.target.checked)} />
           erledigte einblenden{erledigt ? ` (${erledigt})` : ""}
         </label>
-      }
+      )}
     />
   );
 }
