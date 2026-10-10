@@ -6,7 +6,7 @@ import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { IDLE } from "@/lib/domain/action-state";
-import { TICKET_PRIO, TICKET_TYP } from "@/lib/ticket-shared";
+import { TICKET_PRIO, TICKET_STATUS, TICKET_TYP } from "@/lib/ticket-shared";
 import { createTicketAction, updateTicketAction } from "./actions";
 
 export interface TicketFormValues {
@@ -17,6 +17,7 @@ export interface TicketFormValues {
   prioritaet?: string | null;
   zugewiesenAnId?: string | null;
   aufwandMinuten?: number | null;
+  status?: string | null;
 }
 
 export function TicketForm({
@@ -78,6 +79,14 @@ export function TicketForm({
             <Input id="titel" name="titel" defaultValue={v(values.titel)} required
               placeholder="Kurze, sprechende Zusammenfassung" />
           </Field>
+          {mode === "edit" ? (
+            <Field label="Status" htmlFor="status">
+              <input type="hidden" name="statusVorher" value={v(values.status)} />
+              <Select id="status" name="status" defaultValue={v(values.status)}>
+                {TICKET_STATUS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
+            </Field>
+          ) : null}
           <Field label="Typ" htmlFor="typ" errors={err.typ}>
             <Select id="typ" name="typ" defaultValue={v(values.typ) || "BUG"}>
               {TICKET_TYP.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

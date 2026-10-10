@@ -9,13 +9,11 @@ import { isDomainError } from "@/lib/domain/errors";
 import { aktiveBenutzer, getTicket } from "@/lib/domain/ticket";
 import { AnhangCard } from "../../_components/anhang-card";
 import {
-  formatAufwand, TICKET_STATUS_LABEL, TICKET_STATUS_TON, TICKET_TYP_LABEL,
-  type TicketStatus, type TicketTyp,
+  TICKET_TYP_LABEL, type TicketTyp,
 } from "@/lib/ticket-shared";
 import { formatDateTime } from "@/lib/utils";
 import { DeleteTicketButton } from "../delete-button";
 import { KommentarForm } from "../kommentar-form";
-import { StatusForm } from "../status-form";
 import { TicketForm } from "../ticket-form";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +27,6 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     throw e;
   }
   const [benutzer, user] = await Promise.all([aktiveBenutzer(), requireUser()]);
-  const statusTon = TICKET_STATUS_TON[t.status as TicketStatus] ?? "neutral";
 
   return (
     <div className="space-y-5">
@@ -44,29 +41,25 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         }
       />
 
-      <Card>
-        <CardHeader><CardTitle>Übersicht</CardTitle></CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span className="flex items-center gap-2">
-              <Badge tone={statusTon}>{TICKET_STATUS_LABEL[t.status as TicketStatus] ?? t.status}</Badge>
-            </span>
-            <StatusForm id={t.id} status={t.status} />
-          </div>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
-            <div><dt className="text-xs text-muted">Erstellt von</dt><dd>{t.erstelltVonName ?? "–"}</dd></div>
-            <div><dt className="text-xs text-muted">Bearbeiter</dt><dd>{t.zugewiesenAnName ?? "–"}</dd></div>
-            <div><dt className="text-xs text-muted">Aufwand</dt><dd className="tabular-nums">{formatAufwand(t.aufwandMinuten)}</dd></div>
-            <div><dt className="text-xs text-muted">Erledigt</dt><dd>{t.erledigtAm ? formatDateTime(t.erledigtAm) : "–"}</dd></div>
-          </dl>
-          {t.beschreibung ? (
-            <div>
-              <dt className="text-xs text-muted">Beschreibung</dt>
-              <dd className="mt-1 whitespace-pre-wrap">{t.beschreibung}</dd>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+      <p className="-mt-3 text-xs text-muted">
+        Erstellt von {t.erstelltVonName ?? "–"}{t.erledigtAm ? ` · erledigt ${formatDateTime(t.erledigtAm)}` : ""}
+      </p>
+
+      <TicketForm
+        mode="edit"
+        benutzer={benutzer}
+        currentUserId={user.id}
+        values={{
+          id: t.id,
+          typ: t.typ,
+          titel: t.titel,
+          beschreibung: t.beschreibung,
+          prioritaet: t.prioritaet,
+          zugewiesenAnId: t.zugewiesenAnId,
+          aufwandMinuten: t.aufwandMinuten,
+          status: t.status,
+        }}
+      />
 
       <Card>
         <CardHeader><CardTitle>Screenshots & Anhänge</CardTitle></CardHeader>
@@ -98,25 +91,6 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Bearbeiten</CardTitle></CardHeader>
-        <CardContent>
-          <TicketForm
-            mode="edit"
-            benutzer={benutzer}
-            currentUserId={user.id}
-            values={{
-              id: t.id,
-              typ: t.typ,
-              titel: t.titel,
-              beschreibung: t.beschreibung,
-              prioritaet: t.prioritaet,
-              zugewiesenAnId: t.zugewiesenAnId,
-              aufwandMinuten: t.aufwandMinuten,
-            }}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }

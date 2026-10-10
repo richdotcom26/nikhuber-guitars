@@ -29,6 +29,9 @@ export async function updateTicketAction(_p: ActionState, fd: FormData): Promise
   return runAction(async () => {
     const id = String(fd.get("id") ?? "");
     await updateTicket(id, parseForm(ticketSchema, fd));
+    // Status steht mit im Bearbeiten-Formular — nur bei Änderung setzen (erledigt-Zeitpunkt, Mail an Ersteller)
+    const status = String(fd.get("status") ?? "");
+    if (status && status !== String(fd.get("statusVorher") ?? "")) await setTicketStatus(id, status);
     rev(id);
     return ok("Gespeichert.");
   });
