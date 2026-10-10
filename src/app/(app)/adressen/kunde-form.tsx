@@ -169,6 +169,10 @@ export function KundeForm({
               ))}
             </Select>
           </Field>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <input type="checkbox" name="seriennummerAufRechnung" defaultChecked={!!values.seriennummerAufRechnung} />
+            Seriennummer auf Rechnung ausweisen
+          </label>
         </CardContent>
       </Card>
 
@@ -288,10 +292,6 @@ export function KundeForm({
             className="sm:col-span-2" hint="Überschreibt den aus der Adresse berechneten Briefkopf.">
             <Textarea id="briefkopfManuell" name="briefkopfManuell" defaultValue={v(values.briefkopfManuell)} />
           </Field>
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
-            <input type="checkbox" name="seriennummerAufRechnung" defaultChecked={!!values.seriennummerAufRechnung} />
-            Seriennummer auf Rechnung ausweisen
-          </label>
         </CardContent>
       </Card>
 
