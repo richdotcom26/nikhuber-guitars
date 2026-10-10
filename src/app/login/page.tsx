@@ -19,7 +19,7 @@ function LoginForm() {
     setBusy(true);
     setFehler(null);
     // Versand über die App selbst (Link direkt auf diese Adresse, nicht die Supabase-Site-URL)
-    await passwortVergessenAction(email).catch(() => {});
+    await passwortVergessenAction(email.trim()).catch(() => {});
     setBusy(false);
     setHinweis("Falls ein Konto existiert, wurde ein Link zum Zurücksetzen verschickt.");
   }
@@ -29,10 +29,10 @@ function LoginForm() {
     setBusy(true);
     setFehler(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password: passwort });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: passwort });
     setBusy(false);
     if (error) {
-      setFehler(error.message);
+      setFehler(error.message === "Invalid login credentials" ? "E-Mail oder Passwort falsch." : error.message);
       return;
     }
     router.replace(params.get("next") || "/todo");
@@ -48,11 +48,13 @@ function LoginForm() {
     <form onSubmit={onSubmit} className="mt-6 space-y-3">
       <input
         type="email" required placeholder="E-Mail" value={email}
+        autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" inputMode="email"
         onChange={(e) => setEmail(e.target.value)}
         className={inputCls}
       />
       <input
         type="password" required placeholder="Passwort" value={passwort}
+        autoCapitalize="none" autoCorrect="off" autoComplete="current-password"
         onChange={(e) => setPasswort(e.target.value)}
         className={inputCls}
       />
