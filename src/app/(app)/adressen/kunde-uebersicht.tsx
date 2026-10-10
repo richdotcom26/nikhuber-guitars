@@ -88,7 +88,10 @@ export async function KundeUebersicht({ kundeId }: { kundeId: string }) {
           <tr key={a.id}>
             <Td><Link href={`/auftraege/${a.id}`} className="font-mono text-[13px] font-semibold text-blue-700 hover:underline">{a.nummer}</Link></Td>
             <Td muted>{formatDate(a.datum)}</Td>
-            <Td>{a.modell ?? "–"}</Td>
+            <Td>
+              {a.modell ?? "–"}
+              {a.serNr ? <span className="ml-1.5 text-[11px] text-muted">#{a.serNr}</span> : null}
+            </Td>
             <Td><Badge tone={AUFTRAG_STATUS_TONE[a.status as AuftragStatus] ?? "neutral"}>{AUFTRAG_STATUS_LABEL[a.status as AuftragStatus] ?? a.status}</Badge></Td>
             <Td right>{a.umsatz != null ? formatMoney(a.umsatz, "EUR") : "–"}</Td>
           </tr>

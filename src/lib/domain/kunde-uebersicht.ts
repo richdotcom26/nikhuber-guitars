@@ -1,7 +1,7 @@
 import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { angebot, artikel, auftrag, rechnung } from "@/lib/db/schema";
+import { angebot, artikel, auftrag, rechnung, seriennummer } from "@/lib/db/schema";
 import { requireUser } from "./context";
 import { usdEurKurs } from "./kurs";
 
@@ -27,9 +27,10 @@ export async function kundeUebersicht(kundeId: string) {
     db.select({
       id: auftrag.id, nummer: auftrag.nummer, datum: auftrag.auftragsdatum, status: auftrag.status,
       art: auftrag.auftragsart, waehrung: auftrag.kdWaehrung, modell: artikel.nameKurz,
-      umsatz: auftrag.umsatzerwartung,
+      umsatz: auftrag.umsatzerwartung, serNr: seriennummer.anzeige,
     }).from(auftrag)
       .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
+      .leftJoin(seriennummer, eq(seriennummer.id, auftrag.seriennummerId))
       .where(eq(auftrag.kundeId, kundeId))
       .orderBy(desc(auftrag.auftragsdatum), desc(auftrag.createdAt)),
     db.select({
