@@ -25,7 +25,7 @@ import { DomainError } from "./errors";
 export {
   AUFTRAG_STATUS, AUFTRAG_STATUS_LABEL, AUFTRAGSART, AUFTRAGSART_LABEL,
 } from "@/lib/auftrag-shared";
-import { dezimal, formatDate, formatMoney, heuteBerlin, jahrBerlin } from "@/lib/utils";
+import { formatDate, formatMoney, heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- liste */
 
