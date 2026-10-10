@@ -11,7 +11,7 @@ import {
   AUFTRAGSART_LABEL, BESONDERES, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
 import { listArtikel } from "@/lib/domain/artikel";
-import { auftragAngezahlt, auftragHatRechnung, auftragLoeschHindernisse, auftragPositionCount, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
+import { auftragAngezahlt, auftragArchivierbar, auftragHatRechnung, auftragLoeschHindernisse, auftragPositionCount, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
 import { BelegVerwalten, VerwerfenHinweis } from "../../_components/beleg-verwalten";
 import { archivAuftragAction, deleteAuftragAction } from "../actions";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
@@ -116,7 +116,7 @@ export default async function AuftragDetailPage({
             <a href={`/druck/auftrag/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
             <a href={`/druck/auftrag/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>AB PDF</a>
             <a href={`/druck/lieferschein/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Lieferschein</a>
-            <BelegVerwalten id={id} nummer={a.nummer} art="Auftrag" archiviert={a.archiviert} hindernisse={loeschHindernisse} archivAction={archivAuftragAction} deleteAction={deleteAuftragAction} />
+            <BelegVerwalten id={id} nummer={a.nummer} art="Auftrag" archiviert={a.archiviert} hindernisse={loeschHindernisse} archivAction={archivAuftragAction} deleteAction={deleteAuftragAction} archivErlaubt={await auftragArchivierbar(id)} />
           </div>
         }
       />

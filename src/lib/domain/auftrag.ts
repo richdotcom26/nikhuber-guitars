@@ -382,9 +382,21 @@ export async function auftragHatRechnung(id: string): Promise<boolean> {
 
 /* ------------------------------------------------------- Archivieren / Löschen */
 
+/** Archivieren erst, wenn eine Rechnung geschrieben und bezahlt ist (alle gebuchten Rechnungen bezahlt). */
+export async function auftragArchivierbar(id: string): Promise<boolean> {
+  await requireUser();
+  const rows = await db.select({ status: rechnung.status, zahlungsdatum: rechnung.zahlungsdatum }).from(rechnung)
+    .where(and(eq(rechnung.auftragId, id), eq(rechnung.belegart, "RECHNUNG"), sql`${rechnung.nummer} is not null`,
+      sql`${rechnung.status} not in ('ENTWURF', 'STORNIERT')`));
+  return rows.length > 0 && rows.every((r) => r.status === "BEZAHLT" || !!r.zahlungsdatum);
+}
+
 export async function setAuftragArchiviert(id: string, archiviert: boolean) {
   const user = await requireUser();
   assertRolle(user, "ADMIN", "BUERO");
+  if (archiviert && !(await auftragArchivierbar(id))) {
+    throw new DomainError("STATE", "Archivieren erst möglich, wenn die Rechnung geschrieben und bezahlt ist.");
+  }
   await db.update(auftrag).set({ archiviert, updatedAt: new Date(), updatedBy: user.id }).where(eq(auftrag.id, id));
 }
 

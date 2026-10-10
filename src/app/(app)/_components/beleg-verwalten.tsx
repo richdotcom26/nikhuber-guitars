@@ -11,9 +11,11 @@ type Act = (p: ActionState, fd: FormData) => Promise<ActionState>;
  * Gibt es Gründe gegen das Löschen, ist der Knopf gesperrt (Gründe im Tooltip) — dann archivieren.
  */
 export function BelegVerwalten({
-  id, nummer, art, archiviert, hindernisse, archivAction, deleteAction,
+  id, nummer, art, archiviert, hindernisse, archivAction, deleteAction, archivErlaubt = true,
 }: {
   id: string; nummer: string; art: "Angebot" | "Auftrag"; archiviert: boolean;
+  /** Auftrag: Archivieren erst nach bezahlter Rechnung — sonst Knopf ausgeblendet. */
+  archivErlaubt?: boolean;
   hindernisse: string[]; archivAction: Act; deleteAction: Act;
 }) {
   const [aState, aAction] = useActionState(archivAction, IDLE);
@@ -21,6 +23,7 @@ export function BelegVerwalten({
   const fehler = (dState && !dState.ok ? dState.message : null) ?? (aState && !aState.ok ? aState.message : null);
   return (
     <div className="flex items-center gap-1">
+      {archiviert || archivErlaubt ? (
       <form action={aAction}>
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="archiv" value={archiviert ? "0" : "1"} />
@@ -28,6 +31,7 @@ export function BelegVerwalten({
           {archiviert ? "Wiederherstellen" : "Archivieren"}
         </SubmitButton>
       </form>
+      ) : null}
       <form
         action={dAction}
         onSubmit={(e) => {

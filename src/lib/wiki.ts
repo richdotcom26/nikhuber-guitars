@@ -248,7 +248,7 @@ export const WIKI: WikiArtikel[] = [
     titel: "Angebote und Aufträge archivieren, löschen, verwerfen",
     bloecke: [
       { ul: [
-        "**Archivieren** (Knopf oben rechts): blendet den Beleg in der Liste aus, er bleibt aber vollständig erhalten. Über das Häkchen **„archivierte anzeigen“** in der Liste wieder sichtbar; im Beleg **„Wiederherstellen“**.",
+        "**Archivieren** (Knopf oben rechts; bei Aufträgen erst sichtbar, wenn die Rechnung geschrieben und bezahlt ist): blendet den Beleg in der Liste aus, er bleibt aber vollständig erhalten. Über das Häkchen **„archivierte anzeigen“** in der Liste wieder sichtbar; im Beleg **„Wiederherstellen“**.",
         "**Löschen**: endgültig, mit Positionen, Specs, Arbeitsschritten und Anhängen. Angebote dürfen immer gelöscht werden (ein daraus entstandener Auftrag bleibt erhalten).",
         "Aufträge nur, wenn nichts dagegen spricht: keine Rechnung (auch kein Entwurf), keine Seriennummer, keine erledigten/begonnenen Arbeitsschritte, kein Verleih, keine Lagerbewegung, kein HE-Stichtag. Sonst ist „Löschen“ gesperrt (Maus darüber zeigt die Gründe) – dann archivieren. Wird ein Auftrag aus einem Angebot gelöscht, steht das Angebot wieder auf „versendet/offen“.",
         "**Verwerfen**: Ist ein Angebot/Auftrag noch leer (kein Kunde, keine Positionen), erscheint oben ein gelber Hinweis „Versehentlich angelegt?“ mit **„… verwerfen“** – löscht ihn sofort.",
