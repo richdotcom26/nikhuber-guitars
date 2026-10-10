@@ -61,16 +61,16 @@ export function AuftraegeTable({
       ) : <span className="text-neutral-300">–</span>),
     },
     {
-      key: "art", header: "Art", sortable: true,
-      cell: (r) => <span className="text-muted">{AUFTRAGSART_LABEL[r.auftragsart as Auftragsart] ?? r.auftragsart}</span>,
-    },
-    {
       key: "datum", header: "Datum", sortable: true, firstDir: "desc",
       cell: (r) => <span className="text-muted">{formatDate(r.auftragsdatum)}</span>,
     },
     {
-      key: "bauplan", header: "Bauplan", sortable: true, firstDir: "desc",
-      cell: (r) => <span className="text-muted">{r.bauplandatum ? r.bauplandatum.slice(0, 7) : "–"}</span>,
+      key: "status", header: "Status", sortable: true,
+      cell: (r) => (
+        <Badge tone={AUFTRAG_STATUS_TONE[r.status as AuftragStatus] ?? "neutral"}>
+          {AUFTRAG_STATUS_LABEL[r.status as AuftragStatus] ?? r.status}
+        </Badge>
+      ),
     },
     {
       key: "kunde", header: "Kunde", sortable: true,
@@ -95,12 +95,8 @@ export function AuftraegeTable({
       ) : <span className="text-neutral-300">–</span>),
     },
     {
-      key: "status", header: "Status", sortable: true,
-      cell: (r) => (
-        <Badge tone={AUFTRAG_STATUS_TONE[r.status as AuftragStatus] ?? "neutral"}>
-          {AUFTRAG_STATUS_LABEL[r.status as AuftragStatus] ?? r.status}
-        </Badge>
-      ),
+      key: "bauplan", header: "Bauplan", sortable: true, firstDir: "desc",
+      cell: (r) => <span className="text-muted">{r.bauplandatum ? r.bauplandatum.slice(0, 7) : "–"}</span>,
     },
     {
       key: "work", header: "Work %", sortable: true, firstDir: "desc", align: "right", className: "w-16",
@@ -112,6 +108,10 @@ export function AuftraegeTable({
           {r.fortschrittProzent == null ? "–" : `${r.fortschrittProzent}%`}
         </span>
       ),
+    },
+    {
+      key: "art", header: "Art", sortable: true,
+      cell: (r) => <span className="text-muted">{AUFTRAGSART_LABEL[r.auftragsart as Auftragsart] ?? r.auftragsart}</span>,
     },
     {
       key: "umsatz", header: "Umsatzerw.", sortable: true, firstDir: "desc", align: "right", className: "tabular-nums",
