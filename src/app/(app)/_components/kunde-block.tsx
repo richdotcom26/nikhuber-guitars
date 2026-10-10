@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { staat } from "@/lib/db/schema";
+import { berechneBriefkopf } from "@/lib/adressen-shared";
 import { getKunde } from "@/lib/domain/adressen";
 
 export interface KundeSnapshot {
@@ -12,6 +16,7 @@ export interface KundeSnapshot {
   kdStrasse: string | null;
   kdPlz: string | null;
   kdOrt: string | null;
+  kdStaatId?: string | null;
   kdRegion: string | null;
   kdWaehrung: string | null;
   kdVertriebsweg: string | null;
@@ -25,8 +30,15 @@ export interface KundeSnapshot {
  */
 export async function KundeBlock({ beleg, mailHref }: { beleg: KundeSnapshot; mailHref: string }) {
   const name = beleg.kdFirma || [beleg.kdVorname, beleg.kdNachname].filter(Boolean).join(" ");
-  const briefkopf = beleg.kdBriefkopf
-    || [name, beleg.kdStrasse, [beleg.kdPlz, beleg.kdOrt].filter(Boolean).join(" ")].filter(Boolean).join("\n");
+  // Briefkopf wie in den Adressen-Stammdaten („Briefkopf (berechnet)“, inkl. Staat bei Ausland); Snapshot bevorzugt
+  const staatName = beleg.kdStaatId
+    ? (await db.select({ n: staat.name }).from(staat).where(eq(staat.id, beleg.kdStaatId)))[0]?.n ?? null
+    : null;
+  const briefkopf = beleg.kdBriefkopf?.trim() || berechneBriefkopf({
+    firma: beleg.kdFirma, vorname: beleg.kdVorname, nachname: beleg.kdNachname,
+    strasse: beleg.kdStrasse, plz: beleg.kdPlz, ort: beleg.kdOrt,
+    staatName, istInland: beleg.kdRegion === "D",
+  }) || name;
   const k = beleg.kundeId ? (await getKunde(beleg.kundeId).catch(() => null))?.kunde ?? null : null;
   const zeilen = briefkopf.split("\n").map((z) => z.trim()).filter(Boolean);
   const fettErste = !!beleg.kdFirma?.trim() && zeilen[0] === beleg.kdFirma.trim();

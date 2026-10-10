@@ -16,6 +16,7 @@ import { getRechnung, listRechnungPositionen } from "@/lib/domain/rechnung";
 import { formatDate, formatDateTime, formatMoney, heuteBerlin } from "@/lib/utils";
 import { letzteMahnung } from "@/lib/domain/mahnung";
 import { AnhangCard } from "../../_components/anhang-card";
+import { KundeBlock } from "../../_components/kunde-block";
 import { PositionenPanel } from "../../_components/positionen-panel";
 import {
   addPositionAction, setVersandAction, deleteAllePositionenAction, deletePositionAction, positionenAusAuftragAction,
@@ -194,6 +195,14 @@ export default async function RechnungDetailPage({
       {active === "rechnung" ? (
         <div className="grid gap-5 lg:grid-cols-2">
           <div className="space-y-5">
+            <Card>
+              <CardHeader><CardTitle>Kunde</CardTitle></CardHeader>
+              <CardContent>
+                {r.kundeId || r.kdFirma || r.kdNachname ? (
+                  <KundeBlock beleg={r} mailHref={`/rechnungen/${id}/mail`} />
+                ) : <p className="text-sm text-neutral-400">Kein Kunde.</p>}
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader><CardTitle>Beleg</CardTitle></CardHeader>
               <CardContent>
