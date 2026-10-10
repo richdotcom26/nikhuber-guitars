@@ -669,7 +669,7 @@ export async function setGesamtrabatt(
   await db
     .update(head)
     .set({
-      gesamtrabattAktiv: input.aktiv,
+      gesamtrabattAktiv: input.aktiv && prozent > 0, // 0 % / leer = kein Gesamtrabatt
       gesamtrabattProzent: String(prozent),
       updatedAt: new Date(),
       updatedBy: user.id,

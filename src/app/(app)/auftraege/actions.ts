@@ -197,7 +197,7 @@ export async function setGesamtrabattAction(_p: ActionState, fd: FormData): Prom
     const id = String(fd.get("id") ?? "");
     const aktiv = fd.get("aktiv") === "on" || fd.get("aktiv") === "true";
     const prozentRaw = dezimal(String(fd.get("prozent") ?? "")).trim();
-    await setGesamtrabatt("auftrag", id, { aktiv, prozent: prozentRaw ? Number(prozentRaw) : null });
+    await setGesamtrabatt("auftrag", id, { aktiv, prozent: prozentRaw ? Number(prozentRaw) : 0 /* leer = Rabatt entfernt */ });
     rev(id);
     return ok("Gesamtrabatt gesetzt.");
   });

@@ -158,7 +158,7 @@ export function PositionenPanel({
           <SumZeile label="Summe Positionen" wert={formatMoney(summen.summePositionen, cur)} />
 
           {gesamtrabatt ? (
-            <form action={grAction} className="flex flex-wrap items-center gap-2">
+            <form key={`gr:${gesamtrabatt.aktiv}:${gesamtrabatt.prozent ?? ""}`} action={grAction} className="flex flex-wrap items-center gap-2">
               <input type="hidden" name="id" value={belegId} />
               <label className="flex items-center gap-1 text-neutral-500">
                 <input type="checkbox" name="aktiv" defaultChecked={gesamtrabatt.aktiv} />
