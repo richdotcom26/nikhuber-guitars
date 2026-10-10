@@ -60,7 +60,8 @@ export function WikiPanel() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[15rem_1fr]">
-      <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
+      {/* eigene Scrollleiste: bleibt unter der festen Kopfnavigation stehen und scrollt bei vielen Einträgen */}
+      <aside className="space-y-3 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
