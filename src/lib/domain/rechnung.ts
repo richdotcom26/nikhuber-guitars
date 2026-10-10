@@ -52,7 +52,7 @@ const SPARTE = sql<string>`case when ${auftrag.auftragsart} = 'PRODUKTION' then 
 export const RECHNUNG_SORT: Record<string, unknown> = {
   lauf: LAUF_NR,
   modell: artikel.nameKurz,
-  ser: seriennummer.anzeige,
+  ser: seriennummer.lfd, // nach laufender Nummer (rechter Teil), nicht nach Text
   netto: NETTO,
   erloes: sql`${NETTO} * case when ${rechnung.kdWaehrung} = 'USD' then 0.92 else 1 end`,
   waehrung: rechnung.kdWaehrung,

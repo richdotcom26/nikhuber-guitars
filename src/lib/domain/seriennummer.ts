@@ -11,7 +11,7 @@ import { heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 export const SERIENNUMMER_SORT: Record<string, unknown> = {
   lfd: seriennummer.lfd,
-  anzeige: seriennummer.anzeige,
+  anzeige: seriennummer.lfd, // nach laufender Nummer (rechter Teil), nicht nach Text
   vergabe: seriennummer.manuell,
   modell: artikel.nameLang,
   kunde: sql`lower(coalesce(${kunde.kurzname}, ${kunde.firma}, ${auftrag.kdFirma}, ${auftrag.kdNachname}, ''))`,

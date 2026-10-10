@@ -51,10 +51,6 @@ export function RechnungenTable({
   const usd = (r: RechnungRow) => r.kdWaehrung === "USD";
   const columns: Column<RechnungRow>[] = [
     {
-      key: "datum", header: "RG-Dat", sortable: true, firstDir: "desc", className: "whitespace-nowrap",
-      cell: (r) => <span className="tabular-nums">{formatDate(r.rechnungsdatum)}</span>,
-    },
-    {
       key: "nummer", header: "RG-Nr", sortable: true, hideable: false, className: "whitespace-nowrap font-mono text-[13px]",
       cell: (r) => (
         <>
@@ -70,12 +66,8 @@ export function RechnungenTable({
       ),
     },
     {
-      key: "lauf", header: "RG-Count", sortable: true, firstDir: "desc", align: "right", className: "tabular-nums",
-      cell: (r) => r.laufNr ?? "",
-    },
-    {
-      key: "kunde", header: "Kunde", sortable: true,
-      cell: (r) => kundeKurz(r),
+      key: "datum", header: "RG-Dat", sortable: true, firstDir: "desc", className: "whitespace-nowrap",
+      cell: (r) => <span className="tabular-nums">{formatDate(r.rechnungsdatum)}</span>,
     },
     {
       key: "status", header: "Art / Status", sortable: true,
@@ -92,8 +84,8 @@ export function RechnungenTable({
       ),
     },
     {
-      key: "zahlung", header: "Zahlungsdatum", sortable: true, firstDir: "desc", defaultHidden: true,
-      cell: (r) => <span className="tabular-nums">{r.zahlungsdatum ? formatDate(r.zahlungsdatum) : ""}</span>,
+      key: "kunde", header: "Kunde", sortable: true,
+      cell: (r) => kundeKurz(r),
     },
     { key: "modell", header: "Artikelname kurz", sortable: true, cell: (r) => r.modellKurz ?? "" },
     { key: "ser", header: "Ser#", sortable: true, className: "tabular-nums", cell: (r) => r.serNr ?? "" },
@@ -114,6 +106,16 @@ export function RechnungenTable({
         </span>
       ) : ""),
     },
+    { key: "sparte", header: "Umsatzsparte", sortable: true, cell: (r) => r.sparte },
+    { key: "ort", header: "Produktionsort", sortable: true, cell: (r) => (r.produktionsort ? ORT[r.produktionsort] ?? r.produktionsort : "") },
+    {
+      key: "lauf", header: "RG-Count", sortable: true, firstDir: "desc", align: "right", className: "tabular-nums",
+      cell: (r) => r.laufNr ?? "",
+    },
+    {
+      key: "zahlung", header: "Zahlungsdatum", sortable: true, firstDir: "desc", defaultHidden: true,
+      cell: (r) => <span className="tabular-nums">{r.zahlungsdatum ? formatDate(r.zahlungsdatum) : ""}</span>,
+    },
     {
       key: "differenz", header: "Differenz Zahlung", sortable: true, align: "right", className: "tabular-nums", defaultHidden: true,
       cell: (r) => {
@@ -123,8 +125,6 @@ export function RechnungenTable({
         return <span className={d < 0 ? "text-red-700" : "text-green-700"}>{formatBetrag(String(d))}</span>;
       },
     },
-    { key: "sparte", header: "Umsatzsparte", sortable: true, cell: (r) => r.sparte },
-    { key: "ort", header: "Produktionsort", sortable: true, cell: (r) => (r.produktionsort ? ORT[r.produktionsort] ?? r.produktionsort : "") },
   ];
 
   return (
