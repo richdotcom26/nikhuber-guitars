@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { angebot, artikel, auftrag, rechnung, seriennummer } from "@/lib/db/schema";
 import { requireUser } from "./context";
 import { usdEurKurs } from "./kurs";
+import { rechnungsFamilien } from "./rechnung-familie";
 
 /**
  * Kundenübersicht (Adresse, rechte Spalte): alle Angebote/Aufträge/Rechnungen + Statistik
@@ -41,8 +42,10 @@ export async function kundeUebersicht(kundeId: string) {
       id: rechnung.id, nummer: rechnung.nummer, datum: rechnung.rechnungsdatum, status: rechnung.status,
       belegart: rechnung.belegart, waehrung: rechnung.kdWaehrung, netto: RG_NETTO,
       zahlungsdatum: rechnung.zahlungsdatum, serNr: seriennummer.anzeige,
+      modell: sql<string | null>`coalesce(${artikel.nameBelege}, ${artikel.nameLang}, ${artikel.nameKurz})`,
     }).from(rechnung)
       .leftJoin(auftrag, eq(auftrag.id, rechnung.auftragId))
+      .leftJoin(artikel, eq(artikel.id, sql`coalesce(${rechnung.modellArtikelId}, ${auftrag.modellArtikelId})`))
       .leftJoin(seriennummer, eq(seriennummer.id, auftrag.seriennummerId))
       .where(eq(rechnung.kundeId, kundeId))
       .orderBy(sql`${rechnung.rechnungsdatum} desc nulls first`, desc(rechnung.createdAt)),
@@ -85,8 +88,14 @@ export async function kundeUebersicht(kundeId: string) {
   const offen = rechnungen.filter((r) => (r.status === "GEBUCHT" || r.status === "OFFEN") && !r.zahlungsdatum
     && (r.belegart === "RECHNUNG" || r.belegart === "ANZAHLUNGSRECHNUNG"));
 
+  // Vorgangsfamilie je Rechnung (Hover, wie in der Rechnungsliste)
+  const familien = await rechnungsFamilien(rechnungen.map((r) => r.id));
   return {
-    angebote, auftraege, rechnungen,
+    angebote, auftraege,
+    rechnungen: rechnungen.map((r) => ({
+      ...r,
+      familie: familien.get(r.id)?.map((g) => (g.id === r.id ? "▸ " : "   ") + g.text) ?? null,
+    })),
     statistik: {
       umsatzJahre, gesamt: Math.round(gesamt * 100) / 100, tendenz, letzteAktivitaet,
       kundeSeit: daten[0] ?? null,

@@ -104,7 +104,7 @@ export async function KundeUebersicht({ kundeId }: { kundeId: string }) {
 
       <Liste titel={`Rechnungen (${rechnungen.length})`} leer="Keine Rechnungen." kopf={["Nr", "Datum", "Art", "Status", "Netto", "Bezahlt"]}>
         {rechnungen.map((r) => (
-          <tr key={r.id}>
+          <tr key={r.id} title={r.familie ? `Vorgangsfamilie:\n${r.familie.join("\n")}` : undefined}>
             <Td>
               <Link href={`/rechnungen/${r.id}`} className="font-mono text-[13px] font-semibold text-blue-700 hover:underline">
                 {r.nummer ?? <span className="font-sans italic text-muted">Entwurf</span>}
@@ -112,7 +112,15 @@ export async function KundeUebersicht({ kundeId }: { kundeId: string }) {
             </Td>
             <Td muted>{formatDate(r.datum)}</Td>
             <Td>
-              {RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}
+              <span
+                className="cursor-help underline decoration-dotted decoration-neutral-300 underline-offset-2"
+                title={[
+                  r.modell ? `Modell: ${r.modell}` : "Modell: –",
+                  r.familie ? `\nVorgangsfamilie:\n${r.familie.join("\n")}` : null,
+                ].filter(Boolean).join("\n")}
+              >
+                {RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}
+              </span>
               {r.serNr ? <span className="ml-1.5 text-[11px] text-muted">#{r.serNr}</span> : null}
             </Td>
             <Td><Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>{RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}</Badge></Td>
