@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
 import { IDLE } from "@/lib/domain/action-state";
 import { formatDateTime } from "@/lib/utils";
@@ -32,12 +34,9 @@ export function NksDokument({
     window.open(await anhangUrlAction(id), "_blank", "noopener");
   });
   return (
-    <div className="space-y-2 rounded-md border border-line p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="font-semibold text-ink">{titel}</div>
-          <div className="text-xs text-muted">{hinweis}</div>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{titel}</CardTitle>
         <form action={action}>
           <input type="hidden" name="id" value={auftragId} />
           <input type="hidden" name="art" value={art} />
@@ -45,21 +44,25 @@ export function NksDokument({
             {dok ? "Neu erzeugen" : "Erzeugen"}
           </SubmitButton>
         </form>
-      </div>
-      {dok ? (
-        <button
-          type="button"
-          onClick={() => oeffnen(dok.id)}
-          disabled={pending}
-          className="text-left text-sm font-semibold text-blue-700 hover:underline"
-        >
-          {pending ? "öffne …" : dok.dateiname ?? "Dokument"}
-          <span className="ml-2 text-xs font-normal text-muted">{formatDateTime(dok.createdAt)}</span>
-        </button>
-      ) : (
-        <p className="text-xs text-muted">Noch nicht erzeugt.</p>
-      )}
-      {state ? <FormMessage state={state} /> : null}
-    </div>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <p className="text-xs text-muted">{hinweis}</p>
+        <div className="flex items-center justify-between gap-2">
+          {dok ? (
+            <button
+              type="button"
+              onClick={() => oeffnen(dok.id)}
+              disabled={pending}
+              className="min-w-0 truncate text-left font-semibold text-blue-700 hover:underline"
+            >
+              {pending ? "öffne …" : dok.dateiname ?? "Dokument"}
+              <span className="block text-xs font-normal text-muted">{formatDateTime(dok.createdAt)}</span>
+            </button>
+          ) : <span className="text-muted">Noch nicht erzeugt.</span>}
+          {dok ? <Badge tone="green">erzeugt</Badge> : aktiv ? <Badge tone="amber">offen</Badge> : <span className="text-xs text-muted">nicht nötig</span>}
+        </div>
+        {state ? <FormMessage state={state} /> : null}
+      </CardContent>
+    </Card>
   );
 }
