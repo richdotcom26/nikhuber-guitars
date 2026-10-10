@@ -215,7 +215,7 @@ export const WIKI: WikiArtikel[] = [
       ] },
       { p: "**Einzelne Mahnung von Hand:** In der geöffneten Rechnung steht in der Box „Beleg“ (statt des früheren Report-Monats) der **Status**. Ist die Rechnung unbezahlt, dazu **„seit X Tagen offen“**, die bisherige **Mahnstufe** und der Knopf **„Mahnung senden“**. Er öffnet das Mailfenster mit den Mahn-Textbausteinen – vorausgewählt ist die nächste Stufe in Kundensprache; Betrag, Gebühr und Gesamtbetrag sind eingesetzt, das Rechnungs-PDF hängt an. Nach dem Versand gilt die Rechnung als gemahnt mit dieser Stufe." },
       { ul: [
-        "Rechnungsliste: Statusfilter **„Mahnstufe 1 / 2 / 3“**; in der Spalte Art/Status erscheint die Mahnstufe als Kennzeichen (bis die Zahlung erfasst ist).",
+        "Rechnungsliste: Statusfilter **„Mahnstufe 1 / 2 / 3“** – zeigt **alle Jahre** (Jahr/Monat sind dann ausgegraut und greifen nicht); in der Spalte Art/Status erscheint die Mahnstufe als Kennzeichen (bis die Zahlung erfasst ist).",
         "**Verlauf** der Rechnung: jede Mahnung mit Stufe, Datum/Uhrzeit, Empfänger, Gebühr und Link zum Mail-Protokoll.",
         "Der **Report-Monat** wird nicht mehr von Hand gepflegt – er ergibt sich beim Buchen aus dem Rechnungsdatum.",
       ] },

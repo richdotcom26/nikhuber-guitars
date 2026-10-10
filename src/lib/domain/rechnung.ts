@@ -90,8 +90,9 @@ export async function listRechnungen(
     const like = `%${params.q.trim()}%`;
     filters.push(or(ilike(rechnung.nummer, like), ilike(rechnung.kdFirma, like), ilike(rechnung.kdNachname, like))!);
   }
-  if (params.jahr) filters.push(sql`extract(year from ${rechnung.rechnungsdatum}) = ${params.jahr}`);
-  if (params.jahr && params.monat) filters.push(sql`extract(month from ${rechnung.rechnungsdatum}) = ${params.monat}`);
+  // Mahnstufe ist ein eigener Blick auf alle offenen Mahnfälle → Jahr/Monat greifen dann nicht
+  if (params.jahr && !mahnStufe) filters.push(sql`extract(year from ${rechnung.rechnungsdatum}) = ${params.jahr}`);
+  if (params.jahr && params.monat && !mahnStufe) filters.push(sql`extract(month from ${rechnung.rechnungsdatum}) = ${params.monat}`);
   const where = filters.length ? and(...filters) : undefined;
 
   const rows = await db

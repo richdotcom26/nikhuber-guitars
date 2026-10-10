@@ -73,17 +73,20 @@ export default async function RechnungenPage({
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <form method="get" className="flex flex-wrap items-center gap-2">
           {belegart ? <input type="hidden" name="belegart" value={belegart} /> : null}
+          {/* bei Mahnstufe sind Jahr/Monat gesperrt → Auswahl trotzdem mitgeben, damit sie danach wieder greift */}
+          {status.startsWith("MAHN") ? <input type="hidden" name="jahr" value={jahr || "alle"} /> : null}
+          {status.startsWith("MAHN") ? <input type="hidden" name="monat" value={monat || "alle"} /> : null}
           <Input name="q" defaultValue={q} placeholder="Suche Nr / Kunde" className="h-8 w-56" />
           <AutoSelect name="status" defaultValue={status} className="h-8 w-32 py-0 text-xs" aria-label="Status">
             <option value="">Alle Status</option>
             {RG_STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             {[1, 2, 3].map((n) => <option key={n} value={`MAHN${n}`}>Mahnstufe {n}</option>)}
           </AutoSelect>
-          <AutoSelect name="jahr" defaultValue={jahr || "alle"} className="h-8 w-28 py-0 text-xs" aria-label="Jahr">
+          <AutoSelect name="jahr" defaultValue={jahr || "alle"} disabled={status.startsWith("MAHN")} title={status.startsWith("MAHN") ? "Bei Mahnstufe werden alle Jahre angezeigt" : undefined} className="h-8 w-28 py-0 text-xs" aria-label="Jahr">
             <option value="alle">Alle Jahre</option>
             {jahre.map((j) => <option key={j} value={String(j)}>{j}</option>)}
           </AutoSelect>
-          <AutoSelect name="monat" defaultValue={monat || "alle"} disabled={!jahr} className="h-8 w-32 py-0 text-xs" aria-label="Monat">
+          <AutoSelect name="monat" defaultValue={monat || "alle"} disabled={!jahr || status.startsWith("MAHN")} className="h-8 w-32 py-0 text-xs" aria-label="Monat">
             <option value="alle">Ganzes Jahr</option>
             {MONATE.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
           </AutoSelect>
