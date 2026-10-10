@@ -9,7 +9,7 @@ import { Tabs, type TabItem } from "@/components/ui/tabs";
 import {
   ANGEBOT_STATUS_LABEL, ANGEBOT_STATUS_TONE, type AngebotStatus,
 } from "@/lib/angebot-shared";
-import { getAngebot, kundenPickerListe } from "@/lib/domain/angebot";
+import { angebotPositionCount, getAngebot, kundenPickerListe } from "@/lib/domain/angebot";
 import { listArtikel } from "@/lib/domain/artikel";
 import { bepreisbarePositionen, listPositionen } from "@/lib/domain/belege";
 import { kundeKurz } from "@/lib/adressen-shared";
@@ -29,6 +29,8 @@ import { ToAuftragButton } from "../to-auftrag-button";
 import { VorlagePicker } from "../../_components/vorlage-picker";
 import { SpecsEditor } from "../../specs-editor";
 import { KundeBlock } from "../../_components/kunde-block";
+import { BelegVerwalten, VerwerfenHinweis } from "../../_components/beleg-verwalten";
+import { archivAngebotAction, deleteAngebotAction } from "../actions";
 
 const TABS: readonly TabItem[] = [
   { key: "angebot", label: "Angebot" },
@@ -56,6 +58,7 @@ export default async function AngebotDetailPage({
   }
   const a = data.angebot;
   const kdName = a.kdFirma || [a.kdVorname, a.kdNachname].filter(Boolean).join(" ") || null;
+  const leer = !a.kundeId && (await angebotPositionCount(id)) === 0;
 
   return (
     <div className="space-y-5">
@@ -77,9 +80,12 @@ export default async function AngebotDetailPage({
             <a href={`/druck/angebot/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
             <a href={`/druck/angebot/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Angebot PDF</a>
             <ToAuftragButton id={a.id} disabled={a.status === "AUFTRAG"} />
+            <BelegVerwalten id={a.id} nummer={a.nummer} art="Angebot" archiviert={a.archiviert} hindernisse={[]} archivAction={archivAngebotAction} deleteAction={deleteAngebotAction} />
           </div>
         }
       />
+      {leer ? <VerwerfenHinweis id={id} art="Angebot" deleteAction={deleteAngebotAction} /> : null}
+      {a.archiviert ? <p className="rounded-lg bg-neutral-100 px-4 py-2 text-sm text-muted">Archiviert – in der Angebotsliste ausgeblendet.</p> : null}
       <Tabs items={TABS} active={active} basePath={`/angebote/${id}`} />
 
       {active === "angebot" ? (

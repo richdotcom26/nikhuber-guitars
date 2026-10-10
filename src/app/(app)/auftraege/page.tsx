@@ -15,7 +15,7 @@ export default async function AuftraegePage({
 }: {
   searchParams: Promise<{
     q?: string; status?: string; art?: string; modellgruppe?: string;
-    page?: string; sort?: string; dir?: string;
+    page?: string; sort?: string; dir?: string; archiv?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -26,11 +26,11 @@ export default async function AuftraegePage({
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(AUFTRAG_SORT), { key: "datum", dir: "desc" });
   const [{ rows, total, pageCount }, modellgruppen] = await Promise.all([
-    listAuftraege({ q, status, art, modellgruppe, page, sort }),
+    listAuftraege({ q, status, art, modellgruppe, page, sort, archiv: sp.archiv === "1" }),
     auftragModellgruppen(),
   ]);
 
-  const query = { q, status, art, modellgruppe, sort: sort.key, dir: sort.dir };
+  const query = { q, status, art, modellgruppe, sort: sort.key, dir: sort.dir, archiv: sp.archiv === "1" ? "1" : undefined };
   const withP = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries({ ...query, ...patch })) if (v) p.set(k, v);
@@ -53,6 +53,9 @@ export default async function AuftraegePage({
           {modellgruppen.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </Select>
         <Button size="sm" variant="outline" type="submit">Filtern</Button>
+        <label className="flex items-center gap-1.5 text-xs text-muted">
+          <input type="checkbox" name="archiv" value="1" defaultChecked={sp.archiv === "1"} /> archivierte anzeigen
+        </label>
         {(q || modellgruppe) ? (
           <Link href={withP({ q: undefined, modellgruppe: undefined })} className={buttonClasses("ghost", "sm")}>
             × Filter

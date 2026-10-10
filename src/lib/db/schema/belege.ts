@@ -80,6 +80,7 @@ export const angebot = pgTable("angebot", {
     .references((): AnyPgColumn => auftrag.id),             // echte FK statt Freitext (7m)
   positionenAnzeigen: boolean("positionen_anzeigen").default(false).notNull(),
   schreibschutz: boolean("schreibschutz").default(false).notNull(),
+  archiviert: boolean("archiviert").default(false).notNull(),   // ausgeblendet (Liste), nicht gelöscht
   ...auditCols,
 }, (t) => ({ nummerIdx: index("angebot_nummer_idx").on(t.nummer) }));
 
@@ -95,6 +96,7 @@ export const auftrag = pgTable("auftrag", {
   besonderes: text("besonderes"),                          // ex GF (nur 1 Satz) → Freitext/Enum, TODO
   spezialauftrag: text("spezialauftrag"),                  // TODO: Enum?
   statusBemerkung: text("status_bemerkung"),               // Bemerkung im Status-Block (gelb, wenn befüllt)
+  archiviert: boolean("archiviert").default(false).notNull(),   // ausgeblendet (Liste), nicht gelöscht
   produktionsort: produktionsortEnum("produktionsort"),
 
   bauplandatum: date("bauplandatum"),                      // Monatserster (7i)

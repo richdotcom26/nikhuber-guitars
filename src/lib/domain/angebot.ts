@@ -3,7 +3,8 @@ import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
-import { angebot, artikel, belegPosition, kunde } from "@/lib/db/schema";
+import { anhang, angebot, artikel, auftrag, belegPosition, kunde } from "@/lib/db/schema";
+import { ANHANG_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import { ANGEBOT_STATUS_VALUES as STATUS_VALUES, type AngebotStatus } from "@/lib/angebot-shared";
 import { allocateNummer, kdSnapshot } from "./belege";
 import { assertRolle, requireUser } from "./context";
@@ -26,12 +27,13 @@ export const ANGEBOT_SORT: Record<string, unknown> = {
 };
 
 export async function listAngebote(
-  params: { q?: string; status?: string; page?: number; sort?: SortSpec } = {},
+  params: { q?: string; status?: string; page?: number; sort?: SortSpec; archiv?: boolean } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
 
-  const filters = [];
+  // archivierte nur auf Wunsch (Häkchen „archivierte anzeigen“)
+  const filters = [eq(angebot.archiviert, !!params.archiv)];
   if (params.status && (STATUS_VALUES as readonly string[]).includes(params.status)) {
     filters.push(eq(angebot.status, params.status as AngebotStatus));
   }
@@ -174,4 +176,29 @@ export async function kundenPickerListe(q: string, limit = 30) {
     .where(and(...filters))
     .orderBy(asc(sql`lower(coalesce(${kunde.firma}, ${kunde.nachname}, ${kunde.kurzname}, ''))`))
     .limit(limit);
+}
+
+/**
+ * Angebot endgültig löschen (inkl. Positionen, Specs, Anhänge). Ein daraus entstandener Auftrag bleibt
+ * erhalten — nur sein Verweis aufs Angebot wird entfernt. Angebote sind keine buchungspflichtigen Belege.
+ */
+export async function deleteAngebot(id: string): Promise<{ nummer: string | null }> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const [a] = await db.select({ nummer: angebot.nummer }).from(angebot).where(eq(angebot.id, id));
+  if (!a) throw new DomainError("NOT_FOUND", "Angebot nicht gefunden.");
+  const dateien = await db.select({ pfad: anhang.pfad }).from(anhang).where(eq(anhang.angebotId, id));
+  await db.transaction(async (tx) => {
+    await tx.update(auftrag).set({ angebotId: null }).where(eq(auftrag.angebotId, id));
+    await tx.delete(angebot).where(eq(angebot.id, id)); // Positionen, Specs, Anhang-Zeilen: ON DELETE CASCADE
+  });
+  const pfade = dateien.map((d) => d.pfad).filter((p): p is string => !!p);
+  if (pfade.length) await supabaseAdmin().storage.from(ANHANG_BUCKET).remove(pfade).catch(() => {});
+  return { nummer: a.nummer };
+}
+
+export async function setAngebotArchiviert(id: string, archiviert: boolean) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  await db.update(angebot).set({ archiviert, updatedAt: new Date(), updatedBy: user.id }).where(eq(angebot.id, id));
 }

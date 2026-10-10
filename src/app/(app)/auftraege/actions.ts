@@ -12,7 +12,7 @@ import {
 } from "@/lib/domain/arbeitsschritt";
 import {
   auftragKopfSchema, changeAuftragStatus, setAuftragStatusBemerkung, convertAuftragsart, createAuftrag,
-  refreshFortschritt, setAuftragKunde, updateAuftragKopf,
+  refreshFortschritt, setAuftragKunde, updateAuftragKopf, setAuftragArchiviert, deleteAuftrag,
 } from "@/lib/domain/auftrag";
 import {
   addPorto, addPosition, applyModellvorlage, deleteAllePositionen, deletePosition, generatePositionen,
@@ -367,4 +367,27 @@ export async function statusBemerkungAction(_p: ActionState, fd: FormData): Prom
     rev(id);
     return ok("Bemerkung gespeichert.");
   });
+}
+
+export async function archivAuftragAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const archiv = fd.get("archiv") === "1";
+    await setAuftragArchiviert(id, archiv);
+    rev(id);
+    revalidatePath("/auftraege");
+    return ok(archiv ? "Auftrag archiviert (in der Liste ausgeblendet)." : "Auftrag wiederhergestellt.");
+  });
+}
+
+export async function deleteAuftragAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let weg = false;
+  const res = await runAction(async () => {
+    const { nummer } = await deleteAuftrag(String(fd.get("id") ?? ""));
+    revalidatePath("/auftraege");
+    weg = true;
+    return ok(`Auftrag ${nummer ?? ""} gelöscht.`);
+  });
+  if (weg) redirect("/auftraege");
+  return res;
 }

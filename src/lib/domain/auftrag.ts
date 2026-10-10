@@ -5,8 +5,10 @@ import type { SortSpec } from "@/lib/table-sort";
 import { db } from "@/lib/db";
 import { orderByFor } from "./_sort";
 import {
-  arbeitsschritt, artikel, auftrag, belegPosition, kunde, modellgruppe, rechnung,
+  angebot, anhang, arbeitsschritt, artikel, auftrag, belegPosition, heStichtagPosition, holzInventar, kunde,
+  lagerbewegung, modellgruppe, rechnung, seriennummer, verleih,
 } from "@/lib/db/schema";
+import { ANHANG_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import {
   AUFTRAG_STATUS_VALUES as STATUS_VALUES, AUFTRAGSART_VALUES as ART_VALUES, BESONDERES_VALUES,
   SPEZIALAUFTRAG_VALUES, type Auftragsart, type AuftragStatus,
@@ -51,13 +53,14 @@ export async function auftragModellgruppen() {
 export async function listAuftraege(
   params: {
     q?: string; status?: string; art?: string; modellgruppe?: string;
-    page?: number; sort?: SortSpec;
+    page?: number; sort?: SortSpec; archiv?: boolean;
   } = {},
 ) {
   const pageSize = 50;
   const page = Math.max(params.page ?? 1, 1);
   const modell = artikel;
-  const filters = [];
+  // archivierte nur auf Wunsch (Häkchen „archivierte anzeigen“)
+  const filters = [eq(auftrag.archiviert, !!params.archiv)];
   if (params.status && (STATUS_VALUES as readonly string[]).includes(params.status)) {
     filters.push(eq(auftrag.status, params.status as AuftragStatus));
   }
@@ -383,3 +386,61 @@ export async function auftragHatRechnung(id: string): Promise<boolean> {
   const [r] = await db.select({ id: rechnung.id }).from(rechnung).where(eq(rechnung.auftragId, id)).limit(1);
   return !!r;
 }
+
+/* ------------------------------------------------------- Archivieren / Löschen */
+
+export async function setAuftragArchiviert(id: string, archiviert: boolean) {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  await db.update(auftrag).set({ archiviert, updatedAt: new Date(), updatedBy: user.id }).where(eq(auftrag.id, id));
+}
+
+/** Gründe, die gegen das Löschen sprechen (leer = Löschen erlaubt) — dann stattdessen archivieren. */
+export async function auftragLoeschHindernisse(id: string): Promise<string[]> {
+  await requireUser();
+  const cnt = { n: sql<number>`count(*)::int` };
+  const [a] = await db.select({ sn: auftrag.seriennummerId }).from(auftrag).where(eq(auftrag.id, id));
+  if (!a) return ["Auftrag nicht gefunden."];
+  const [[re], [as], [vl], [lb], [he]] = await Promise.all([
+    db.select(cnt).from(rechnung).where(eq(rechnung.auftragId, id)),
+    db.select(cnt).from(arbeitsschritt).where(and(eq(arbeitsschritt.auftragId, id), sql`${arbeitsschritt.status} <> 'OFFEN'`)),
+    db.select(cnt).from(verleih).where(eq(verleih.auftragId, id)),
+    db.select(cnt).from(lagerbewegung).where(eq(lagerbewegung.auftragId, id)),
+    db.select(cnt).from(heStichtagPosition).where(eq(heStichtagPosition.auftragId, id)),
+  ]);
+  const g: string[] = [];
+  if (re.n) g.push("Es gibt Rechnungen (auch Entwürfe) zum Auftrag.");
+  if (a.sn) g.push("Eine Seriennummer ist vergeben.");
+  if (as.n) g.push("Arbeitsschritte sind bereits erledigt oder begonnen.");
+  if (vl.n) g.push("Der Auftrag wird im Verleih verwendet.");
+  if (lb.n) g.push("Es gibt Lagerbewegungen zum Auftrag.");
+  if (he.n) g.push("Der Auftrag steht in einem festgeschriebenen HE-Stichtag.");
+  return g;
+}
+
+/** Auftrag endgültig löschen — nur ohne Hindernisse. Positionen, Specs, Arbeitsschritte und Anhänge gehen mit. */
+export async function deleteAuftrag(id: string): Promise<{ nummer: string | null }> {
+  const user = await requireUser();
+  assertRolle(user, "ADMIN", "BUERO");
+  const gruende = await auftragLoeschHindernisse(id);
+  if (gruende.length) {
+    throw new DomainError("STATE", `Löschen nicht möglich: ${gruende.join(" ")} Bitte stattdessen archivieren.`);
+  }
+  const [a] = await db.select({ nummer: auftrag.nummer, angebotId: auftrag.angebotId }).from(auftrag).where(eq(auftrag.id, id));
+  const dateien = await db.select({ pfad: anhang.pfad }).from(anhang).where(eq(anhang.auftragId, id));
+  await db.transaction(async (tx) => {
+    await tx.update(holzInventar).set({ reserviertFuerAuftragId: null }).where(eq(holzInventar.reserviertFuerAuftragId, id));
+    await tx.update(angebot).set({ erzeugtAusAuftragId: null }).where(eq(angebot.erzeugtAusAuftragId, id));
+    await tx.update(seriennummer).set({ auftragId: null }).where(eq(seriennummer.auftragId, id));
+    // Angebot, aus dem der Auftrag entstand, wieder auf „versendet/offen“
+    if (a?.angebotId) {
+      await tx.update(angebot).set({ status: "VERSENDET_OFFEN" })
+        .where(and(eq(angebot.id, a.angebotId), eq(angebot.status, "AUFTRAG")));
+    }
+    await tx.delete(auftrag).where(eq(auftrag.id, id));
+  });
+  const pfade = dateien.map((d) => d.pfad).filter((p): p is string => !!p);
+  if (pfade.length) await supabaseAdmin().storage.from(ANHANG_BUCKET).remove(pfade).catch(() => {});
+  return { nummer: a?.nummer ?? null };
+}
+

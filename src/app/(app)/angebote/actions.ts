@@ -6,7 +6,7 @@ import {
   type ActionState, fail, ok, parseForm, runAction,
 } from "@/lib/domain/action-state";
 import {
-  angebotKopfSchema, createAngebot, setAngebotKunde, updateAngebotKopf,
+  angebotKopfSchema, createAngebot, deleteAngebot, setAngebotArchiviert, setAngebotKunde, updateAngebotKopf,
 } from "@/lib/domain/angebot";
 import {
   addPorto, addPosition, angebotToAuftrag, applyModellvorlage, deleteAllePositionen,
@@ -188,5 +188,28 @@ export async function setVersandAction(_p: ActionState, fd: FormData): Promise<A
     await setVersand("angebot", id, { betrag, bezeichnung: String(fd.get("bezeichnung") ?? "") || null });
     rev(id);
     return ok(betrag ? "Versand gespeichert." : "Versand entfernt.");
+  });
+}
+
+export async function deleteAngebotAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let weg = false;
+  const res = await runAction(async () => {
+    const { nummer } = await deleteAngebot(String(fd.get("id") ?? ""));
+    revalidatePath("/angebote");
+    weg = true;
+    return ok(`Angebot ${nummer ?? ""} gelöscht.`);
+  });
+  if (weg) redirect("/angebote");
+  return res;
+}
+
+export async function archivAngebotAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const id = String(fd.get("id") ?? "");
+    const archiv = fd.get("archiv") === "1";
+    await setAngebotArchiviert(id, archiv);
+    rev(id);
+    revalidatePath("/angebote");
+    return ok(archiv ? "Angebot archiviert (in der Liste ausgeblendet)." : "Angebot wiederhergestellt.");
   });
 }

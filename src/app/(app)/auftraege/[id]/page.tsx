@@ -11,7 +11,9 @@ import {
   AUFTRAGSART_LABEL, BESONDERES, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
 import { listArtikel } from "@/lib/domain/artikel";
-import { auftragHatRechnung, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
+import { auftragHatRechnung, auftragLoeschHindernisse, auftragPositionCount, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
+import { BelegVerwalten, VerwerfenHinweis } from "../../_components/beleg-verwalten";
+import { archivAuftragAction, deleteAuftragAction } from "../actions";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
 import { bepreisbarePositionen, listPositionen } from "@/lib/domain/belege";
 import { kundeKurz } from "@/lib/adressen-shared";
@@ -78,6 +80,8 @@ export default async function AuftragDetailPage({
   }
   const a = data.auftrag;
   const hatRechnung = await auftragHatRechnung(id);
+  const loeschHindernisse = await auftragLoeschHindernisse(id);
+  const leer = !a.kundeId && loeschHindernisse.length === 0 && (await auftragPositionCount(id)) === 0;
   const kdName = a.kdFirma || [a.kdVorname, a.kdNachname].filter(Boolean).join(" ") || null;
 
   return (
@@ -112,9 +116,12 @@ export default async function AuftragDetailPage({
             <a href={`/druck/auftrag/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Vorschau</a>
             <a href={`/druck/auftrag/${id}/pdf`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>AB PDF</a>
             <a href={`/druck/lieferschein/${id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}>Lieferschein</a>
+            <BelegVerwalten id={id} nummer={a.nummer} art="Auftrag" archiviert={a.archiviert} hindernisse={loeschHindernisse} archivAction={archivAuftragAction} deleteAction={deleteAuftragAction} />
           </div>
         }
       />
+      {leer ? <VerwerfenHinweis id={id} art="Auftrag" deleteAction={deleteAuftragAction} /> : null}
+      {a.archiviert ? <p className="rounded-lg bg-neutral-100 px-4 py-2 text-sm text-muted">Archiviert – in der Auftragsliste ausgeblendet.</p> : null}
       <Tabs items={TABS} active={active} basePath={`/auftraege/${id}`} />
 
       {active === "auftrag" ? (

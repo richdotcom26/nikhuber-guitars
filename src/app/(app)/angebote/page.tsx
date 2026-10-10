@@ -11,16 +11,16 @@ import { CreateAngebotButton } from "./create-angebot-button";
 export default async function AngebotePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; sort?: string; dir?: string; archiv?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "";
   const page = Number(sp.page) || 1;
   const sort = parseSort(sp, Object.keys(ANGEBOT_SORT), { key: "datum", dir: "desc" });
-  const { rows, total, pageCount } = await listAngebote({ q, status, page, sort });
+  const { rows, total, pageCount } = await listAngebote({ q, status, page, sort, archiv: sp.archiv === "1" });
 
-  const query = { q, status, sort: sort.key, dir: sort.dir };
+  const query = { q, status, sort: sort.key, dir: sort.dir, archiv: sp.archiv === "1" ? "1" : undefined };
   const withP = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries({ ...query, ...patch })) if (v) p.set(k, v);
@@ -36,6 +36,9 @@ export default async function AngebotePage({
         {status ? <input type="hidden" name="status" value={status} /> : null}
         <Input name="q" defaultValue={q} placeholder="Suche Nr / Kunde" className="h-8 w-64" />
         <Button size="sm" variant="outline" type="submit">Suchen</Button>
+        <label className="flex items-center gap-1.5 text-xs text-muted">
+          <input type="checkbox" name="archiv" value="1" defaultChecked={sp.archiv === "1"} /> archivierte anzeigen
+        </label>
       </form>
 
       <div className="mb-4 flex flex-wrap gap-1.5">
