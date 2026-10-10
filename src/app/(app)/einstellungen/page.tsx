@@ -29,7 +29,6 @@ const ALLE_TABS: readonly (TabItem & { admin?: boolean })[] = [
   { key: "firma", label: "Firma" },
   { key: "benutzer", label: "Benutzer", admin: true },
   { key: "buchhaltung", label: "Buchhaltung" },
-  { key: "zaehler", label: "Belegnummern" },
   { key: "zahlungen", label: "Zahlungsbedingungen" },
   { key: "staaten", label: "Staaten" },
   { key: "textbausteine", label: "Textbausteine" },
@@ -53,11 +52,17 @@ export default async function EinstellungenPage({
     <div>
       <PageHeader
         title="Einstellungen"
-        description="Firmenstammdaten, Buchhaltung, Belegnummern, Zahlungsbedingungen, Staaten, Textbausteine, Modellgruppen, Arbeitsschritte und Themes."
+        description="Firmenstammdaten mit Belegnummern, Buchhaltung, Zahlungsbedingungen, Staaten, Textbausteine, Modellgruppen, Arbeitsschritte und Themes."
       />
       <Tabs items={TABS} active={active} basePath="/einstellungen" className="mb-5" />
 
-      {active === "firma" && <FirmaForm setting={await getFirmaSetting()} />}
+      {active === "firma" && (
+        <div className="space-y-5">
+          <FirmaForm setting={await getFirmaSetting()} />
+          {/* Belegnummern (früher eigener Reiter) ganz unten unter Firma */}
+          <ZaehlerPanel rows={await listZaehler()} />
+        </div>
+      )}
       {active === "zahlungen" && <ZahlungenPanel rows={await listZahlungsbedingungen()} />}
       {active === "staaten" && (
         <StaatenPanel
@@ -68,7 +73,6 @@ export default async function EinstellungenPage({
       )}
       {active === "modellgruppen" && <ModellgruppenPanel rows={await listModellgruppen()} />}
       {active === "arbeitsschritte" && <ArbeitsschrittePanel rows={await listArbeitsschrittVorrat()} />}
-      {active === "zaehler" && <ZaehlerPanel rows={await listZaehler()} />}
       {active === "textbausteine" && <TextbausteinePanel rows={await listMailVorlagen()} />}
       {active === "buchhaltung" && (
         <div className="space-y-5">
