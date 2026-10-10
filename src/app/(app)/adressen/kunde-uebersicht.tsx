@@ -111,7 +111,10 @@ export async function KundeUebersicht({ kundeId }: { kundeId: string }) {
               </Link>
             </Td>
             <Td muted>{formatDate(r.datum)}</Td>
-            <Td>{RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}</Td>
+            <Td>
+              {RG_BELEGART_LABEL[r.belegart as RgBelegart] ?? r.belegart}
+              {r.serNr ? <span className="ml-1.5 text-[11px] text-muted">#{r.serNr}</span> : null}
+            </Td>
             <Td><Badge tone={RG_STATUS_TONE[r.status as RgStatus] ?? "neutral"}>{RG_STATUS_LABEL[r.status as RgStatus] ?? r.status}</Badge></Td>
             <Td right>{r.netto != null ? formatMoney(r.netto, wg(r.waehrung)) : "–"}</Td>
             <Td muted>{r.zahlungsdatum ? formatDate(r.zahlungsdatum) : "–"}</Td>

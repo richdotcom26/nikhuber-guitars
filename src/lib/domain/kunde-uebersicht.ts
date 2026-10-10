@@ -40,8 +40,10 @@ export async function kundeUebersicht(kundeId: string) {
     db.select({
       id: rechnung.id, nummer: rechnung.nummer, datum: rechnung.rechnungsdatum, status: rechnung.status,
       belegart: rechnung.belegart, waehrung: rechnung.kdWaehrung, netto: RG_NETTO,
-      zahlungsdatum: rechnung.zahlungsdatum,
+      zahlungsdatum: rechnung.zahlungsdatum, serNr: seriennummer.anzeige,
     }).from(rechnung)
+      .leftJoin(auftrag, eq(auftrag.id, rechnung.auftragId))
+      .leftJoin(seriennummer, eq(seriennummer.id, auftrag.seriennummerId))
       .where(eq(rechnung.kundeId, kundeId))
       .orderBy(sql`${rechnung.rechnungsdatum} desc nulls first`, desc(rechnung.createdAt)),
     usdEurKurs(),
