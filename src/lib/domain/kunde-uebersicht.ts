@@ -28,6 +28,10 @@ export async function kundeUebersicht(kundeId: string) {
       id: auftrag.id, nummer: auftrag.nummer, datum: auftrag.auftragsdatum, status: auftrag.status,
       art: auftrag.auftragsart, waehrung: auftrag.kdWaehrung, modell: artikel.nameKurz,
       umsatz: auftrag.umsatzerwartung, serNr: seriennummer.anzeige,
+      // abgerechneter Umsatz (netto, gebuchte Rechnungen ohne Anzahlungsrechnungen) — für abgeschlossene Aufträge,
+      // deren Umsatzerwartung aus Ninox leer ist
+      berechnet: sql<string | null>`(select sum(coalesce(r.summe_netto, (select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = r.id)))
+        from rechnung r where r.auftrag_id = ${auftrag.id} and r.nummer is not null and r.status <> 'ENTWURF' and r.belegart <> 'ANZAHLUNGSRECHNUNG')`,
     }).from(auftrag)
       .leftJoin(artikel, eq(artikel.id, auftrag.modellArtikelId))
       .leftJoin(seriennummer, eq(seriennummer.id, auftrag.seriennummerId))

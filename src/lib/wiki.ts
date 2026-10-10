@@ -238,7 +238,7 @@ export const WIKI: WikiArtikel[] = [
         "**Statistik:** Umsatz gesamt und **je Jahr** (netto, EUR, als Balken; gebuchte Rechnungen ohne Anzahlungsrechnungen, Stornos abgezogen, USD zum aktuellen Kurs umgerechnet).",
         "**Tendenz:** Umsatz der letzten 2 Jahre (inkl. laufendem) gegenüber den 2 Jahren davor – steigend (> +15 %), fallend (< −15 %), gleichbleibend, neu aktiv oder inaktiv.",
         "**Ø Zahlungsdauer:** Tage vom Rechnungsdatum bis zur Zahlung (bezahlte Rechnungen). Dazu letzte Aktivität, Kunde seit, Anzahl Belege, Abschlussquote Angebot → Auftrag und offene Rechnungen.",
-        "**Tabellen** mit allen Angeboten, Aufträgen und Rechnungen des Kunden (neueste oben, Nummern anklickbar).",
+        "**Tabellen** mit allen Angeboten, Aufträgen (Modell mit #Seriennummer) und Rechnungen des Kunden (neueste oben, Nummern anklickbar). Spalte **Umsatz** bei Aufträgen: Umsatzerwartung; bei abgeschlossenen Aufträgen (ohne Umsatzerwartung) der abgerechnete Nettobetrag der Rechnungen.",
       ] },
     ],
   },
