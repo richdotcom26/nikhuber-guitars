@@ -228,6 +228,20 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "mail-testsperre",
+    bereich: "Allgemein",
+    titel: "Testphase: E-Mail-Versand nur an freigegebene Adressen",
+    bloecke: [
+      { p: "Während wir mit den echten Daten testen, verschickt die App **keine Mails an Kunden oder Externe**. Erlaubt sind nur: alle Adressen **@nikhuber-guitars.com**, rainer@wuelbeck.de, rw@wuelbeck.de, johannes.spiegelhoff@gmail.com." },
+      { ul: [
+        "Gilt für alle Mails der App (Rechnung, Angebot, AB, Mahnung, Verleih, DATEV-Export, Passwort-Link …). Enthält eine Mail auch nur einen gesperrten Empfänger (An/CC/BCC), wird sie **gar nicht** gesendet; der Mailversand zeigt „Testphase: Versand an … gesperrt“.",
+        "Die E-Mail-Adressen in den Datensätzen bleiben unverändert.",
+        "Zum Testen eines Versands vorübergehend die eigene Adresse als Empfänger eintragen.",
+        "Echtbetrieb: in Vercel die Umgebungsvariable **MAIL_FREIGABE=*** setzen (oder eine eigene Liste, Komma-getrennt) und neu deployen.",
+      ] },
+    ],
+  },
+  {
     id: "navigation",
     bereich: "Allgemein",
     titel: "Navigation: Hauptregister, „Weitere“, „Verwaltung“, Einstellungen",
