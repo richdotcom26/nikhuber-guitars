@@ -11,7 +11,7 @@ import {
   AUFTRAGSART_LABEL, BESONDERES, fortschrittFarbe,
 } from "@/lib/auftrag-shared";
 import { listArtikel } from "@/lib/domain/artikel";
-import { auftragHatRechnung, auftragLoeschHindernisse, auftragPositionCount, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
+import { auftragAngezahlt, auftragHatRechnung, auftragLoeschHindernisse, auftragPositionCount, getAuftrag, kundenPickerListe } from "@/lib/domain/auftrag";
 import { BelegVerwalten, VerwerfenHinweis } from "../../_components/beleg-verwalten";
 import { archivAuftragAction, deleteAuftragAction } from "../actions";
 import { listArbeitsschritte } from "@/lib/domain/arbeitsschritt";
@@ -184,7 +184,7 @@ export default async function AuftragDetailPage({
             <Card>
               <CardHeader><CardTitle>Status</CardTitle></CardHeader>
               <CardContent>
-                <StatusChanger id={id} status={a.status} />
+                <StatusChanger id={id} status={a.status} angezahlt={await auftragAngezahlt(id)} />
                 <StatusBemerkung key={`sb:${a.statusBemerkung ?? ""}`} id={id} value={a.statusBemerkung ?? ""} />
               </CardContent>
             </Card>
@@ -201,7 +201,6 @@ export default async function AuftragDetailPage({
                     spezialauftrag: a.spezialauftrag,
                     bauplandatum: a.bauplandatum,
                     umsatzerwartung: a.umsatzerwartung,
-                    anzahlung: a.anzahlung,
                     lieferdatum: a.lieferdatum,
                   }}
                 />

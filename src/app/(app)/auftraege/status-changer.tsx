@@ -22,7 +22,7 @@ const ALLOWED: Record<AuftragStatus, AuftragStatus[]> = {
   STORNIERT: ["BACKORDER"],
 };
 
-export function StatusChanger({ id, status }: { id: string; status: string }) {
+export function StatusChanger({ id, status, angezahlt }: { id: string; status: string; angezahlt?: string | null }) {
   const [state, action] = useActionState(changeStatusAction, IDLE);
   const ziele = ALLOWED[status as AuftragStatus] ?? [];
 
@@ -33,6 +33,8 @@ export function StatusChanger({ id, status }: { id: string; status: string }) {
         <Badge tone={AUFTRAG_STATUS_TONE[status as AuftragStatus] ?? "neutral"}>
           {AUFTRAG_STATUS_LABEL[status as AuftragStatus] ?? status}
         </Badge>
+        {/* bezahlte Anzahlungsrechnung vorhanden (Maus darüber: Nummer, Betrag, Datum) */}
+        {angezahlt ? <Badge tone="green" title={angezahlt}>angezahlt</Badge> : null}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {ziele.map((z) => (

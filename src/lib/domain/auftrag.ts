@@ -25,7 +25,7 @@ import { DomainError } from "./errors";
 export {
   AUFTRAG_STATUS, AUFTRAG_STATUS_LABEL, AUFTRAGSART, AUFTRAGSART_LABEL,
 } from "@/lib/auftrag-shared";
-import { dezimal, heuteBerlin, jahrBerlin } from "@/lib/utils";
+import { dezimal, formatDate, formatMoney, heuteBerlin, jahrBerlin } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------- liste */
 
@@ -290,13 +290,6 @@ const dateOrNull = z.preprocess(
   (v) => (v === "" || v == null ? null : v),
   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Datum YYYY-MM-DD").nullable(),
 );
-const decimalOrNull = z.preprocess(
-  (v) => {
-    if (v == null || (typeof v === "string" && v.trim() === "")) return null;
-    return typeof v === "string" ? dezimal(v).trim() : v;
-  },
-  z.coerce.number().transform((n) => n.toString()).nullable(),
-);
 
 export const auftragKopfSchema = z.object({
   auftragsart: z.enum(ART_VALUES),
@@ -309,7 +302,7 @@ export const auftragKopfSchema = z.object({
   spezialauftrag: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(SPEZIALAUFTRAG_VALUES).nullable()),
   bauplandatum: dateOrNull,
   lieferdatum: dateOrNull,
-  anzahlung: decimalOrNull,
+  // anzahlung: Altfeld aus Ninox – nicht mehr im Formular (Anzahlungen laufen über Anzahlungsrechnungen)
 });
 export type AuftragKopfInput = z.infer<typeof auftragKopfSchema>;
 
@@ -444,3 +437,19 @@ export async function deleteAuftrag(id: string): Promise<{ nummer: string | null
   return { nummer: a?.nummer ?? null };
 }
 
+
+/** Bezahlte Anzahlungsrechnung(en) zum Auftrag → Kurztext für das Kennzeichen „angezahlt“ (null = keine). */
+export async function auftragAngezahlt(id: string): Promise<string | null> {
+  await requireUser();
+  const rows = await db
+    .select({ nummer: rechnung.nummer, brutto: rechnung.summeBrutto, zahlbetrag: rechnung.zahlbetrag, waehrung: rechnung.kdWaehrung, datum: rechnung.zahlungsdatum })
+    .from(rechnung)
+    .where(and(
+      eq(rechnung.auftragId, id),
+      eq(rechnung.belegart, "ANZAHLUNGSRECHNUNG"),
+      sql`${rechnung.status} <> 'STORNIERT'`,
+      sql`(${rechnung.status} = 'BEZAHLT' or ${rechnung.zahlungsdatum} is not null)`,
+    ));
+  if (!rows.length) return null;
+  return rows.map((r) => `${r.nummer}: ${formatMoney(r.zahlbetrag ?? r.brutto, r.waehrung === "USD" ? "USD" : "EUR")}${r.datum ? ` am ${formatDate(r.datum)}` : ""}`).join("\n");
+}

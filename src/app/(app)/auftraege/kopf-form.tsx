@@ -29,7 +29,6 @@ export interface KopfValues {
   spezialauftrag: string | null;
   bauplandatum: string | null;
   umsatzerwartung: string | null;
-  anzahlung: string | null;
   lieferdatum: string | null;
 }
 
@@ -103,9 +102,6 @@ export function KopfForm({ v }: { v: KopfValues }) {
         </Field>
         <Field label="Lieferdatum" htmlFor="lieferdatum" hint="Erscheint auf Lieferschein und Rechnung.">
           <Input id="lieferdatum" name="lieferdatum" type="date" defaultValue={v.lieferdatum ?? ""} />
-        </Field>
-        <Field label="Anzahlung" htmlFor="anzahlung">
-          <Input id="anzahlung" name="anzahlung" inputMode="decimal" defaultValue={formatBetrag(v.anzahlung)} />
         </Field>
         <Field label="Besonderes" htmlFor="besonderes">
           <BesonderesSelect wert={v.besonderes} />
