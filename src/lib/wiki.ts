@@ -1,5 +1,5 @@
 /**
- * Inhalte des Wikis (Einstellungen → Wiki). Neue Features hier dokumentieren.
+ * Inhalte des Wikis (Wiki (Hauptregister)). Neue Features hier dokumentieren.
  * Blöcke: Absatz (`p`), Liste (`ul`), Hinweis (`hinweis`). `**fett**` wird hervorgehoben.
  */
 
@@ -233,7 +233,7 @@ export const WIKI: WikiArtikel[] = [
     titel: "Navigation: Hauptregister, „Weitere“, „Verwaltung“, Einstellungen",
     bloecke: [
       { ul: [
-        "Oberste Ebene: **ToDo · Adressen · Angebote · Aufträge · Rechnungen**.",
+        "Oberste Ebene: **ToDo · Adressen · Angebote · Aufträge · Rechnungen · Wiki**.",
         "**Weitere ▾** (Klick öffnet): SerNo #, Artikel, Modelle, Holzbestand, Tickets.",
         "**Verwaltung ▾**: Verleih-/Testgitarren, Bauplanung, Betriebsmittel, Report Monat, Mailversand.",
         "Ist man in einem Unterregister, zeigt der Knopf es an (z. B. „Weitere: Artikel“).",

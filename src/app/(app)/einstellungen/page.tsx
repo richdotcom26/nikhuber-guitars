@@ -18,7 +18,6 @@ import { listMailVorlagen } from "@/lib/domain/textbausteine";
 import { listThemes } from "@/lib/domain/theme";
 import { TextbausteinePanel } from "./textbausteine-panel";
 import { ThemesPanel } from "./themes-panel";
-import { WikiPanel } from "./wiki-panel";
 import { MahnwesenPanel } from "./mahnwesen-panel";
 import { DatevPanel } from "./datev-panel";
 import { mahnKonfig } from "@/lib/domain/mahnung";
@@ -38,7 +37,6 @@ const ALLE_TABS: readonly (TabItem & { admin?: boolean })[] = [
   { key: "arbeitsschritte", label: "Arbeitsschritte" },
   { key: "themes", label: "Themes" },
   { key: "arbeitszeit", label: "Arbeitszeit", admin: true },
-  { key: "wiki", label: "Wiki" },
 ];
 
 export default async function EinstellungenPage({
@@ -55,7 +53,7 @@ export default async function EinstellungenPage({
     <div>
       <PageHeader
         title="Einstellungen"
-        description="Firmenstammdaten, Zahlungsbedingungen, Staaten, Modellgruppen, Arbeitsschritte, Belegnummernkreise und das Wiki mit Erklärungen zu allen Funktionen."
+        description="Firmenstammdaten, Buchhaltung, Belegnummern, Zahlungsbedingungen, Staaten, Textbausteine, Modellgruppen, Arbeitsschritte und Themes."
       />
       <Tabs items={TABS} active={active} basePath="/einstellungen" className="mb-5" />
 
@@ -84,7 +82,6 @@ export default async function EinstellungenPage({
           istAdmin={user.rolle === "ADMIN"}
         />
       )}
-      {active === "wiki" && <WikiPanel />}
       {active === "arbeitszeit" && user.rolle === "ADMIN" && (
         <ArbeitszeitPanel
           rows={(await listArbeitstage()).map((r) => ({

@@ -5,6 +5,7 @@ export const NAV = [
   { href: "/angebote", label: "Angebote" },
   { href: "/auftraege", label: "Aufträge" },
   { href: "/rechnungen", label: "Rechnungen" },
+  { href: "/wiki", label: "Wiki" },
 ] as const;
 
 /** Untermenüs (Aufklapp-Register neben der obersten Ebene). */
