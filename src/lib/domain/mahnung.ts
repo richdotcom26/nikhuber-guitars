@@ -17,6 +17,12 @@ import { getFirmaSetting } from "./stammdaten";
 
 const POS_NETTO = sql`(select coalesce(sum(p.gesamtpreis) filter (where p.re_relevant), sum(p.gesamtpreis)) from beleg_position p where p.rechnung_id = ${rechnung.id})`;
 
+/**
+ * Kunden, die nie gemahnt werden (interne Rechnungen „Testfirma Muster“, Nr. 11000).
+ * TODO nach der Produktiv-Übernahme: interne Rechnungen anders organisieren, dann Liste prüfen.
+ */
+const NIE_MAHNEN_KUNDENNR = ["11000"];
+
 export const MAHN_STUFE_LABEL: Record<number, string> = {
   1: "1. Erinnerung", 2: "2. Erinnerung", 3: "Letzte Mahnung",
 };
@@ -72,6 +78,7 @@ export async function listMahnvorschlaege(opts: { alle?: boolean } = {}) {
       inArray(rechnung.belegart, ["RECHNUNG", "ANZAHLUNGSRECHNUNG"]),
       isNull(rechnung.zahlungsdatum),
       sql`${rechnung.rechnungsdatum} is not null`,
+      sql`coalesce(${kunde.kundenNr}, '') not in (${sql.join(NIE_MAHNEN_KUNDENNR.map((n) => sql`${n}`), sql`, `)})`,
     ))
     .orderBy(rechnung.rechnungsdatum);
 
