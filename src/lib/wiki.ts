@@ -228,6 +228,20 @@ export const WIKI: WikiArtikel[] = [
     ],
   },
   {
+    id: "navigation",
+    bereich: "Allgemein",
+    titel: "Navigation: Hauptregister, „Weitere“, „Verwaltung“, Einstellungen",
+    bloecke: [
+      { ul: [
+        "Oberste Ebene: **ToDo · Adressen · Angebote · Aufträge · Rechnungen**.",
+        "**Weitere ▾** (Klick öffnet): SerNo #, Artikel, Modelle, Holzbestand, Tickets.",
+        "**Verwaltung ▾**: Verleih-/Testgitarren, Bauplanung, Betriebsmittel, Report Monat, Mailversand.",
+        "Ist man in einem Unterregister, zeigt der Knopf es an (z. B. „Weitere: Artikel“).",
+        "**Einstellungen** = Zahnrad-Symbol oben rechts neben der Anmeldung.",
+      ] },
+    ],
+  },
+  {
     id: "datev-export",
     bereich: "Rechnungen",
     titel: "DATEV-Export Rechnungsausgang (Monat ans Steuerbüro)",
