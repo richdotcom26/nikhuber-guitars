@@ -61,7 +61,7 @@ export function TicketForm({
   const bearbeiterDefault = values.zugewiesenAnId ?? (mode === "neu" ? currentUserId : null) ?? "";
 
   return (
-    <form action={action} onInput={() => setGeaendert(true)} onChange={() => setGeaendert(true)} className="max-w-2xl space-y-5">
+    <form action={action} onInput={() => setGeaendert(true)} onChange={() => setGeaendert(true)} className={mode === "edit" ? "space-y-5" : "max-w-2xl space-y-5"}>
       {mode === "edit" && values.id ? <input type="hidden" name="id" value={values.id} /> : null}
       {state ? <FormMessage state={state} /> : null}
 
