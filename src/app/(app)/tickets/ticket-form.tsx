@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { FormMessage, SubmitButton } from "@/components/ui/form";
@@ -37,15 +37,42 @@ export function TicketForm({
   );
   const err = (state && !state.ok && state.fieldErrors) || {};
   const v = (x: string | number | null | undefined) => (x == null ? "" : String(x));
+
+  // Ungespeicherte Änderungen: beim Verlassen (Zurück, Menü, Tab schließen) nachfragen
+  const [geaendert, setGeaendert] = useState(false);
+  const [gespeichertBei, setGespeichertBei] = useState(state);
+  if (state !== gespeichertBei) {
+    setGespeichertBei(state);
+    if (state?.ok) setGeaendert(false);
+  }
+  useEffect(() => {
+    if (!geaendert) return;
+    const frage = "Es gibt ungespeicherte Änderungen am Ticket. Seite trotzdem verlassen?";
+    const klick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest("a[href]");
+      if (a && !a.getAttribute("href")!.startsWith("#") && !confirm(frage)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    const unload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    document.addEventListener("click", klick, true);
+    window.addEventListener("beforeunload", unload);
+    return () => { document.removeEventListener("click", klick, true); window.removeEventListener("beforeunload", unload); };
+  }, [geaendert]);
   const bearbeiterDefault = values.zugewiesenAnId ?? (mode === "neu" ? currentUserId : null) ?? "";
 
   return (
-    <form action={action} className="max-w-2xl space-y-5">
+    <form action={action} onInput={() => setGeaendert(true)} onChange={() => setGeaendert(true)} className="max-w-2xl space-y-5">
       {mode === "edit" && values.id ? <input type="hidden" name="id" value={values.id} /> : null}
       {state ? <FormMessage state={state} /> : null}
 
       <Card>
-        <CardHeader><CardTitle>{mode === "neu" ? "Neues Ticket" : "Ticket bearbeiten"}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>{mode === "neu" ? "Neues Ticket" : "Ticket bearbeiten"}</CardTitle>
+          {/* Speichern prominent oben (zusätzlich unten) */}
+          <div className="flex items-center gap-2">
+            {geaendert ? <span className="text-xs font-medium text-amber-700">ungespeichert</span> : null}
+            <SubmitButton size="sm">{mode === "neu" ? "Ticket anlegen" : "Speichern"}</SubmitButton>
+          </div>
+        </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Titel" htmlFor="titel" errors={err.titel} className="sm:col-span-2">
             <Input id="titel" name="titel" defaultValue={v(values.titel)} required
