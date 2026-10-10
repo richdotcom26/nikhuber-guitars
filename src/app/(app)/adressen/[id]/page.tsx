@@ -11,6 +11,7 @@ import { AnsprechpartnerPanel } from "../ansprechpartner-panel";
 import { DeleteKundeButton } from "../delete-kunde-button";
 import { KundeForm } from "../kunde-form";
 import { LieferadressenPanel } from "../lieferadressen-panel";
+import { KundeUebersicht } from "../kunde-uebersicht";
 
 const KONTAKTART_LABEL = Object.fromEntries(KONTAKTARTEN.map((k) => [k.value, k.label]));
 
@@ -57,23 +58,31 @@ export default async function KundeDetailPage({
         }
       />
 
-      <KundeForm
-        mode="edit"
-        values={formValues}
-        staaten={staaten.map((s) => ({ id: s.id, name: s.name, region: s.region, kuerzel: s.kuerzel }))}
-        zahlungsbedingungen={zbs.map((z) => ({ id: z.id, bezeichnung: z.bezeichnung }))}
-      />
+      {/* links Stammdaten, rechts Übersicht (Statistik, Angebote, Aufträge, Rechnungen) */}
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-5">
+          <KundeForm
+            mode="edit"
+            values={formValues}
+            staaten={staaten.map((s) => ({ id: s.id, name: s.name, region: s.region, kuerzel: s.kuerzel }))}
+            zahlungsbedingungen={zbs.map((z) => ({ id: z.id, bezeichnung: z.bezeichnung }))}
+          />
 
-      <Card className="max-w-3xl">
-        <CardHeader><CardTitle>Briefkopf (berechnet)</CardTitle></CardHeader>
-        <CardContent>
-          <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-700">{briefkopfText || "–"}</pre>
-        </CardContent>
-      </Card>
+          <Card className="max-w-3xl">
+            <CardHeader><CardTitle>Briefkopf (berechnet)</CardTitle></CardHeader>
+            <CardContent>
+              <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-700">{briefkopfText || "–"}</pre>
+            </CardContent>
+          </Card>
 
-      <div className="max-w-3xl space-y-5">
-        <AnsprechpartnerPanel kundeId={k.id} rows={ansprechpartner} />
-        <LieferadressenPanel kundeId={k.id} rows={lieferadressen} />
+          <div className="max-w-3xl space-y-5">
+            <AnsprechpartnerPanel kundeId={k.id} rows={ansprechpartner} />
+            <LieferadressenPanel kundeId={k.id} rows={lieferadressen} />
+          </div>
+        </div>
+        <div className="min-w-0">
+          <KundeUebersicht kundeId={k.id} />
+        </div>
       </div>
     </div>
   );
